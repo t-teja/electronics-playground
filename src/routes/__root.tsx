@@ -40,8 +40,7 @@ export const Route = createRootRoute({
     links: [
       { rel: "icon", type: "image/svg+xml", href: asset("favicon.svg") },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: asset("__grok/manifest.webmanifest") },
-      { rel: "apple-touch-icon", href: asset("__grok/icon-180.png") },
+      { rel: "apple-touch-icon", href: asset("favicon.svg") },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

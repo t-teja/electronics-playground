@@ -2,8 +2,8 @@
 
 Interactive electronics laboratory. Open a bench, drag a slider, watch charge move.
 
-Live: after the Pages Action succeeds, the lab is at
-[https://t-teja.github.io/electronics-playground/](https://t-teja.github.io/electronics-playground/).
+Live: [https://t-teja.github.io/electronics-playground/](https://t-teja.github.io/electronics-playground/)
+(after **Settings → Pages → Source: GitHub Actions**, and the Action is green).
 
 ## Benches
 

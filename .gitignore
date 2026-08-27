@@ -15,5 +15,6 @@ artifacts
 .project_id
 AGENTS.md
 Agents.md
-.grok/*
-!.grok/app-env.json
+.grok/
+migrations
+public/__grok
