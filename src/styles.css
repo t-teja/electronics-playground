@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root,
+html.dark,
+html[data-theme="dark"] {
+  --ep-bg: #09090b;
+  --ep-surface: #121214;
+  --ep-raised: #18181b;
+  --ep-fg: #f4f4f5;
+  --ep-muted: #a1a1aa;
+  --ep-subtle: #71717a;
+  --ep-border: #27272a;
+  --ep-line: #1f1f23;
+  --ep-accent: #eceef2;
+  --ep-accent-fg: #09090b;
+  --ep-electron: #2dd4bf;
+  --ep-electron-dim: #0f766e;
+  --ep-sim: #0c0c0e;
+  --ep-ring: #2dd4bf;
+  --ep-shadow-border: 0 0 0 1px rgb(255 255 255 / 0.07);
+  --ep-shadow-border-hover: 0 0 0 1px rgb(255 255 255 / 0.12);
+  --ep-thumb-ring: 0 0 0 4px #09090b, 0 0 0 5px rgb(45 212 191 / 0.55);
+  color-scheme: dark;
+}
+
+html.light,
+html[data-theme="light"] {
+  --ep-bg: #f4f3ef;
+  --ep-surface: #fffcf7;
+  --ep-raised: #eceae4;
+  --ep-fg: #1c1c1a;
+  --ep-muted: #5c5c56;
+  --ep-subtle: #8a8a84;
+  --ep-border: #ddd9d0;
+  --ep-line: #e8e4db;
+  --ep-accent: #1c1c1a;
+  --ep-accent-fg: #f4f3ef;
+  --ep-electron: #0f766e;
+  --ep-electron-dim: #99f6e4;
+  --ep-sim: #f7f5ef;
+  --ep-ring: #0f766e;
+  --ep-shadow-border: 0 0 0 1px rgb(28 28 26 / 0.08), 0 1px 2px rgb(28 28 26 / 0.04);
+  --ep-shadow-border-hover: 0 0 0 1px rgb(28 28 26 / 0.14), 0 1px 2px rgb(28 28 26 / 0.06);
+  --ep-thumb-ring: 0 0 0 4px #f4f3ef, 0 0 0 5px rgb(15 118 110 / 0.45);
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-bg: var(--ep-bg);
+  --color-surface: var(--ep-surface);
+  --color-raised: var(--ep-raised);
+  --color-fg: var(--ep-fg);
+  --color-muted: var(--ep-muted);
+  --color-subtle: var(--ep-subtle);
+  --color-border: var(--ep-border);
+  --color-line: var(--ep-line);
+  --color-accent: var(--ep-accent);
+  --color-accent-fg: var(--ep-accent-fg);
+  --color-electron: var(--ep-electron);
+  --color-electron-dim: var(--ep-electron-dim);
+  --color-sim: var(--ep-sim);
+  --color-ring: var(--ep-ring);
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-border: var(--ep-shadow-border);
+  --shadow-border-hover: var(--ep-shadow-border-hover);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--ep-bg);
+    color: var(--ep-fg);
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--ep-bg);
+    color: var(--ep-fg);
+    font-family: var(--font-sans);
+    transition: background-color 200ms ease-out, color 200ms ease-out;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--ep-electron) 35%, transparent);
+    color: var(--ep-fg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-flow {
+    display: none !important;
+  }
+
+  body {
+    transition: none;
+  }
+}
