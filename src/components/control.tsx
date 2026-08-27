@@ -38,6 +38,7 @@ export function LinearControl({
   step,
   onChange,
   hint,
+  disabled = false,
 }: {
   label: string;
   value: number;
@@ -47,10 +48,19 @@ export function LinearControl({
   step?: number;
   onChange: (n: number) => void;
   hint?: string;
+  disabled?: boolean;
 }) {
   return (
     <Control label={label} value={display} hint={hint}>
-      <Slider value={value} min={min} max={max} step={step} onValueChange={onChange} aria-label={label} />
+      <Slider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={onChange}
+        aria-label={label}
+        disabled={disabled}
+      />
     </Control>
   );
 }

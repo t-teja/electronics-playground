@@ -18,3 +18,16 @@ Agents.md
 .grok/
 migrations
 public/__grok
+server
+startup.sh
+src/lib/auth
+src/lib/app-data
+src/lib/db.ts
+src/lib/multiplayer
+src/lib/preview-host-bridge.ts
+src/lib/preview-embedder-origin.ts
+src/components/preview-host-bridge.tsx
+scripts/*
+!scripts/gh-pages-post.mjs
+!scripts/with-app-env.mjs
+eslint.config.mjs

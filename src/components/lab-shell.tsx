@@ -112,6 +112,22 @@ export function LabShell({
                 </div>
                 <Separator className="my-4" />
                 <p className="text-sm leading-relaxed text-subtle">{lab.principle}</p>
+                {lab.uses.length > 0 ? (
+                  <>
+                    <Separator className="my-4" />
+                    <h3 className="mb-2 text-[10px] font-medium tracking-[0.16em] text-subtle uppercase">
+                      Where you’ll see it
+                    </h3>
+                    <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-muted">
+                      {lab.uses.map((use) => (
+                        <li key={use} className="flex gap-2">
+                          <span className="mt-[0.55em] size-1 shrink-0 rounded-full bg-electron" />
+                          <span>{use}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : null}
               </section>
             </div>
           </div>

@@ -8,7 +8,9 @@ import { LogicGatesLab } from "@/labs/logic-gates";
 import { MicrocontrollerLab } from "@/labs/microcontroller";
 import { MosfetLab } from "@/labs/mosfet";
 import { PotentiometerLab } from "@/labs/potentiometer";
+import { RelayLab } from "@/labs/relay";
 import { ResistorLab } from "@/labs/resistor";
+import { SignalGeneratorLab } from "@/labs/signal-generator";
 import { Timer555Lab } from "@/labs/timer-555";
 import { TransformerLab } from "@/labs/transformer";
 import { TransistorLab } from "@/labs/transistor";
@@ -26,5 +28,7 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   "logic-gates": LogicGatesLab,
   "timer-555": Timer555Lab,
   microcontroller: MicrocontrollerLab,
+  "signal-generator": SignalGeneratorLab,
   "dc-motor": DcMotorLab,
+  relay: RelayLab,
 };

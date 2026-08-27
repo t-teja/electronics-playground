@@ -9,6 +9,7 @@ export type LabMeta = {
   summary: string;
   principle: string;
   formula: string;
+  uses: string[];
 };
 
 export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
@@ -30,7 +31,7 @@ export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
   {
     id: "electromechanical",
     label: "Electromechanical",
-    blurb: "Current becomes torque. A spinning armature is just an inductor with a job.",
+    blurb: "Current becomes torque, or a magnetic click that throws a switch.",
   },
 ];
 
@@ -46,6 +47,12 @@ export const LABS: LabMeta[] = [
     principle:
       "Free electrons in a metal already move at random. An electric field adds a tiny drift. Collisions with the lattice convert that ordered motion into heat — that is resistance.",
     formula: "I = V / R",
+    uses: [
+      "Current-limiting resistors in front of LEDs",
+      "Voltage dividers for sensors and ADC inputs",
+      "Pull-up / pull-down resistors on digital pins",
+      "Dummy loads and power dissipation in test rigs",
+    ],
   },
   {
     slug: "capacitor",
@@ -58,6 +65,12 @@ export const LABS: LabMeta[] = [
     principle:
       "Current can flow only while the plates are charging or discharging. Once the capacitor voltage equals the source, the field stops further charge. The time constant τ = RC sets how quickly that happens.",
     formula: "I = C · dV/dt",
+    uses: [
+      "Smoothing ripple on power-supply rails",
+      "Decoupling ICs so they don’t brown out on switching spikes",
+      "Timing networks (with a resistor) in 555s and RC filters",
+      "Energy storage in camera flashes and motor snubbers",
+    ],
   },
   {
     slug: "inductor",
@@ -70,6 +83,12 @@ export const LABS: LabMeta[] = [
     principle:
       "A changing current produces a changing flux, which induces a voltage opposing the change (Lenz’s law). Energy lives in the magnetic field. The lamp is the load that current actually feeds — open the switch and that energy has to go somewhere.",
     formula: "V = L · dI/dt",
+    uses: [
+      "Energy storage in switch-mode power supplies (buck/boost)",
+      "LC filters that keep noise off a power rail",
+      "Ignition coils and flyback converters",
+      "Chokes on USB and Ethernet cables",
+    ],
   },
   {
     slug: "potentiometer",
@@ -82,6 +101,12 @@ export const LABS: LabMeta[] = [
     principle:
       "The wiper splits the track into two resistances that always add to the total. Output is V · (R_lower / R_total). Current into a light load still follows Ohm, but the ratio is the story.",
     formula: "Vout = V · k",
+    uses: [
+      "Volume and tone knobs on audio gear",
+      "Lamp dimmers and analog set-points",
+      "Calibrating sensor offsets on a board",
+      "Joystick axes and panel controls",
+    ],
   },
   {
     slug: "transformer",
@@ -94,6 +119,12 @@ export const LABS: LabMeta[] = [
     principle:
       "Faraday’s law: V = N · dφ/dt. Same flux through both windings means Vs / Vp = Ns / Np. Current transforms the other way so power is (almost) conserved.",
     formula: "Vs / Vp = Ns / Np",
+    uses: [
+      "Stepping mains down in phone chargers and laptop PSUs",
+      "Isolation so the secondary is not tied to earth/live",
+      "Distribution transformers on the pole outside a house",
+      "Audio matching and gate-drive isolation",
+    ],
   },
   {
     slug: "diode",
@@ -106,6 +137,12 @@ export const LABS: LabMeta[] = [
     principle:
       "P-type silicon is rich in holes, N-type in electrons. At the junction they recombine and leave a depletion region — an insulating wall. Forward voltage lowers that wall past ~0.7 V; reverse voltage raises it.",
     formula: "I = Iₛ (e^{V/nVₜ} − 1)",
+    uses: [
+      "Bridge rectifiers that turn AC into DC",
+      "Reverse-polarity protection on battery inputs",
+      "Flyback / freewheel diodes across coils and motors",
+      "Logic OR-ing of two power sources",
+    ],
   },
   {
     slug: "led",
@@ -118,6 +155,12 @@ export const LABS: LabMeta[] = [
     principle:
       "When an electron drops from the conduction band into a hole, the energy difference can be emitted as light. Larger band-gap means bluer light and a higher forward voltage.",
     formula: "E = h · f  ≈  q · V_f",
+    uses: [
+      "Power and status indicators on every board",
+      "Room and street lighting",
+      "Optocouplers and IR remote transmitters",
+      "Displays, traffic signals, and backlights",
+    ],
   },
   {
     slug: "transistor",
@@ -130,6 +173,12 @@ export const LABS: LabMeta[] = [
     principle:
       "Forward-biasing the base–emitter junction injects electrons into the base. Most of them are swept into the collector before they can recombine. Collector current is β times base current, until the device saturates.",
     formula: "I_c = β · I_b  (active)",
+    uses: [
+      "Audio and RF amplifiers",
+      "Switching relays, buzzers, and small motors from a GPIO pin",
+      "Discrete logic and level shifting",
+      "Current sources and analog front-ends",
+    ],
   },
   {
     slug: "mosfet",
@@ -142,6 +191,12 @@ export const LABS: LabMeta[] = [
     principle:
       "Vgs above threshold inverts a p-type body into an n-channel between source and drain. Id grows with (Vgs − Vth)² in saturation. The gate is insulated, so DC gate current is essentially zero.",
     formula: "Id = k · (Vgs − Vth)²",
+    uses: [
+      "Synchronous switches in DC–DC converters",
+      "H-bridge drivers for DC motors",
+      "LED dimming and PWM loads",
+      "Load switches and battery protection FETs",
+    ],
   },
   {
     slug: "logic-gates",
@@ -154,6 +209,12 @@ export const LABS: LabMeta[] = [
     principle:
       "A gate is just transistors biased as switches. Inputs above a threshold are 1, below are 0. AND, OR, NOT and the rest are wiring patterns on those switches — CMOS in silicon, truth tables on paper.",
     formula: "Y = f(A, B)",
+    uses: [
+      "ALUs and every digital chip",
+      "Glue logic between mismatched ICs",
+      "Safety interlocks (AND of two enables)",
+      "Address decoding on memory buses",
+    ],
   },
   {
     slug: "timer-555",
@@ -166,6 +227,12 @@ export const LABS: LabMeta[] = [
     principle:
       "In astable mode the capacitor charges through RA + RB and discharges through RB. Comparators at ⅓ and ⅔ of VCC set and reset an SR latch, which opens and closes the discharge transistor. Frequency follows the RC network.",
     formula: "f = 1.44 / ((RA + 2 RB) · C)",
+    uses: [
+      "LED blinkers and toy sirens",
+      "PWM generation before a microcontroller existed",
+      "Switch debounce and missing-pulse detectors",
+      "Precision one-shots for camera flashes",
+    ],
   },
   {
     slug: "microcontroller",
@@ -178,6 +245,30 @@ export const LABS: LabMeta[] = [
     principle:
       "Each clock edge fetches the instruction at the program counter, executes it, and advances. Pins are just registers mapped to silicon pads. Firmware is the difference between a chip and a product.",
     formula: "T_clk = 1 / f_cpu",
+    uses: [
+      "Washing machines, thermostats, and appliances",
+      "Robots, drones, and RC transmitters",
+      "USB gadgets and sensor nodes",
+      "The brain of almost every modern product",
+    ],
+  },
+  {
+    slug: "signal-generator",
+    name: "Signal generator",
+    symbol: "GEN",
+    category: "digital",
+    tagline: "Shapes of voltage, on purpose",
+    summary:
+      "Sine, triangle, square, saw, PWM. Frequency sets how fast. Duty cycle sets how long the high part lasts — and that average is what motors and LEDs actually feel.",
+    principle:
+      "A square wave’s duty cycle D is on-time over period; its average is V × D. PWM is that idea run fast enough that a coil or an RC filter cannot follow the pulses — it sees a smooth level. Analog shapes (sine, triangle, saw) are defined by frequency and amplitude, not pulse width.",
+    formula: "Vavg = V × D",
+    uses: [
+      "Audio and RF test benches",
+      "PWM motor speed and LED brightness",
+      "Switch-mode charger control loops",
+      "Clock and stimulus sources in the lab",
+    ],
   },
   {
     slug: "dc-motor",
@@ -190,6 +281,30 @@ export const LABS: LabMeta[] = [
     principle:
       "V = I·R + Ke·ω. Torque τ = Kt·I. At stall, ω = 0 so the motor is a resistor and current peaks. Unloaded, back-EMF rises until current is only what’s needed to cover friction.",
     formula: "V = I R + Ke ω",
+    uses: [
+      "Fans, pumps, and window motors",
+      "Toys, robots, and CNC axes",
+      "Printers and DVD trays",
+      "Automotive wipers and seat adjusters",
+    ],
+  },
+  {
+    slug: "relay",
+    name: "Relay",
+    symbol: "K",
+    category: "electromechanical",
+    tagline: "A magnet that throws a switch",
+    summary:
+      "A small coil current pulls an armature and slams metal contacts. The load never shares a wire with the coil — that is galvanic isolation you can hear.",
+    principle:
+      "Amp-turns in the coil build a field that beats the return spring. COM leaves NC and lands on NO. Opening the coil dumps the field; a flyback diode gives that energy a path so the driving transistor survives.",
+    formula: "Icoil = Vcoil / Rcoil",
+    uses: [
+      "HVAC contactors and thermostat outputs",
+      "Automotive horns, lamps, and starters",
+      "PLC discrete outputs switching mains",
+      "Isolating a low-voltage MCU from a dirty load",
+    ],
   },
 ];
 

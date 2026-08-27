@@ -8,6 +8,7 @@ export function Slider({
   min = 0,
   max = 100,
   step = 1,
+  disabled = false,
   "aria-label": ariaLabel,
 }: {
   className?: string;
@@ -16,18 +17,20 @@ export function Slider({
   min?: number;
   max?: number;
   step?: number;
+  disabled?: boolean;
   "aria-label"?: string;
 }) {
   return (
     <SliderPrimitive.Root
       className={cn(
-        "relative flex h-11 w-full touch-none items-center select-none",
+        "relative flex h-11 w-full touch-none items-center select-none data-[disabled]:opacity-40",
         className,
       )}
       value={[value]}
       min={min}
       max={max}
       step={step}
+      disabled={disabled}
       onValueChange={(v) => onValueChange(v[0] ?? min)}
       aria-label={ariaLabel}
     >

@@ -770,3 +770,56 @@ export function potentiometer(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.stroke();
   return { wiper: { x: wx, y: y - 34 } };
 }
+
+export function relayBody(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  energized: boolean,
+) {
+  roundRect(ctx, x - 70, y - 48, 140, 96, 8);
+  ctx.fillStyle = Ink.package;
+  ctx.fill();
+  ctx.strokeStyle = "rgba(128,128,128,0.22)";
+  ctx.stroke();
+
+  ctx.strokeStyle = Ink.copper;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for (let i = 0; i < 4; i++) {
+    ctx.arc(x - 38, y - 18 + i * 10, 5, Math.PI, 0, false);
+  }
+  ctx.stroke();
+  label(ctx, "coil", x - 38, y + 32, { size: 10, color: Ink.muted });
+
+  const com = { x: x + 36, y: y + 8 };
+  const nc = { x: x + 54, y: y - 22 };
+  const no = { x: x + 54, y: y + 28 };
+  ctx.fillStyle = Ink.pin;
+  ctx.beginPath();
+  ctx.arc(com.x, com.y, 3.2, 0, Math.PI * 2);
+  ctx.arc(nc.x, nc.y, 3.2, 0, Math.PI * 2);
+  ctx.arc(no.x, no.y, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = energized ? Ink.electron : Ink.copper;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(com.x, com.y);
+  if (energized) ctx.lineTo(no.x - 4, no.y);
+  else ctx.lineTo(nc.x - 4, nc.y);
+  ctx.stroke();
+  label(ctx, "NC", nc.x + 16, nc.y, { size: 10, align: "left" });
+  label(ctx, "NO", no.x + 16, no.y, { size: 10, align: "left" });
+  label(ctx, "COM", com.x - 8, com.y + 18, { size: 10 });
+  label(ctx, energized ? "pulled in" : "released", x, y - 62, {
+    size: 12,
+    color: energized ? Ink.electron : Ink.muted,
+  });
+  return {
+    coilTop: { x: x - 38, y: y - 28 },
+    coilBot: { x: x - 38, y: y + 18 },
+    com,
+    nc,
+    no,
+  };
+}

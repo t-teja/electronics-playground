@@ -158,6 +158,27 @@ export function GlyphMotor({ className }: { className?: string }) {
   );
 }
 
+export function GlyphRelay({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M28 22 V50" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M36 26 a6 6 0 0 1 0 12 a6 6 0 0 1 0 12" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M78 20 H110 M78 52 H110 M70 36 L110 20" stroke="currentColor" strokeWidth="1.5" />
+      <Electron d="M12 36 H28" dur="1.6s" />
+    </Frame>
+  );
+}
+
+export function GlyphGenerator({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="28" y="16" width="104" height="40" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M40 36 q12 -14 24 0 t24 0 t24 0" stroke="currentColor" strokeWidth="1.6" className="text-electron" />
+      <Electron d="M40 36 q12 -14 24 0 t24 0" dur="1.6s" />
+    </Frame>
+  );
+}
+
 export const GLYPHS = {
   resistor: GlyphResistor,
   capacitor: GlyphCapacitor,
@@ -171,5 +192,7 @@ export const GLYPHS = {
   "logic-gates": GlyphGate,
   "timer-555": GlyphTimer,
   microcontroller: GlyphMcu,
+  "signal-generator": GlyphGenerator,
   "dc-motor": GlyphMotor,
+  relay: GlyphRelay,
 } as const;
