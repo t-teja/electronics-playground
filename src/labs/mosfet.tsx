@@ -47,9 +47,9 @@ export function MosfetLab() {
       return `Vgs = ${formatVolt(vgs)} is below the ${formatVolt(VTH)} threshold. No inversion layer, no channel, the LED is dark. The gate draws (almost) no DC current.`;
     }
     if (region === "linear") {
-      return `The channel is a resistor. Drain current is limited by ${formatOhm(rd)} to ${formatAmp(idMax)} — the MOSFET is a closed switch.`;
+      return `The channel is a resistor. Drain current is limited by ${formatOhm(rd)} to ${formatAmp(idMax)} \u2014 the MOSFET is a closed switch.`;
     }
-    return `Saturation. The inverted n-channel is pinched off at the drain. Id ≈ k(Vgs − Vth)² = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
+    return `Saturation. The inverted n-channel is pinched off at the drain. Id \u2248 k(Vgs \u2212 Vth)\u00b2 = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
   }, [region, vgs, id, idMax, rd]);
 
   return (
@@ -89,7 +89,10 @@ export function MosfetLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            Vth = {formatVolt(VTH)} · Id sat = k (Vgs − Vth)²
+            Vth = {formatVolt(VTH)} \u00b7 Id sat = k (Vgs \u2212 Vth)\u00b2
+          </p>
+          <p className="text-xs text-subtle">
+            Region names are a current clamp against VDD/Rd, not a full Vds MOSFET model.
           </p>
         </>
       }
@@ -104,8 +107,8 @@ export function MosfetLab() {
               battery(ctx, 64, 90);
               label(ctx, formatVolt(VDD), 64, 142, { mono: true, size: 12 });
               resistorBody(ctx, 180, 54, 80, p.rd, Math.min(1, p.id * 8));
-              ledDome(ctx, 340, 30, Ink.electron, Math.min(1, p.id / 0.015));
-              nMosfet(ctx, 520, 150, on);
+              const led = ledDome(ctx, 340, 30, Ink.electron, Math.min(1, p.id / 0.015));
+              const mos = nMosfet(ctx, 520, 150, on);
 
               wire(ctx, [
                 { x: 80, y: 90 },
@@ -114,22 +117,23 @@ export function MosfetLab() {
               ]);
               wire(ctx, [
                 { x: 270, y: 54 },
-                { x: 340, y: 54 },
+                { x: led.anode.x, y: 54 },
+                led.anode,
               ]);
               wire(ctx, [
-                { x: 340, y: 70 },
-                { x: 340, y: 116 },
-                { x: 536, y: 116 },
+                led.cathode,
+                { x: led.cathode.x, y: mos.d.y },
+                mos.d,
               ]);
               wire(ctx, [
-                { x: 536, y: 184 },
-                { x: 536, y: 250 },
+                mos.s,
+                { x: mos.s.x, y: 250 },
                 { x: 48, y: 250 },
                 { x: 48, y: 90 },
               ]);
               wire(ctx, [
                 { x: 200, y: 150 },
-                { x: 486, y: 150 },
+                mos.g,
               ]);
               roundRect(ctx, 148, 136, 90, 28, 6);
               ctx.fillStyle = Ink.package;
@@ -167,9 +171,9 @@ export function MosfetLab() {
               });
 
               const col: Pt[] = [
-                { x: 340, y: 116 },
-                { x: 536, y: 116 },
-                { x: 536, y: 184 },
+                led.cathode,
+                mos.d,
+                mos.s,
               ];
               flow.current.setPath(col, false);
               flow.current.set(
@@ -179,7 +183,7 @@ export function MosfetLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `Id = k (Vgs − Vth)² = ${formatAmp(p.id)}`, 560, 392, {
+              label(ctx, `Id = k (Vgs \u2212 Vth)\u00b2 = ${formatAmp(p.id)}`, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
