@@ -8,7 +8,6 @@ import { useProgress } from "@/lib/progress";
 import {
   battery,
   clearSim,
-  gnd,
   graphPaper,
   Ink,
   junction,
@@ -20,8 +19,6 @@ import {
   withFrame,
 } from "@/lib/sim/draw";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
-
-const VF_LED = 1.8;
 
 export function PotentiometerLab() {
   const lab = LAB_BY_SLUG.potentiometer!;
@@ -37,7 +34,8 @@ export function PotentiometerLab() {
   const rhi = Math.max(1, rtot * (1 - k));
   const rpar = 1 / (1 / rlo + 1 / rload);
   const vout = v * (rpar / (rhi + rpar));
-  const iled = Math.max(0, (vout - VF_LED) / rload);
+  const VF = 1.8;
+  const iled = Math.max(0, (vout - VF) / rload);
 
   const flow = useRef(new ElectronFlow());
   const flowTap = useRef(new ElectronFlow());
@@ -111,40 +109,50 @@ export function PotentiometerLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 200;
-              const botY = 320;
-              const tapY = 114;
+              const botY = 310;
               const bat = battery(ctx, 70, y);
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
+              // k is fraction from ground; draw inverted so ground is on the right.
               const pot = potentiometer(ctx, 260, y, 220, 1 - p.k, p.rtot);
               label(ctx, formatOhm(p.rtot), 370, y + 36, { mono: true, size: 11 });
 
-              const rsX = 520;
-              const rsW = 80;
-              resistorBody(ctx, rsX, tapY, rsW, p.rload, Math.min(1, p.iled * 20));
-              const rsLeft: Pt = { x: rsX - 10, y: tapY };
-              const rsRight: Pt = { x: rsX + rsW + 10, y: tapY };
-              label(ctx, "load", 560, tapY - 28, { size: 11 });
-
-              const led = ledDome(ctx, 640, tapY - 34, Ink.electron, Math.min(1, p.iled / 0.008));
+              const led = ledDome(ctx, 620, 70, Ink.electron, Math.min(1, p.iled / 0.008));
+              resistorBody(ctx, 580, y, 80, p.rload, Math.min(1, p.iled * 20));
+              label(ctx, "load", 620, y - 28, { size: 11 });
 
               wire(ctx, [bat.pos, pot.left]);
-              wire(ctx, [pot.right, { x: pot.right.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [pot.wiper, { x: pot.wiper.x, y: tapY }, rsLeft]);
-              wire(ctx, [rsRight, led.anode]);
+              wire(ctx, [
+                pot.right,
+                { x: 720, y },
+                { x: 720, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ]);
+              wire(ctx, [
+                pot.wiper,
+                { x: pot.wiper.x, y: led.anode.y },
+                { x: led.anode.x, y: led.anode.y },
+                led.anode,
+              ]);
               wire(ctx, [
                 led.cathode,
-                { x: led.cathode.x, y: botY },
-                { x: bat.neg.x, y: botY },
+                { x: led.cathode.x, y },
+                { x: 570, y },
               ]);
-              gnd(ctx, 200, botY);
-              junction(ctx, pot.right.x, botY);
+              wire(ctx, [
+                { x: 670, y },
+                { x: 720, y },
+              ]);
+              junction(ctx, 720, y);
+              junction(ctx, led.cathode.x, y);
               junction(ctx, bat.neg.x, botY);
 
               const loop: Pt[] = [
                 bat.pos,
                 pot.left,
                 pot.right,
-                { x: pot.right.x, y: botY },
+                { x: 720, y },
+                { x: 720, y: botY },
                 { x: bat.neg.x, y: botY },
                 bat.neg,
               ];
@@ -155,14 +163,10 @@ export function PotentiometerLab() {
 
               const tap: Pt[] = [
                 pot.wiper,
-                { x: pot.wiper.x, y: tapY },
-                rsLeft,
-                rsRight,
+                { x: pot.wiper.x, y: led.anode.y },
                 led.anode,
                 led.cathode,
-                { x: led.cathode.x, y: botY },
-                { x: bat.neg.x, y: botY },
-                bat.neg,
+                { x: led.cathode.x, y },
               ];
               flowTap.current.setPath(tap, false);
               flowTap.current.set(
