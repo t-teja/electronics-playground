@@ -7,7 +7,7 @@ Live: [https://t-teja.github.io/electronics-playground/](https://t-teja.github.i
 
 ## Benches
 
-Resistor, capacitor, inductor, potentiometer, transformer, diode, LED, BJT, MOSFET, logic gates, 555 timer, microcontroller, DC motor.
+Resistor, capacitor, inductor, potentiometer, transformer, diode, LED, BJT, MOSFET, logic gates, 555 timer, microcontroller, signal generator, DC motor, relay.
 
 ## GitHub Pages
 
