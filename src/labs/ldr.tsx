@@ -30,13 +30,32 @@ function ldrResistance(lux: number) {
   return RDARK / (1 + (Math.max(0, lux) / LUX0) ** GAMMA);
 }
 
+function verticalResistor(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  w: number,
+  ohm: number,
+  heat = 0,
+) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.PI / 2);
+  resistorBody(ctx, -w / 2, 0, w, ohm, heat);
+  ctx.restore();
+  return {
+    top: { x: cx, y: cy - w / 2 - 10 },
+    bot: { x: cx, y: cy + w / 2 + 10 },
+  };
+}
+
 export function LdrLab() {
   const lab = LAB_BY_SLUG.ldr!;
   const mark = useProgress((s) => s.mark);
   useEffect(() => mark(lab.slug), [lab.slug, mark]);
 
   const [lux, setLux] = useState(120);
-  const [rFixed, setRFixed] = useState(10000);
+  const [rFixed, setRFixed] = useState(100000);
 
   const rLdr = ldrResistance(lux);
   const rTop = rLdr;
@@ -52,15 +71,12 @@ export function LdrLab() {
 
   const insight = useMemo(() => {
     if (lux < 2) {
-      return `Dark. Photons are scarce, so almost no extra carriers are freed. The LDR sits near ${formatOhm(RDARK)} and ${formatVolt(vout)} appears at the tap - too low to light the LED.`;
-    }
-    if (lux < 40) {
-      return `Photoconductivity has started: R_LDR = R_dark / (1 + (E/${LUX0})^${GAMMA}) = ${formatOhm(rLdr)}. The divider with ${formatOhm(rFixed)} yields ${formatVolt(vout)}.`;
+      return `Dark. The LDR sits near ${formatOhm(RDARK)}, so almost all of VCC drops across it. Vout is only ${formatVolt(vout)} - under the LED drop, so the indicator stays off.`;
     }
     if (iLed < 0.00015) {
-      return `Brighter, lower R. Vout is ${formatVolt(vout)}, still under the LED's ~${VF_LED.toFixed(1)} V forward drop, so the indicator stays dark even though the meter is moving.`;
+      return `R_LDR = ${formatOhm(rLdr)}. The divider with ${formatOhm(rFixed)} yields ${formatVolt(vout)}, still under the LED's ~${VF_LED.toFixed(1)} V drop. More light, or a larger R2, will light it.`;
     }
-    return `Photons flood the lattice and resistance falls to ${formatOhm(rLdr)}. Vout = VCC * Rbot / (Rbot + Rtop) = ${formatVolt(vout)}. The LED sees that voltage and glows.`;
+    return `Photons free carriers, R_LDR falls to ${formatOhm(rLdr)}. Vout = VCC * R2 / (R2 + R_LDR) = ${formatVolt(vout)}. That is enough to light the LED through Rs.`;
   }, [lux, rLdr, rFixed, vout, iLed]);
 
   return (
@@ -70,7 +86,7 @@ export function LdrLab() {
         <>
           <Meter label="R LDR" value={formatOhm(rLdr)} />
           <Meter label="Vout" value={formatVolt(vout)} />
-          <Meter label="I divider" value={formatAmp(iDiv)} />
+          <Meter label="LED" value={iLed > 0.00015 ? "on" : "off"} />
         </>
       }
       controls={
@@ -83,7 +99,7 @@ export function LdrLab() {
             max={1000}
             step={1}
             onChange={setLux}
-            hint="Photons free carriers. More light, less resistance."
+            hint="Photons free carriers. More light, less resistance, LED comes on."
           />
           <LogControl
             label="R2"
@@ -92,7 +108,7 @@ export function LdrLab() {
             min={1000}
             max={100000}
             onChange={setRFixed}
-            hint="Bottom of the divider, not in series with the LED."
+            hint="Pull-down at the bottom of the divider. Not in series with the LED."
           />
         </>
       }
@@ -100,7 +116,7 @@ export function LdrLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            R proportional to 1 / E^{GAMMA} * Vout = {formatVolt(VCC)} * {formatOhm(rBot)} / ({formatOhm(rBot)} + {formatOhm(rTop)})
+            Vout = {formatVolt(VCC)} * {formatOhm(rBot)} / ({formatOhm(rBot)} + {formatOhm(rTop)})
           </p>
         </>
       }
@@ -111,69 +127,76 @@ export function LdrLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              const topY = 90;
-              const midY = 180;
-              const botY = 280;
+              const stackX = 300;
               const bat = battery(ctx, 80, 180);
               label(ctx, formatVolt(VCC), 80, 236, { mono: true, size: 12 });
 
-              resistorBody(ctx, 240, topY, 140, p.rLdr, 0);
-              const ldrLeft: Pt = { x: 230, y: topY };
-              const ldrRight: Pt = { x: 390, y: topY };
-              label(ctx, "LDR", 310, 58, { size: 11 });
-              label(ctx, formatOhm(p.rLdr), 310, 74, { mono: true, size: 11 });
+              const ldr = verticalResistor(ctx, stackX, 100, 80, p.rLdr, 0);
+              const r2 = verticalResistor(
+                ctx,
+                stackX,
+                260,
+                80,
+                p.rFixed,
+                Math.min(1, p.iDiv * p.iDiv * p.rFixed * 8),
+              );
+              const tap: Pt = { x: stackX, y: 180 };
+
+              label(ctx, "LDR", stackX + 36, 88, { size: 11, align: "left" });
+              label(ctx, formatOhm(p.rLdr), stackX + 36, 104, { mono: true, size: 11, align: "left" });
+              label(ctx, "R2", stackX + 36, 248, { size: 11, align: "left" });
+              label(ctx, formatOhm(p.rFixed), stackX + 36, 264, { mono: true, size: 11, align: "left" });
 
               const light01 = Math.min(1, p.lux / 800);
               ctx.strokeStyle = Ink.electron;
               ctx.lineWidth = 1.5;
               ctx.lineCap = "round";
               for (let i = 0; i < 3; i++) {
-                const ox = 286 + i * 18;
+                const oy = 78 + i * 16;
                 ctx.globalAlpha = 0.25 + light01 * 0.75;
                 ctx.beginPath();
-                ctx.moveTo(ox - 8, topY - 48);
-                ctx.lineTo(ox + 6, topY - 22);
+                ctx.moveTo(stackX - 70, oy - 10);
+                ctx.lineTo(stackX - 42, oy + 4);
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.moveTo(ox + 6, topY - 22);
-                ctx.lineTo(ox - 2, topY - 26);
-                ctx.moveTo(ox + 6, topY - 22);
-                ctx.lineTo(ox + 2, topY - 30);
+                ctx.moveTo(stackX - 42, oy + 4);
+                ctx.lineTo(stackX - 52, oy + 2);
+                ctx.moveTo(stackX - 42, oy + 4);
+                ctx.lineTo(stackX - 44, oy - 6);
                 ctx.stroke();
               }
               ctx.globalAlpha = 1;
-              label(ctx, `${p.lux.toFixed(0)} lux`, 310, topY - 58, { mono: true, size: 11, color: Ink.electron });
+              label(ctx, `${p.lux.toFixed(0)} lux`, stackX - 56, 54, {
+                mono: true,
+                size: 11,
+                color: Ink.electron,
+              });
 
-              resistorBody(ctx, 240, botY, 140, p.rFixed, Math.min(1, p.iDiv * p.iDiv * p.rFixed * 8));
-              const rLeft: Pt = { x: 230, y: botY };
-              const rRight: Pt = { x: 390, y: botY };
-              label(ctx, "R2 divider", 310, botY + 28, { size: 11 });
-              label(ctx, formatOhm(p.rFixed), 310, botY + 44, { mono: true, size: 11 });
+              resistorBody(ctx, 400, tap.y, 70, R_LED, Math.min(1, p.iLed * 30));
+              label(ctx, "Rs", 435, tap.y - 24, { size: 11 });
+              const led = ledDome(ctx, 620, tap.y - 34, Ink.electron, Math.min(1, p.iLed / 0.0008));
+              label(ctx, "out", 620, tap.y - 58, { size: 11 });
 
-              const node: Pt = { x: 430, y: midY };
-              resistorBody(ctx, 470, midY, 70, R_LED, Math.min(1, p.iLed * 30));
-              label(ctx, "Rs", 505, midY - 24, { size: 11 });
-              const led = ledDome(ctx, 660, 146, Ink.electron, Math.min(1, p.iLed / 0.0008));
-              label(ctx, "out", 660, 116, { size: 11 });
-
-              wire(ctx, [bat.pos, { x: bat.pos.x, y: topY }, ldrLeft]);
-              wire(ctx, [ldrRight, { x: node.x, y: topY }, node]);
-              wire(ctx, [node, { x: node.x, y: botY }, rRight]);
-              wire(ctx, [rLeft, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [node, { x: 460, y: midY }]);
+              wire(ctx, [bat.pos, { x: bat.pos.x, y: ldr.top.y }, ldr.top]);
+              wire(ctx, [ldr.bot, tap]);
+              wire(ctx, [tap, r2.top]);
+              wire(ctx, [r2.bot, { x: bat.neg.x, y: r2.bot.y }, bat.neg]);
+              wire(ctx, [tap, { x: 390, y: tap.y }]);
               wire(ctx, [
-                { x: 550, y: midY },
-                { x: led.anode.x, y: midY },
+                { x: 480, y: tap.y },
+                { x: led.anode.x, y: tap.y },
                 led.anode,
               ]);
               wire(ctx, [
                 led.cathode,
-                { x: led.cathode.x, y: botY },
-                { x: bat.neg.x, y: botY },
+                { x: led.cathode.x, y: r2.bot.y },
+                { x: bat.neg.x, y: r2.bot.y },
               ]);
-              junction(ctx, node.x, node.y);
+              junction(ctx, tap.x, tap.y);
+              junction(ctx, bat.neg.x, r2.bot.y);
+              junction(ctx, led.cathode.x, r2.bot.y);
 
-              label(ctx, `Vout ${formatVolt(p.vout)}`, node.x + 36, midY - 16, {
+              label(ctx, `Vout ${formatVolt(p.vout)}`, tap.x + 52, tap.y + 22, {
                 mono: true,
                 size: 12,
                 color: Ink.text,
@@ -182,15 +205,13 @@ export function LdrLab() {
 
               const loop: Pt[] = [
                 bat.pos,
-                { x: bat.pos.x, y: topY },
-                ldrLeft,
-                ldrRight,
-                { x: node.x, y: topY },
-                node,
-                { x: node.x, y: botY },
-                rRight,
-                rLeft,
-                { x: bat.neg.x, y: botY },
+                { x: bat.pos.x, y: ldr.top.y },
+                ldr.top,
+                ldr.bot,
+                tap,
+                r2.top,
+                r2.bot,
+                { x: bat.neg.x, y: r2.bot.y },
                 bat.neg,
               ];
               flow.current.setPath(loop, true);
@@ -203,14 +224,14 @@ export function LdrLab() {
 
               if (p.iLed > 2e-5) {
                 const branch: Pt[] = [
-                  node,
-                  { x: 460, y: midY },
-                  { x: 550, y: midY },
-                  { x: led.anode.x, y: midY },
+                  tap,
+                  { x: 390, y: tap.y },
+                  { x: 480, y: tap.y },
+                  { x: led.anode.x, y: tap.y },
                   led.anode,
                   led.cathode,
-                  { x: led.cathode.x, y: botY },
-                  { x: bat.neg.x, y: botY },
+                  { x: led.cathode.x, y: r2.bot.y },
+                  { x: bat.neg.x, y: r2.bot.y },
                 ];
                 ledFlow.current.setPath(branch, false);
                 ledFlow.current.set(Math.max(3, Math.min(14, Math.round(p.iLed * 12000))), -90);
