@@ -58,21 +58,21 @@ export function ResistorLab() {
 
   const insight = useMemo(() => {
     if (mode === "series") {
-      return `The LED eats ~${VF_LED.toFixed(1)} V, then the same current (${formatAmp(i)}) passes through both resistors. Remaining ${formatVolt(vr)} splits in proportion \u2014 ${formatOhm(r1)} drops ${formatVolt(i * r1)}, ${formatOhm(r2)} drops ${formatVolt(i * r2)}.`;
+      return `The LED eats ~${VF_LED.toFixed(1)} V, then the same current (${formatAmp(i)}) passes through both resistors. Remaining ${formatVolt(vr)} splits in proportion — ${formatOhm(r1)} drops ${formatVolt(i * r1)}, ${formatOhm(r2)} drops ${formatVolt(i * r2)}.`;
     }
     if (mode === "parallel") {
-      return `After the LED\u2019s ~${VF_LED.toFixed(1)} V drop, both resistors see ${formatVolt(vr)}. Current splits: ${formatAmp(i1)} through R1, ${formatAmp(i2)} through R2. The pair behaves as ${formatOhm(req)}.`;
+      return `After the LED’s ~${VF_LED.toFixed(1)} V drop, both resistors see ${formatVolt(vr)}. Current splits: ${formatAmp(i1)} through R1, ${formatAmp(i2)} through R2. The pair behaves as ${formatOhm(req)}.`;
     }
     if (v < VF_LED) {
-      return `Supply is below the LED\u2019s ~${VF_LED.toFixed(1)} V forward drop. I = max(0, (V \u2212 Vf) / R) is zero \u2014 the LED stays dark.`;
+      return `Supply is below the LED’s ~${VF_LED.toFixed(1)} V forward drop. I = max(0, (V − Vf) / R) is zero — the LED stays dark.`;
     }
     if (i < 0.0008) {
-      return `Almost no current. At ${formatOhm(r1)} the lattice is a dense crowd of collisions \u2014 electrons drift slowly, the LED barely glows. I = (V \u2212 Vf) / R with Vf \u2248 ${VF_LED.toFixed(1)} V.`;
+      return `Almost no current. At ${formatOhm(r1)} the lattice is a dense crowd of collisions — electrons drift slowly, the LED barely glows. I = (V − Vf) / R with Vf ≈ ${VF_LED.toFixed(1)} V.`;
     }
     if (p > 0.25) {
-      return `Power in the resistor is ${formatWatt(p)}. The LED\u2019s Vf is taken out first; the rest of the voltage becomes I\u00b2R heat.`;
+      return `Power in the resistor is ${formatWatt(p)}. The LED’s Vf is taken out first; the rest of the voltage becomes I²R heat.`;
     }
-    return `Ohm\u2019s law with the LED in the loop: I = (V \u2212 Vf) / R. ${formatVolt(v)} minus ~${VF_LED.toFixed(1)} V across ${formatOhm(r1)} forces ${formatAmp(i)}.`;
+    return `Ohm’s law with the LED in the loop: I = (V − Vf) / R. ${formatVolt(v)} minus ~${VF_LED.toFixed(1)} V across ${formatOhm(r1)} forces ${formatAmp(i)}.`;
   }, [mode, i, r1, r2, v, req, i1, i2, p, vr]);
 
   return (
@@ -130,59 +130,81 @@ export function ResistorLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              const y = 200;
-              battery(ctx, 70, y);
-              label(ctx, formatVolt(p.v), 70, y + 48, { mono: true, size: 12 });
-
-              const loop: Pt[] = [
-                { x: 90, y },
-                { x: 150, y },
-                { x: 150, y: 110 },
-                { x: 650, y: 110 },
-                { x: 650, y },
-                { x: 710, y },
-                { x: 710, y: 310 },
-                { x: 90, y: 310 },
-                { x: 90, y },
-              ];
-              wire(ctx, loop, 3);
-
-              const heat = Math.min(1, p.p / 0.4);
-              if (p.mode === "single") {
-                resistorBody(ctx, 330, 110, 120, p.r1, heat);
-                label(ctx, formatOhm(p.r1), 390, 78, { mono: true, size: 12 });
-              } else if (p.mode === "series") {
-                resistorBody(ctx, 250, 110, 100, p.r1, Math.min(1, (p.i * p.i * p.r1) / 0.25));
-                resistorBody(ctx, 430, 110, 100, p.r2, Math.min(1, (p.i * p.i * p.r2) / 0.25));
-                label(ctx, "R1", 300, 78, { size: 11 });
-                label(ctx, "R2", 480, 78, { size: 11 });
-              } else {
-                wire(ctx, [
-                  { x: 280, y: 110 },
-                  { x: 280, y: 70 },
-                  { x: 500, y: 70 },
-                  { x: 500, y: 110 },
-                ]);
-                wire(ctx, [
-                  { x: 280, y: 110 },
-                  { x: 280, y: 150 },
-                  { x: 500, y: 150 },
-                  { x: 500, y: 110 },
-                ]);
-                junction(ctx, 280, 110);
-                junction(ctx, 500, 110);
-                resistorBody(ctx, 340, 70, 100, p.r1, Math.min(1, (p.i1 * p.i1 * p.r1) / 0.25));
-                resistorBody(ctx, 340, 150, 100, p.r2, Math.min(1, (p.i2 * p.i2 * p.r2) / 0.25));
-                label(ctx, "R1", 390, 42, { size: 11 });
-                label(ctx, "R2", 390, 182, { size: 11 });
-              }
+              const topY = 110;
+              const botY = 300;
+              const bat = battery(ctx, 80, 200);
+              label(ctx, formatVolt(p.v), 80, 256, { mono: true, size: 12 });
 
               const bright = Math.min(1, p.ledI / 0.015);
-              ledDome(ctx, 650, 78, Ink.electron, bright);
-              label(ctx, "LED", 650, 48, { size: 11 });
+              const led = ledDome(ctx, 640, 76, Ink.electron, bright);
+              label(ctx, "LED", 640, 46, { size: 11 });
+
+              const heat = Math.min(1, p.p / 0.4);
+              let rLeft: Pt = { x: 240, y: topY };
+              let rRight: Pt = { x: 420, y: topY };
+
+              wire(ctx, [bat.pos, { x: bat.pos.x, y: topY }]);
+
+              if (p.mode === "single") {
+                resistorBody(ctx, 250, topY, 160, p.r1, heat);
+                rLeft = { x: 240, y: topY };
+                rRight = { x: 420, y: topY };
+                label(ctx, formatOhm(p.r1), 330, 78, { mono: true, size: 12 });
+              } else if (p.mode === "series") {
+                resistorBody(ctx, 200, topY, 100, p.r1, Math.min(1, (p.i * p.i * p.r1) / 0.25));
+                resistorBody(ctx, 320, topY, 100, p.r2, Math.min(1, (p.i * p.i * p.r2) / 0.25));
+                rLeft = { x: 190, y: topY };
+                rRight = { x: 430, y: topY };
+                label(ctx, "R1", 250, 78, { size: 11 });
+                label(ctx, "R2", 370, 78, { size: 11 });
+              } else {
+                rLeft = { x: 250, y: topY };
+                rRight = { x: 470, y: topY };
+                wire(ctx, [
+                  rLeft,
+                  { x: 250, y: 70 },
+                  { x: 470, y: 70 },
+                  rRight,
+                ]);
+                wire(ctx, [
+                  rLeft,
+                  { x: 250, y: 150 },
+                  { x: 470, y: 150 },
+                  rRight,
+                ]);
+                junction(ctx, rLeft.x, rLeft.y);
+                junction(ctx, rRight.x, rRight.y);
+                resistorBody(ctx, 310, 70, 100, p.r1, Math.min(1, (p.i1 * p.i1 * p.r1) / 0.25));
+                resistorBody(ctx, 310, 150, 100, p.r2, Math.min(1, (p.i2 * p.i2 * p.r2) / 0.25));
+                label(ctx, "R1", 360, 42, { size: 11 });
+                label(ctx, "R2", 360, 182, { size: 11 });
+              }
+
+              wire(ctx, [{ x: bat.pos.x, y: topY }, rLeft]);
+              wire(ctx, [rRight, { x: led.anode.x, y: topY }, led.anode]);
+              wire(ctx, [
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ]);
+              junction(ctx, bat.pos.x, topY);
+
               label(ctx, "electron flow  \u2212  \u2192  +", 400, 348, { size: 11 });
               label(ctx, "conventional current is the opposite direction", 400, 368, { size: 10 });
 
+              const loop: Pt[] = [
+                bat.pos,
+                { x: bat.pos.x, y: topY },
+                rLeft,
+                rRight,
+                { x: led.anode.x, y: topY },
+                led.anode,
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ];
               const count = Math.max(4, Math.min(48, Math.round(8 + p.i * 1800)));
               const speed = Math.max(20, Math.min(260, 40 + p.i * 9000));
               flow.current.setPath(loop, true);
@@ -192,8 +214,8 @@ export function ResistorLab() {
 
               if (p.mode === "parallel") {
                 const branch: Pt[] = [
-                  { x: 280, y: 70 },
-                  { x: 500, y: 70 },
+                  { x: 250, y: 70 },
+                  { x: 470, y: 70 },
                 ];
                 flow2.current.setPath(branch, false);
                 flow2.current.set(Math.max(3, Math.min(20, Math.round(p.i1 * 900))), -speed * 0.7);
