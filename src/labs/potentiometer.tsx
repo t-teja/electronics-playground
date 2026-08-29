@@ -8,8 +8,10 @@ import { useProgress } from "@/lib/progress";
 import {
   battery,
   clearSim,
+  gnd,
   graphPaper,
   Ink,
+  junction,
   label,
   ledDome,
   potentiometer,
@@ -18,6 +20,8 @@ import {
   withFrame,
 } from "@/lib/sim/draw";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
+
+const VF_LED = 1.8;
 
 export function PotentiometerLab() {
   const lab = LAB_BY_SLUG.potentiometer!;
@@ -33,7 +37,7 @@ export function PotentiometerLab() {
   const rhi = Math.max(1, rtot * (1 - k));
   const rpar = 1 / (1 / rlo + 1 / rload);
   const vout = v * (rpar / (rhi + rpar));
-  const iled = vout / rload;
+  const iled = Math.max(0, (vout - VF_LED) / rload);
 
   const flow = useRef(new ElectronFlow());
   const flowTap = useRef(new ElectronFlow());
@@ -76,7 +80,7 @@ export function PotentiometerLab() {
             max={0.98}
             step={0.01}
             onChange={setK}
-            hint="Fraction from the bottom (ground) end."
+            hint="0% is ground (right). 100% is +V (left)."
           />
           <LinearControl
             label="Track"
@@ -107,52 +111,59 @@ export function PotentiometerLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 200;
-              battery(ctx, 70, y);
+              const botY = 320;
+              const tapY = 114;
+              const bat = battery(ctx, 70, y);
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
-              const pot = potentiometer(ctx, 260, y, 220, p.k, p.rtot);
+              const pot = potentiometer(ctx, 260, y, 220, 1 - p.k, p.rtot);
               label(ctx, formatOhm(p.rtot), 370, y + 36, { mono: true, size: 11 });
 
-              ledDome(ctx, 620, 80, Ink.electron, Math.min(1, p.iled / 0.008));
-              resistorBody(ctx, 560, 200, 80, p.rload, Math.min(1, p.iled * 20));
-              label(ctx, "load", 600, 168, { size: 11 });
+              const rsX = 520;
+              const rsW = 80;
+              resistorBody(ctx, rsX, tapY, rsW, p.rload, Math.min(1, p.iled * 20));
+              const rsLeft: Pt = { x: rsX - 10, y: tapY };
+              const rsRight: Pt = { x: rsX + rsW + 10, y: tapY };
+              label(ctx, "load", 560, tapY - 28, { size: 11 });
 
+              const led = ledDome(ctx, 640, tapY - 34, Ink.electron, Math.min(1, p.iled / 0.008));
+
+              wire(ctx, [bat.pos, pot.left]);
+              wire(ctx, [pot.right, { x: pot.right.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
+              wire(ctx, [pot.wiper, { x: pot.wiper.x, y: tapY }, rsLeft]);
+              wire(ctx, [rsRight, led.anode]);
               wire(ctx, [
-                { x: 86, y },
-                { x: 260, y },
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
               ]);
-              wire(ctx, [
-                { x: 490, y },
-                { x: 720, y },
-                { x: 720, y: 310 },
-                { x: 54, y: 310 },
-                { x: 54, y },
-              ]);
-              wire(ctx, [
-                pot.wiper,
-                { x: pot.wiper.x, y: 80 },
-                { x: 620, y: 80 },
-              ]);
-              wire(ctx, [
-                { x: 620, y: 114 },
-                { x: 620, y: 200 },
-                { x: 650, y: 200 },
-              ]);
-              wire(ctx, [
-                { x: 650, y: 200 },
-                { x: 720, y: 200 },
-              ]);
+              gnd(ctx, 200, botY);
+              junction(ctx, pot.right.x, botY);
+              junction(ctx, bat.neg.x, botY);
 
               const loop: Pt[] = [
-                { x: 86, y },
-                { x: 370, y },
-                { x: 720, y },
+                bat.pos,
+                pot.left,
+                pot.right,
+                { x: pot.right.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
               ];
               flow.current.setPath(loop, true);
               flow.current.set(10, -70);
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              const tap: Pt[] = [pot.wiper, { x: pot.wiper.x, y: 80 }, { x: 620, y: 80 }];
+              const tap: Pt[] = [
+                pot.wiper,
+                { x: pot.wiper.x, y: tapY },
+                rsLeft,
+                rsRight,
+                led.anode,
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ];
               flowTap.current.setPath(tap, false);
               flowTap.current.set(
                 p.iled > 0.0003 ? Math.max(4, Math.min(20, p.iled * 2000)) : 0,
