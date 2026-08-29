@@ -65,6 +65,12 @@ const LAB_SLUGS = [
   "ir",
   "pir",
   "ultrasonic",
+  "ram",
+  "rom",
+  "eprom",
+  "psram",
+  "cpu",
+  "gpu",
 ];
 for (const slug of LAB_SLUGS) {
   const dir = join(dest, "lab", slug);

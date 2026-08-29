@@ -1,4 +1,4 @@
-export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor";
+export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor" | "computer";
 
 export type LabMeta = {
   slug: string;
@@ -37,6 +37,11 @@ export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
     id: "sensor",
     label: "Sensors",
     blurb: "Light, heat, distance, and motion turned into voltage.",
+  },
+  {
+    id: "computer",
+    label: "Computers",
+    blurb: "Memory that keeps bits, and processors that walk through them.",
   },
 ];
 
@@ -435,6 +440,105 @@ export const LABS: LabMeta[] = [
       "Parking sensors and tank level gauges",
       "Range finders in drones and toys",
       "Anemometers and flow meters",
+    ],
+  },
+  {
+    slug: "ram",
+    name: "RAM",
+    symbol: "RAM",
+    category: "computer",
+    tagline: "Bits that live only while the lights are on",
+    summary:
+      "Sixteen nibbles of SRAM. Address selects a row, din rides the data bus, a write strobe stores. Kill VCC and every cell becomes 0.",
+    principle:
+      "Each bit is a pair of cross-coupled inverters. The latch holds a 1 or a 0 only while current feeds the transistors. That is volatile: power is the memory.",
+    formula: "data[addr] ← din  (while powered)",
+    uses: [
+      "MCU SRAM",
+      "CPU working memory",
+      "framebuffers",
+    ],
+  },
+  {
+    slug: "rom",
+    name: "ROM",
+    symbol: "ROM",
+    category: "computer",
+    tagline: "A table the fab printed in metal",
+    summary:
+      "Same 16×4 grid, but the pattern is mask-programmed at fab — here an increment table. Address and read. There is no write pin.",
+    principle:
+      "Mask ROM is vias and implants, not latches. The bits are baked in. Power-off does not clear them because there is nothing to dump.",
+    formula: "dout = ROM[addr]",
+    uses: [
+      "boot firmware",
+      "character generators",
+      "lookup tables",
+    ],
+  },
+  {
+    slug: "eprom",
+    name: "EPROM",
+    symbol: "EPROM",
+    category: "computer",
+    tagline: "Floating gates you can UV-erase",
+    summary:
+      "A quartz window over 16×4 floating-gate cells. UV empties the gates toward 1s. Vpp programs 0s. Power-off keeps the charge.",
+    principle:
+      "Erased floating gates read as 1. A programming pulse on Vpp injects electrons and turns selected bits to 0. Ultraviolet through the window photoemits those electrons back out.",
+    formula: "UV empties the floating gate; Vpp programs 0s",
+    uses: [
+      "old BIOS chips",
+      "firmware you can UV-erase and reburn",
+    ],
+  },
+  {
+    slug: "psram",
+    name: "PSRAM",
+    symbol: "PSRAM",
+    category: "computer",
+    tagline: "SRAM pins, DRAM capacitors",
+    summary:
+      "Looks like SRAM until you kill the refresh engine. Each row is a DRAM capacitor. Charge leaks as Q(t) = Q0 e^{−t/RC} unless a cursor tops it up.",
+    principle:
+      "Pseudo-static means a DRAM with a built-in refresh engine. The bus looks static; under the lid a walker restores every row before the capacitors forget.",
+    formula: "Q(t) = Q0 e^{−t/RC} unless refreshed",
+    uses: [
+      "IoT RAM",
+      "display buffers",
+      "anything that wants SRAM timing with DRAM density",
+    ],
+  },
+  {
+    slug: "cpu",
+    name: "CPU",
+    symbol: "CPU",
+    category: "computer",
+    tagline: "Fetch, decode, execute — then do it again",
+    summary:
+      "Not the GPIO toy. Registers A and PC, eight bytes of RAM, and a stored program: LDA, ADD, STA, JMP, HLT. Default: 3 + 5 = 8.",
+    principle:
+      "Each instruction cycle is fetch + decode + execute. The program lives in memory; the ALU is just a box the bus walks through. Power-off resets PC and A; RAM is kept.",
+    formula: "instruction cycle = fetch + decode + execute",
+    uses: [
+      "every computer; this is the loop a phone still runs, just faster",
+    ],
+  },
+  {
+    slug: "gpu",
+    name: "GPU",
+    symbol: "GPU",
+    category: "computer",
+    tagline: "The same math, on many pixels at once",
+    summary:
+      "An 8×8 framebuffer. One CPU painter versus 1, 4, or 8 parallel cores claiming tiles. GPUs win on width, not on a faster clock.",
+    principle:
+      "A CPU paints one pixel per clock. N cores paint N pixels per clock on the same job. That is why a GPU is not a faster CPU — it is many ALUs doing the same multiply on different data.",
+    formula: "pixels/s ≈ cores × clocks",
+    uses: [
+      "displays",
+      "games",
+      "ML matmuls (same idea: lots of ALUs)",
     ],
   },
 ];
