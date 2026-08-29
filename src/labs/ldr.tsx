@@ -8,7 +8,6 @@ import { useProgress } from "@/lib/progress";
 import {
   battery,
   clearSim,
-  gnd,
   graphPaper,
   Ink,
   junction,
@@ -87,7 +86,7 @@ export function LdrLab() {
             hint="Photons free carriers. More light, less resistance."
           />
           <LogControl
-            label="R2"
+            label="Fixed resistor"
             value={rFixed}
             display={formatOhm(rFixed)}
             min={1000}
@@ -148,37 +147,36 @@ export function LdrLab() {
               resistorBody(ctx, 240, botY, 140, p.rFixed, Math.min(1, p.iDiv * p.iDiv * p.rFixed * 8));
               const rLeft: Pt = { x: 230, y: botY };
               const rRight: Pt = { x: 390, y: botY };
-              label(ctx, "R2", 310, botY + 28, { size: 11 });
-              label(ctx, "divider", 310, botY + 44, { size: 10, color: Ink.muted });
-              label(ctx, formatOhm(p.rFixed), 370, botY + 44, { mono: true, size: 11 });
+              label(ctx, "R2 divider", 310, botY + 28, { size: 11 });
+              label(ctx, formatOhm(p.rFixed), 310, botY + 44, { mono: true, size: 11 });
 
               const node: Pt = { x: 430, y: midY };
-              const rsX = 500;
-              const rsW = 80;
-              resistorBody(ctx, rsX, midY, rsW, R_LED, Math.min(1, p.iLed * 30));
-              const rsLeft: Pt = { x: rsX - 10, y: midY };
-              const rsRight: Pt = { x: rsX + rsW + 10, y: midY };
-              label(ctx, "Rs", 540, midY - 28, { size: 11 });
-              label(ctx, formatOhm(R_LED), 540, midY + 24, { mono: true, size: 10 });
-
-              const led = ledDome(ctx, 700, midY - 34, Ink.electron, Math.min(1, p.iLed / 0.0008));
-              label(ctx, "out", 700, midY - 58, { size: 11 });
+              resistorBody(ctx, 470, midY, 70, R_LED, Math.min(1, p.iLed * 30));
+              label(ctx, "Rs", 505, midY - 24, { size: 11 });
+              const led = ledDome(ctx, 660, 146, Ink.electron, Math.min(1, p.iLed / 0.0008));
+              label(ctx, "out", 660, 116, { size: 11 });
 
               wire(ctx, [bat.pos, { x: bat.pos.x, y: topY }, ldrLeft]);
               wire(ctx, [ldrRight, { x: node.x, y: topY }, node]);
               wire(ctx, [node, { x: node.x, y: botY }, rRight]);
               wire(ctx, [rLeft, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [node, rsLeft]);
-              wire(ctx, [rsRight, led.anode]);
+              wire(ctx, [node, { x: 460, y: midY }]);
+              wire(ctx, [
+                { x: 550, y: midY },
+                { x: led.anode.x, y: midY },
+                led.anode,
+              ]);
               wire(ctx, [
                 led.cathode,
                 { x: led.cathode.x, y: botY },
                 { x: bat.neg.x, y: botY },
               ]);
               junction(ctx, node.x, node.y);
-              gnd(ctx, 160, botY);
+              junction(ctx, bat.neg.x, botY);
+              junction(ctx, node.x, topY);
+              junction(ctx, node.x, botY);
 
-              label(ctx, `Vout ${formatVolt(p.vout)}`, node.x + 8, midY - 16, {
+              label(ctx, `Vout ${formatVolt(p.vout)}`, node.x + 36, midY - 16, {
                 mono: true,
                 size: 12,
                 color: Ink.text,
@@ -209,8 +207,9 @@ export function LdrLab() {
               if (p.iLed > 2e-5) {
                 const branch: Pt[] = [
                   node,
-                  rsLeft,
-                  rsRight,
+                  { x: 460, y: midY },
+                  { x: 550, y: midY },
+                  { x: led.anode.x, y: midY },
                   led.anode,
                   led.cathode,
                   { x: led.cathode.x, y: botY },
@@ -222,7 +221,7 @@ export function LdrLab() {
                 ledFlow.current.draw(ctx);
               }
 
-              label(ctx, `R \u221d 1 / E^\u03b3   \u03b3 = ${GAMMA}`, 400, 392, {
+              label(ctx, `R ∝ 1 / E^γ   γ = ${GAMMA}`, 400, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

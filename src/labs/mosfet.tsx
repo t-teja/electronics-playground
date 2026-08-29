@@ -8,10 +8,8 @@ import { useProgress } from "@/lib/progress";
 import {
   battery,
   clearSim,
-  gnd,
   graphPaper,
   Ink,
-  junction,
   label,
   ledDome,
   nMosfet,
@@ -91,7 +89,7 @@ export function MosfetLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            Vth = {formatVolt(VTH)} · Id sat = k (Vgs - Vth)²
+            Vth = {formatVolt(VTH)} \u00b7 Id sat = k (Vgs \u2212 Vth)\u00b2
           </p>
           <p className="text-xs text-subtle">
             Region names are a current clamp against VDD/Rd, not a full Vds MOSFET model.
@@ -106,38 +104,44 @@ export function MosfetLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              const vddY = 54;
-              const botY = 250;
               const bat = battery(ctx, 64, 90);
               label(ctx, formatVolt(VDD), 64, 142, { mono: true, size: 12 });
-
-              const rdX = 180;
-              const rdW = 80;
-              resistorBody(ctx, rdX, vddY, rdW, p.rd, Math.min(1, p.id * 8));
-              const rdLeft: Pt = { x: rdX - 10, y: vddY };
-              const rdRight: Pt = { x: rdX + rdW + 10, y: vddY };
-
-              const led = ledDome(ctx, 340, vddY - 34, Ink.electron, Math.min(1, p.id / 0.015));
+              resistorBody(ctx, 180, 54, 80, p.rd, Math.min(1, p.id * 8));
+              const led = ledDome(ctx, 340, 30, Ink.electron, Math.min(1, p.id / 0.015));
               const mos = nMosfet(ctx, 520, 150, on);
 
-              wire(ctx, [bat.pos, { x: bat.pos.x, y: vddY }, rdLeft]);
-              wire(ctx, [rdRight, { x: led.anode.x, y: vddY }, led.anode]);
-              wire(ctx, [led.cathode, { x: led.cathode.x, y: mos.d.y }, mos.d]);
-              wire(ctx, [mos.s, { x: mos.s.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [{ x: 200, y: 150 }, mos.g]);
-              gnd(ctx, 160, botY);
-              junction(ctx, bat.pos.x, vddY);
-              junction(ctx, led.cathode.x, mos.d.y);
-              junction(ctx, mos.s.x, botY);
-              junction(ctx, bat.neg.x, botY);
-
+              wire(ctx, [
+                bat.pos,
+                { x: bat.pos.x, y: 54 },
+                { x: 180, y: 54 },
+              ]);
+              wire(ctx, [
+                { x: 270, y: 54 },
+                { x: led.anode.x, y: 54 },
+                led.anode,
+              ]);
+              wire(ctx, [
+                led.cathode,
+                { x: led.cathode.x, y: mos.d.y },
+                mos.d,
+              ]);
+              wire(ctx, [
+                mos.s,
+                { x: mos.s.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
+              ]);
+              wire(ctx, [
+                { x: 200, y: 150 },
+                mos.g,
+              ]);
               roundRect(ctx, 148, 136, 90, 28, 6);
               ctx.fillStyle = Ink.package;
               ctx.fill();
               label(ctx, "Vgs", 193, 150, { size: 11, color: Ink.text });
               label(ctx, formatVolt(p.vgs), 193, 178, { mono: true, size: 11 });
-              label(ctx, "N-channel", 520, 198, { size: 11, color: Ink.text });
-              label(ctx, p.region, 520, 216, { size: 12, color: Ink.electron });
+              label(ctx, "N-channel", 520, 194, { size: 11, color: Ink.muted });
+              label(ctx, p.region, 520, 210, { size: 12, color: Ink.electron });
 
               const bodyX = 80;
               const bodyY = 292;
@@ -172,8 +176,8 @@ export function MosfetLab() {
                 { x: led.cathode.x, y: mos.d.y },
                 mos.d,
                 mos.s,
-                { x: mos.s.x, y: botY },
-                { x: bat.neg.x, y: botY },
+                { x: mos.s.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
                 bat.neg,
               ];
               flow.current.setPath(col, false);
