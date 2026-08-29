@@ -39,10 +39,10 @@ export function RelayLab() {
 
   const insight = useMemo(() => {
     if (!armed) {
-      return `Coil open. The spring holds COM on NC. The load is dark. That click you don’t hear is the isolation — coil and lamp never share copper.`;
+      return `Coil open. The spring holds COM on NC. The load is dark. That click you don\u2019t hear is the isolation \u2014 coil and lamp never share copper.`;
     }
     if (!on) {
-      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn’t strong enough to beat the spring yet. Raise the coil supply.`;
+      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn\u2019t strong enough to beat the spring yet. Raise the coil supply.`;
     }
     return `Pulled in. ${formatAmp(icoil)} in the coil slammed COM onto NO, and the lamp lights from its own supply. The diode across the coil is the flyback path for when you drop the field.`;
   }, [armed, on, icoil]);
@@ -89,30 +89,30 @@ export function RelayLab() {
               battery(ctx, 70, 150);
               label(ctx, formatVolt(p.vcoil), 70, 202, { mono: true, size: 12 });
               const R = relayBody(ctx, 340, 168, p.on);
-              diodeSymbol(ctx, 200, 248, 0.85);
-              label(ctx, "flyback", 200, 278, { size: 10 });
+              const fly = diodeSymbol(ctx, 200, 200, 0.85);
+              label(ctx, "flyback", 200, 236, { size: 10 });
 
               wire(ctx, [
                 { x: 86, y: 150 },
                 { x: 200, y: 150 },
-                { x: 200, y: R.coilTop.y },
+                { x: R.coilTop.x, y: 150 },
                 R.coilTop,
               ]);
+              // cathode on coil + / battery +
               wire(ctx, [
+                fly.cathode,
+                { x: fly.cathode.x, y: 150 },
+              ]);
+              // anode on coil bottom / ground
+              wire(ctx, [
+                fly.anode,
+                { x: fly.anode.x, y: R.coilBot.y },
                 R.coilBot,
-                { x: 200, y: R.coilBot.y },
-                { x: 200, y: 232 },
               ]);
               wire(ctx, [
-                { x: 168, y: 248 },
-                { x: 54, y: 248 },
+                R.coilBot,
+                { x: 54, y: R.coilBot.y },
                 { x: 54, y: 150 },
-              ]);
-              wire(ctx, [
-                { x: 232, y: 248 },
-                { x: 302, y: 248 },
-                { x: 302, y: R.coilBot.y },
-                R.coilBot,
               ]);
 
               battery(ctx, 620, 70);

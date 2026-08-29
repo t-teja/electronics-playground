@@ -6,6 +6,7 @@ import { LAB_BY_SLUG } from "@/lib/catalog";
 import { formatAmp, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
+  acSource,
   clearSim,
   graphPaper,
   Ink,
@@ -92,7 +93,7 @@ export function TransformerLab() {
           <LinearControl
             label="Load"
             value={rload}
-            display={`${rload.toFixed(0)} Ω`}
+            display={`${rload.toFixed(0)} \u03a9`}
             min={40}
             max={800}
             step={10}
@@ -113,25 +114,16 @@ export function TransformerLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              const T = transformer(ctx, 400, 180, flux);
+              const T = transformer(ctx, 400, 180, flux, p.np, p.ns);
               label(ctx, `Np ${p.np.toFixed(0)}`, 300, 180, { size: 12, mono: true });
               label(ctx, `Ns ${p.ns.toFixed(0)}`, 500, 180, { size: 12, mono: true });
-              label(ctx, "core", 400, 236, { size: 11, color: Ink.muted });
+              label(ctx, "core", 400, 248, { size: 11, color: Ink.muted });
 
-              ctx.strokeStyle = Ink.pin;
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.moveTo(80, 140);
-              ctx.lineTo(80, 220);
-              ctx.moveTo(64, 148);
-              ctx.lineTo(80, 140);
-              ctx.lineTo(96, 148);
-              ctx.stroke();
-              label(ctx, "AC", 80, 250, { size: 11 });
-              label(ctx, formatVolt(p.vp * ac), 80, 268, { mono: true, size: 11 });
+              const acSrc = acSource(ctx, 80, 180);
+              label(ctx, formatVolt(p.vp * ac), 80, 226, { mono: true, size: 11 });
 
-              wire(ctx, [T.priTop, { x: 80, y: 140 }]);
-              wire(ctx, [T.priBot, { x: 80, y: 220 }]);
+              wire(ctx, [T.priTop, acSrc.top]);
+              wire(ctx, [T.priBot, acSrc.bot]);
 
               lamp(ctx, 680, 140, Math.min(1, (p.vs / 12) * flux));
               resistorBody(ctx, 640, 220, 70, p.rload, Math.min(1, p.isec * 8));
@@ -146,7 +138,7 @@ export function TransformerLab() {
               label(ctx, "load", 680, 100, { size: 11 });
               label(ctx, formatVolt(p.vs * ac), 680, 268, { mono: true, size: 11 });
 
-              const pri: Pt[] = [T.priTop, { x: 80, y: 140 }, { x: 80, y: 220 }, T.priBot];
+              const pri: Pt[] = [T.priTop, acSrc.top, acSrc.bot, T.priBot];
               flowP.current.setPath(pri, false);
               flowP.current.set(Math.max(4, Math.min(20, p.ipri * 80)), ac >= 0 ? -90 : 90);
               flowP.current.step(dt);
