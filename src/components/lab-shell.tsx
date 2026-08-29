@@ -5,7 +5,7 @@ import { AppHeader } from "@/components/app-header";
 import { GLYPHS } from "@/components/glyphs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { CATEGORIES, labsIn, LABS, type Category, type LabMeta } from "@/lib/catalog";
+import { CATEGORIES, labsIn, type Category, type LabMeta } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { useProgress } from "@/lib/progress";
 
@@ -200,7 +200,7 @@ export function LabShell({
               </section>
               <section className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-border)] md:p-5">
                 <h2 className="mb-3 text-[10px] font-medium tracking-[0.16em] text-subtle uppercase">
-                  What’s happening
+                  What's happening
                 </h2>
                 <div className="flex flex-col gap-3 text-sm leading-relaxed text-muted">
                   {insight}
@@ -211,7 +211,7 @@ export function LabShell({
                   <>
                     <Separator className="my-4" />
                     <h3 className="mb-2 text-[10px] font-medium tracking-[0.16em] text-subtle uppercase">
-                      Where you’ll see it
+                      Where you'll see it
                     </h3>
                     <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-muted">
                       {lab.uses.map((use) => (
@@ -231,5 +231,3 @@ export function LabShell({
     </div>
   );
 }
-
-void LABS;
