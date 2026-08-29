@@ -146,7 +146,7 @@ export const LABS: LabMeta[] = [
       "A PN junction that conducts one way and blocks the other. Forward bias thins the barrier; reverse bias thickens it.",
     principle:
       "P-type silicon is rich in holes, N-type in electrons. At the junction they recombine and leave a depletion region — an insulating wall. Forward voltage lowers that wall past ~0.7 V; reverse voltage raises it.",
-    formula: "I = Is (e^{V/nVt} - 1)",
+    formula: "I = Iₛ (e^{V/nVₜ} − 1)",
     uses: [
       "Bridge rectifiers that turn AC into DC",
       "Reverse-polarity protection on battery inputs",
@@ -181,7 +181,7 @@ export const LABS: LabMeta[] = [
     summary:
       "An NPN sandwich. A whisper of base current opens a wide path from collector to emitter — amplification, or a switch.",
     principle:
-      "Forward-biasing the base-emitter junction injects electrons into the base. Most of them are swept into the collector before they can recombine. Collector current is beta times base current, until the device saturates.",
+      "Forward-biasing the base–emitter junction injects electrons into the base. Most of them are swept into the collector before they can recombine. Collector current is β times base current, until the device saturates.",
     formula: "I_c = β · I_b  (active)",
     uses: [
       "Audio and RF amplifiers",
@@ -199,7 +199,7 @@ export const LABS: LabMeta[] = [
     summary:
       "A PNP sandwich. Pull a whisper of current out of the base and a wide path opens from emitter to collector — the high-side twin of the NPN.",
     principle:
-      "Forward-biasing the emitter-base junction injects holes into the base. Most of them are swept into the collector before they recombine. Collector current is beta times the current leaving the base, until the device saturates. Emitter sits at +VCC; the load hangs off the collector toward ground.",
+      "Forward-biasing the emitter–base junction injects holes into the base. Most of them are swept into the collector before they recombine. Collector current is β times the current leaving the base, until the device saturates. Emitter sits at +VCC; the load hangs off the collector toward ground.",
     formula: "I_c = β · I_b  (active)",
     uses: [
       "High-side switches that source current into a load",
@@ -217,10 +217,10 @@ export const LABS: LabMeta[] = [
     summary:
       "No base current. A gate voltage inverts the silicon under the oxide and a channel appears — a switch turned by field, not charge flow into the control pin.",
     principle:
-      "Vgs above threshold inverts a p-type body into an n-channel between source and drain. Id grows with (Vgs - Vth)^2 in saturation. The gate is insulated, so DC gate current is essentially zero.",
-    formula: "Id = k · (Vgs - Vth)^2",
+      "Vgs above threshold inverts a p-type body into an n-channel between source and drain. Id grows with (Vgs − Vth)² in saturation. The gate is insulated, so DC gate current is essentially zero.",
+    formula: "Id = k · (Vgs − Vth)²",
     uses: [
-      "Synchronous switches in DC-DC converters",
+      "Synchronous switches in DC–DC converters",
       "H-bridge drivers for DC motors",
       "LED dimming and PWM loads",
       "Load switches and battery protection FETs",
@@ -253,7 +253,7 @@ export const LABS: LabMeta[] = [
     summary:
       "Comparators, a flip-flop, and a discharge transistor. Add two resistors and a capacitor, get a heartbeat.",
     principle:
-      "In astable mode the capacitor charges through RA + RB and discharges through RB. Comparators at 1/3 and 2/3 of VCC set and reset an SR latch, which opens and closes the discharge transistor. Frequency follows the RC network.",
+      "In astable mode the capacitor charges through RA + RB and discharges through RB. Comparators at ⅓ and ⅔ of VCC set and reset an SR latch, which opens and closes the discharge transistor. Frequency follows the RC network.",
     formula: "f = 1.44 / ((RA + 2 RB) · C)",
     uses: [
       "LED blinkers and toy sirens",
@@ -305,10 +305,10 @@ export const LABS: LabMeta[] = [
     category: "digital",
     tagline: "A ruler for voltage",
     summary:
-      "Analog in, bits out. The converter snaps a voltage onto the nearest code of a 2^n-1 step ladder.",
+      "Analog in, bits out. The converter snaps a voltage onto the nearest code of a 2ⁿ−1 step ladder.",
     principle:
-      "An n-bit ADC divides Vref into 2^n-1 equal slices. The code is round(Vin/Vref × (2^n-1)). The reconstructed voltage Vq never quite equals Vin — that leftover is quantization error.",
-    formula: "D = round(Vin/Vref · (2^n - 1))",
+      "An n-bit ADC divides Vref into 2ⁿ−1 equal slices. The code is round(Vin/Vref × (2ⁿ−1)). The reconstructed voltage Vq never quite equals Vin — that leftover is quantization error.",
+    formula: "D = round(Vin/Vref · (2ⁿ − 1))",
     uses: [
       "Microphone and sensor front-ends on microcontrollers",
       "Audio interfaces and SDR receivers",
@@ -325,8 +325,8 @@ export const LABS: LabMeta[] = [
     summary:
       "Bits in, analog out. Weighted resistors (or an R-2R ladder) turn a code into a fraction of Vref.",
     principle:
-      "Vout = Vref × D / (2^n - 1). Each bit is a switch onto a binary-weighted rung. The LED on the output sees a voltage, not a number.",
-    formula: "Vout = Vref · D / (2^n - 1)",
+      "Vout = Vref × D / (2ⁿ − 1). Each bit is a switch onto a binary-weighted rung. The LED on the output sees a voltage, not a number.",
+    formula: "Vout = Vref · D / (2ⁿ − 1)",
     uses: [
       "Audio playback and synthesizer voices",
       "Analog control voltages from a microcontroller",
@@ -395,10 +395,10 @@ export const LABS: LabMeta[] = [
     category: "sensor",
     tagline: "Bounce light, measure closeness",
     summary:
-      "An IR LED shouts; a photodiode listens for the echo. Close objects return more photons — intensity falls as 1/d^2.",
+      "An IR LED shouts; a photodiode listens for the echo. Close objects return more photons — intensity falls as 1/d².",
     principle:
       "Reflected optical power drops with the square of distance. Photodiode current follows that intensity. A comparator against a threshold turns proximity into a bit.",
-    formula: "I ∝ 1 / d^2",
+    formula: "I ∝ 1 / d²",
     uses: [
       "Line-following robots and cliff sensors",
       "TV remotes and IR break-beams",
@@ -452,7 +452,7 @@ export const LABS: LabMeta[] = [
       "Sixteen nibbles of SRAM. Address selects a row, din rides the data bus, a write strobe stores. Kill VCC and every cell becomes 0.",
     principle:
       "Each bit is a pair of cross-coupled inverters. The latch holds a 1 or a 0 only while current feeds the transistors. That is volatile: power is the memory.",
-    formula: "data[addr] <- din  (while powered)",
+    formula: "data[addr] ← din  (while powered)",
     uses: [
       "MCU SRAM",
       "CPU working memory",
@@ -466,7 +466,7 @@ export const LABS: LabMeta[] = [
     category: "computer",
     tagline: "A table the fab printed in metal",
     summary:
-      "Same 16x4 grid, but the pattern is mask-programmed at fab — here an increment table. Address and read. There is no write pin.",
+      "Same 16×4 grid, but the pattern is mask-programmed at fab — here an increment table. Address and read. There is no write pin.",
     principle:
       "Mask ROM is vias and implants, not latches. The bits are baked in. Power-off does not clear them because there is nothing to dump.",
     formula: "dout = ROM[addr]",
@@ -483,7 +483,7 @@ export const LABS: LabMeta[] = [
     category: "computer",
     tagline: "Floating gates you can UV-erase",
     summary:
-      "A quartz window over 16x4 floating-gate cells. UV empties the gates toward 1s. Vpp programs 0s. Power-off keeps the charge.",
+      "A quartz window over 16×4 floating-gate cells. UV empties the gates toward 1s. Vpp programs 0s. Power-off keeps the charge.",
     principle:
       "Erased floating gates read as 1. A programming pulse on Vpp injects electrons and turns selected bits to 0. Ultraviolet through the window photoemits those electrons back out.",
     formula: "UV empties the floating gate; Vpp programs 0s",
@@ -499,10 +499,10 @@ export const LABS: LabMeta[] = [
     category: "computer",
     tagline: "SRAM pins, DRAM capacitors",
     summary:
-      "Looks like SRAM until you kill the refresh engine. Each row is a DRAM capacitor. Charge leaks as Q(t) = Q0 e^{-t/RC} unless a cursor tops it up.",
+      "Looks like SRAM until you kill the refresh engine. Each row is a DRAM capacitor. Charge leaks as Q(t) = Q0 e^{−t/RC} unless a cursor tops it up.",
     principle:
       "Pseudo-static means a DRAM with a built-in refresh engine. The bus looks static; under the lid a walker restores every row before the capacitors forget.",
-    formula: "Q(t) = Q0 e^{-t/RC} unless refreshed",
+    formula: "Q(t) = Q0 e^{−t/RC} unless refreshed",
     uses: [
       "IoT RAM",
       "display buffers",
@@ -531,7 +531,7 @@ export const LABS: LabMeta[] = [
     category: "computer",
     tagline: "The same math, on many pixels at once",
     summary:
-      "An 8x8 framebuffer. One CPU painter versus 1, 4, or 8 parallel cores claiming tiles. GPUs win on width, not on a faster clock.",
+      "An 8×8 framebuffer. One CPU painter versus 1, 4, or 8 parallel cores claiming tiles. GPUs win on width, not on a faster clock.",
     principle:
       "A CPU paints one pixel per clock. N cores paint N pixels per clock on the same job. That is why a GPU is not a faster CPU — it is many ALUs doing the same multiply on different data.",
     formula: "pixels/s ≈ cores × clocks",
