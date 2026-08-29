@@ -10,6 +10,7 @@ import {
   clearSim,
   graphPaper,
   Ink,
+  junction,
   label,
   ledDome,
   potentiometer,
@@ -33,7 +34,8 @@ export function PotentiometerLab() {
   const rhi = Math.max(1, rtot * (1 - k));
   const rpar = 1 / (1 / rlo + 1 / rload);
   const vout = v * (rpar / (rhi + rpar));
-  const iled = vout / rload;
+  const VF = 1.8;
+  const iled = Math.max(0, (vout - VF) / rload);
 
   const flow = useRef(new ElectronFlow());
   const flowTap = useRef(new ElectronFlow());
@@ -76,7 +78,7 @@ export function PotentiometerLab() {
             max={0.98}
             step={0.01}
             onChange={setK}
-            hint="Fraction from the bottom (ground) end."
+            hint="0% is ground (right). 100% is +V (left)."
           />
           <LinearControl
             label="Track"
@@ -107,52 +109,65 @@ export function PotentiometerLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 200;
-              battery(ctx, 70, y);
+              const botY = 310;
+              const bat = battery(ctx, 70, y);
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
-              const pot = potentiometer(ctx, 260, y, 220, p.k, p.rtot);
+              // k is fraction from ground; draw inverted so ground is on the right.
+              const pot = potentiometer(ctx, 260, y, 220, 1 - p.k, p.rtot);
               label(ctx, formatOhm(p.rtot), 370, y + 36, { mono: true, size: 11 });
 
-              ledDome(ctx, 620, 80, Ink.electron, Math.min(1, p.iled / 0.008));
-              resistorBody(ctx, 560, 200, 80, p.rload, Math.min(1, p.iled * 20));
-              label(ctx, "load", 600, 168, { size: 11 });
+              const led = ledDome(ctx, 620, 70, Ink.electron, Math.min(1, p.iled / 0.008));
+              resistorBody(ctx, 580, y, 80, p.rload, Math.min(1, p.iled * 20));
+              label(ctx, "load", 620, y - 28, { size: 11 });
 
+              wire(ctx, [bat.pos, pot.left]);
               wire(ctx, [
-                { x: 86, y },
-                { x: 260, y },
-              ]);
-              wire(ctx, [
-                { x: 490, y },
+                pot.right,
                 { x: 720, y },
-                { x: 720, y: 310 },
-                { x: 54, y: 310 },
-                { x: 54, y },
+                { x: 720, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
               ]);
               wire(ctx, [
                 pot.wiper,
-                { x: pot.wiper.x, y: 80 },
-                { x: 620, y: 80 },
+                { x: pot.wiper.x, y: led.anode.y },
+                { x: led.anode.x, y: led.anode.y },
+                led.anode,
               ]);
               wire(ctx, [
-                { x: 620, y: 114 },
-                { x: 620, y: 200 },
-                { x: 650, y: 200 },
+                led.cathode,
+                { x: led.cathode.x, y },
+                { x: 570, y },
               ]);
               wire(ctx, [
-                { x: 650, y: 200 },
-                { x: 720, y: 200 },
+                { x: 670, y },
+                { x: 720, y },
               ]);
+              junction(ctx, 720, y);
+              junction(ctx, led.cathode.x, y);
+              junction(ctx, bat.neg.x, botY);
 
               const loop: Pt[] = [
-                { x: 86, y },
-                { x: 370, y },
+                bat.pos,
+                pot.left,
+                pot.right,
                 { x: 720, y },
+                { x: 720, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
               ];
               flow.current.setPath(loop, true);
               flow.current.set(10, -70);
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              const tap: Pt[] = [pot.wiper, { x: pot.wiper.x, y: 80 }, { x: 620, y: 80 }];
+              const tap: Pt[] = [
+                pot.wiper,
+                { x: pot.wiper.x, y: led.anode.y },
+                led.anode,
+                led.cathode,
+                { x: led.cathode.x, y },
+              ];
               flowTap.current.setPath(tap, false);
               flowTap.current.set(
                 p.iled > 0.0003 ? Math.max(4, Math.min(20, p.iled * 2000)) : 0,

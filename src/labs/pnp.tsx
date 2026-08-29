@@ -108,18 +108,24 @@ export function PnpLab() {
               const bat = battery(ctx, 70, 150);
               label(ctx, formatVolt(VCC), 70, 206, { mono: true, size: 12 });
 
-              const q = bjtSymbol(ctx, 340, 150, "pnp");
-              const led = ledDome(ctx, 560, 30, Ink.electron, Math.min(1, p.ic / 0.015));
+              const q = bjtSymbol(ctx, 340, 168, "pnp");
+              const led = ledDome(ctx, 560, 90, Ink.electron, Math.min(1, p.ic / 0.015));
               resistorBody(ctx, 520, botY, 80, p.rc, Math.min(1, p.ic * 8));
 
+              // Emitter (bottom pad) to VCC around the LEFT. Collector never joins this rail.
               wire(ctx, [
-                bat.pos,
-                { x: bat.pos.x, y: topY },
-                { x: 420, y: topY },
-                { x: 420, y: q.e.y },
                 q.e,
+                { x: 250, y: q.e.y },
+                { x: 250, y: topY },
+                { x: bat.pos.x, y: topY },
+                bat.pos,
               ]);
-              wire(ctx, [q.c, { x: q.c.x, y: 64 }, { x: led.anode.x, y: 64 }, led.anode]);
+              // Collector (top pad) to LED on the right, below VCC.
+              wire(ctx, [
+                q.c,
+                { x: led.anode.x, y: q.c.y },
+                led.anode,
+              ]);
               wire(ctx, [
                 led.cathode,
                 { x: led.cathode.x, y: botY },
@@ -137,16 +143,16 @@ export function PnpLab() {
               label(ctx, "Ib sink", 200, q.b.y, { size: 10, color: Ink.text });
               label(ctx, `${p.ibUa.toFixed(0)} µA out`, 200, q.b.y + 24, { mono: true, size: 11 });
 
-              junction(ctx, 420, topY);
+              junction(ctx, 250, topY);
               junction(ctx, bat.pos.x, topY);
               junction(ctx, led.cathode.x, botY);
               junction(ctx, 200, botY);
               junction(ctx, bat.neg.x, botY);
 
-              label(ctx, "PNP", 340, 204, { size: 10 });
-              label(ctx, p.region, 340, 220, { size: 12, color: Ink.electron });
-              label(ctx, "E → +VCC", 420, topY - 16, { size: 10, color: Ink.text });
-              label(ctx, "arrow in", q.e.x + 36, q.e.y, { size: 10, align: "left" });
+              label(ctx, "PNP  (high-side)", 340, 222, { size: 11 });
+              label(ctx, p.region, 340, 238, { size: 12, color: Ink.electron });
+              label(ctx, "E to +VCC", 250, topY - 16, { size: 10, color: Ink.text });
+              label(ctx, "C to load", q.c.x + 48, q.c.y - 14, { size: 10 });
 
               const dx = 80;
               const dy = 300;
@@ -171,17 +177,14 @@ export function PnpLab() {
               const col: Pt[] = [
                 bat.neg,
                 { x: bat.neg.x, y: botY },
-                { x: 510, y: botY },
-                { x: 610, y: botY },
                 { x: led.cathode.x, y: botY },
                 led.cathode,
                 led.anode,
-                { x: led.anode.x, y: 64 },
-                { x: q.c.x, y: 64 },
+                { x: led.anode.x, y: q.c.y },
                 q.c,
                 q.e,
-                { x: 420, y: q.e.y },
-                { x: 420, y: topY },
+                { x: 250, y: q.e.y },
+                { x: 250, y: topY },
                 { x: bat.pos.x, y: topY },
                 bat.pos,
               ];

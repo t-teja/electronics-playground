@@ -11,8 +11,11 @@ import {
   diodeSymbol,
   graphPaper,
   Ink,
+  junction,
   label,
+  ledDome,
   pnJunction,
+  resistorBody,
   scope,
   wire,
   withFrame,
@@ -86,25 +89,45 @@ export function DiodeLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 110;
-              battery(ctx, 70, y);
-              const d = diodeSymbol(ctx, 400, y, 1.15, p.v < 0);
-              const leftPad = p.v < 0 ? d.cathode : d.anode;
-              const rightPad = p.v < 0 ? d.anode : d.cathode;
-              wire(ctx, [
-                { x: 88, y },
-                leftPad,
-              ]);
-              wire(ctx, [
-                rightPad,
-                { x: 700, y },
-                { x: 700, y: 190 },
-                { x: 70, y: 190 },
-                { x: 70, y: y + 28 },
-              ]);
-              label(ctx, p.v >= 0 ? "forward" : "reverse", 400, y - 44, { size: 12 });
-              label(ctx, "anode", d.anode.x, y - 22, { size: 10 });
-              label(ctx, "cathode", d.cathode.x, y - 22, { size: 10 });
+              const botY = 190;
+              const bat = battery(ctx, 70, y);
+              const d = diodeSymbol(ctx, 380, y, 1.15);
+              resistorBody(ctx, 150, y, 70, 330, 0);
+              const led = ledDome(
+                ctx,
+                560,
+                76,
+                Ink.electron,
+                p.v >= 0.7 ? Math.min(1, Math.abs(p.i) / 0.02) : 0.04,
+              );
+              label(ctx, p.v >= 0 ? "forward" : "reverse", 380, y - 48, { size: 12 });
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
+              label(ctx, "330", 185, y + 28, { size: 10, mono: true });
+
+              const rLeft = { x: 140, y };
+              const rRight = { x: 230, y };
+              if (p.v >= 0) {
+                wire(ctx, [bat.pos, rLeft]);
+                wire(ctx, [rRight, d.anode]);
+                wire(ctx, [d.cathode, { x: led.anode.x, y }, led.anode]);
+                wire(ctx, [
+                  led.cathode,
+                  { x: led.cathode.x, y: botY },
+                  { x: bat.neg.x, y: botY },
+                  bat.neg,
+                ]);
+              } else {
+                wire(ctx, [
+                  bat.pos,
+                  { x: bat.pos.x, y: 48 },
+                  { x: led.cathode.x, y: 48 },
+                  led.cathode,
+                ]);
+                wire(ctx, [led.anode, { x: led.anode.x, y }, d.cathode]);
+                wire(ctx, [d.anode, rRight]);
+                wire(ctx, [rLeft, { x: rLeft.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
+              }
+              junction(ctx, bat.neg.x, botY);
 
               const deplete = p.v >= 0 ? Math.max(0.08, 1 - p.v / 0.85) : Math.min(1, 0.55 + Math.abs(p.v) / 8);
               const j = pnJunction(ctx, 160, 220, 480, 110, deplete);

@@ -92,7 +92,7 @@ export function LdrLab() {
             min={1000}
             max={100000}
             onChange={setRFixed}
-            hint="Bottom of the divider. Sets where Vout lands."
+            hint="Bottom of the divider, not in series with the LED."
           />
         </>
       }
@@ -147,18 +147,25 @@ export function LdrLab() {
               resistorBody(ctx, 240, botY, 140, p.rFixed, Math.min(1, p.iDiv * p.iDiv * p.rFixed * 8));
               const rLeft: Pt = { x: 230, y: botY };
               const rRight: Pt = { x: 390, y: botY };
-              label(ctx, "R", 310, botY + 28, { size: 11 });
+              label(ctx, "R2 divider", 310, botY + 28, { size: 11 });
               label(ctx, formatOhm(p.rFixed), 310, botY + 44, { mono: true, size: 11 });
 
               const node: Pt = { x: 430, y: midY };
-              const led = ledDome(ctx, 620, 146, Ink.electron, Math.min(1, p.iLed / 0.0008));
-              label(ctx, "out", 620, 116, { size: 11 });
+              resistorBody(ctx, 470, midY, 70, R_LED, Math.min(1, p.iLed * 30));
+              label(ctx, "Rs", 505, midY - 24, { size: 11 });
+              const led = ledDome(ctx, 660, 146, Ink.electron, Math.min(1, p.iLed / 0.0008));
+              label(ctx, "out", 660, 116, { size: 11 });
 
               wire(ctx, [bat.pos, { x: bat.pos.x, y: topY }, ldrLeft]);
               wire(ctx, [ldrRight, { x: node.x, y: topY }, node]);
               wire(ctx, [node, { x: node.x, y: botY }, rRight]);
               wire(ctx, [rLeft, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [node, { x: led.anode.x, y: node.y }, led.anode]);
+              wire(ctx, [node, { x: 460, y: midY }]);
+              wire(ctx, [
+                { x: 550, y: midY },
+                { x: led.anode.x, y: midY },
+                led.anode,
+              ]);
               wire(ctx, [
                 led.cathode,
                 { x: led.cathode.x, y: botY },
@@ -200,7 +207,9 @@ export function LdrLab() {
               if (p.iLed > 2e-5) {
                 const branch: Pt[] = [
                   node,
-                  { x: led.anode.x, y: node.y },
+                  { x: 460, y: midY },
+                  { x: 550, y: midY },
+                  { x: led.anode.x, y: midY },
                   led.anode,
                   led.cathode,
                   { x: led.cathode.x, y: botY },

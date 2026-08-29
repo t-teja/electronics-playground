@@ -174,7 +174,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "transistor",
-    name: "Transistor",
+    name: "NPN transistor",
     symbol: "Q",
     category: "semiconductor",
     tagline: "A small current running a large one",
@@ -210,7 +210,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "mosfet",
-    name: "MOSFET",
+    name: "N-MOSFET",
     symbol: "M",
     category: "semiconductor",
     tagline: "A voltage-built channel",

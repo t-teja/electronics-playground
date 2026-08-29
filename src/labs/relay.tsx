@@ -11,6 +11,7 @@ import {
   diodeSymbol,
   graphPaper,
   Ink,
+  junction,
   label,
   lamp,
   relayBody,
@@ -96,15 +97,30 @@ export function RelayLab() {
               wire(ctx, [R.coilBot, { x: coilBat.neg.x, y: R.coilBot.y }, coilBat.neg]);
               wire(ctx, [fly.cathode, { x: fly.cathode.x, y: coilBat.pos.y }]);
               wire(ctx, [fly.anode, { x: fly.anode.x, y: R.coilBot.y }, R.coilBot]);
+              junction(ctx, R.coilTop.x, coilBat.pos.y);
+              junction(ctx, fly.cathode.x, coilBat.pos.y);
+              junction(ctx, fly.anode.x, R.coilBot.y);
+              junction(ctx, coilBat.neg.x, R.coilBot.y);
 
-              const loadBat = battery(ctx, 620, 70);
-              label(ctx, "load  9 V", 620, 122, { size: 11 });
-              const lampPads = lamp(ctx, 720, 196, p.on ? 1 : 0.04);
-              label(ctx, "load", 720, 240, { size: 11 });
+              const loadBat = battery(ctx, 700, 340);
+              label(ctx, "load  9 V", 700, 394, { size: 11 });
+              const lampPads = lamp(ctx, 700, R.no.y, p.on ? 1 : 0.04);
+              label(ctx, "load", 700, R.no.y + 44, { size: 11 });
 
-              wire(ctx, [loadBat.pos, { x: lampPads.left.x, y: loadBat.pos.y }, lampPads.left]);
-              wire(ctx, [lampPads.right, { x: 770, y: lampPads.right.y }, { x: 770, y: R.no.y }, R.no]);
-              wire(ctx, [R.com, { x: R.com.x, y: 330 }, { x: loadBat.neg.x, y: 330 }, loadBat.neg]);
+              wire(ctx, [
+                loadBat.pos,
+                { x: loadBat.pos.x, y: lampPads.right.y },
+                lampPads.right,
+              ]);
+              wire(ctx, [lampPads.left, { x: R.no.x, y: lampPads.left.y }, R.no]);
+              wire(ctx, [
+                R.com,
+                { x: R.com.x, y: loadBat.neg.y },
+                loadBat.neg,
+              ]);
+              junction(ctx, loadBat.pos.x, lampPads.right.y);
+              junction(ctx, R.no.x, lampPads.left.y);
+              junction(ctx, R.com.x, loadBat.neg.y);
 
               const coilPath: Pt[] = [coilBat.pos, { x: R.coilTop.x, y: coilBat.pos.y }, R.coilTop];
               coilFlow.current.setPath(coilPath, false);
@@ -117,10 +133,13 @@ export function RelayLab() {
 
               const loadPath: Pt[] = [
                 loadBat.pos,
-                lampPads.left,
+                { x: loadBat.pos.x, y: lampPads.right.y },
                 lampPads.right,
+                lampPads.left,
+                { x: R.no.x, y: lampPads.left.y },
                 R.no,
                 R.com,
+                { x: R.com.x, y: loadBat.neg.y },
                 loadBat.neg,
               ];
               loadFlow.current.setPath(loadPath, false);

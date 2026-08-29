@@ -11,6 +11,7 @@ import {
   clearSim,
   graphPaper,
   Ink,
+  junction,
   label,
   ledDome,
   npnDie,
@@ -102,15 +103,15 @@ export function TransistorLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              battery(ctx, 70, 100);
+              const bat = battery(ctx, 70, 100);
               label(ctx, formatVolt(VCC), 70, 152, { mono: true, size: 12 });
               resistorBody(ctx, 200, 64, 80, p.rc, Math.min(1, p.ic * 8));
               const led = ledDome(ctx, 360, 40, Ink.electron, Math.min(1, p.ic / 0.015));
               const q = bjtSymbol(ctx, 520, 140, "npn");
 
               wire(ctx, [
-                { x: 88, y: 100 },
-                { x: 88, y: 64 },
+                bat.pos,
+                { x: bat.pos.x, y: 64 },
                 { x: 200, y: 64 },
               ]);
               wire(ctx, [
@@ -126,9 +127,12 @@ export function TransistorLab() {
               wire(ctx, [
                 q.e,
                 { x: q.e.x, y: 250 },
-                { x: 70, y: 250 },
-                { x: 70, y: 128 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
               ]);
+              junction(ctx, bat.pos.x, 64);
+              junction(ctx, led.cathode.x, q.c.y);
+              junction(ctx, bat.neg.x, 250);
               wire(ctx, [
                 { x: 200, y: 200 },
                 q.b,
@@ -137,7 +141,7 @@ export function TransistorLab() {
               ctx.fillRect(160, 188, 80, 24);
               label(ctx, "Ib source", 200, 200, { size: 10, color: Ink.text });
               label(ctx, `${p.ibUa.toFixed(0)} \u00b5A`, 200, 224, { mono: true, size: 11 });
-              label(ctx, "NPN", 520, 188, { size: 10 });
+              label(ctx, "NPN  (low-side)", 520, 188, { size: 11 });
               label(ctx, p.region, 520, 206, { size: 12, color: Ink.electron });
 
               npnDie(ctx, 80, 288, 300, 70);
@@ -145,8 +149,12 @@ export function TransistorLab() {
 
               const col: Pt[] = [
                 led.cathode,
+                { x: led.cathode.x, y: q.c.y },
                 q.c,
                 q.e,
+                { x: q.e.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
               ];
               collector.current.setPath(col, false);
               collector.current.set(

@@ -155,32 +155,38 @@ export function LogicGatesLab() {
               logicShape(ctx, p.gate, 400, 200);
               label(ctx, p.gate, 400, 140, { size: 14, color: Ink.text });
 
-              bitLed(ctx, 140, p.gate === "NOT" ? 200 : 168, p.a);
-              label(ctx, "A", 140, p.gate === "NOT" ? 230 : 198, { size: 12 });
+              const andFamily = p.gate === "AND" || p.gate === "NAND";
+              const leftX = p.gate === "NOT" ? 372 : andFamily ? 376 : 372;
+              const aY = p.gate === "NOT" ? 200 : 188;
+              const bY = 212;
+              const outX = p.gate === "NAND" || p.gate === "NOR" || p.gate === "XNOR" ? 428 : 422;
+
+              bitLed(ctx, 140, aY, p.a);
+              label(ctx, "A", 140, aY + 30, { size: 12 });
               wire(ctx, [
-                { x: 154, y: p.gate === "NOT" ? 200 : 168 },
-                { x: 372, y: p.gate === "NOT" ? 200 : 186 },
+                { x: 154, y: aY },
+                { x: leftX, y: aY },
               ]);
 
               if (p.gate !== "NOT") {
-                bitLed(ctx, 140, 232, p.b);
-                label(ctx, "B", 140, 262, { size: 12 });
+                bitLed(ctx, 140, bY, p.b);
+                label(ctx, "B", 140, bY + 30, { size: 12 });
                 wire(ctx, [
-                  { x: 154, y: 232 },
-                  { x: 372, y: 214 },
+                  { x: 154, y: bY },
+                  { x: leftX, y: bY },
                 ]);
               }
 
               bitLed(ctx, 640, 200, p.y);
               label(ctx, "Y", 640, 230, { size: 12 });
               wire(ctx, [
-                { x: 430, y: 200 },
+                { x: outX, y: 200 },
                 { x: 626, y: 200 },
               ]);
 
               if (p.y) {
                 const out: Pt[] = [
-                  { x: 430, y: 200 },
+                  { x: outX, y: 200 },
                   { x: 626, y: 200 },
                 ];
                 flow.current.setPath(out, false);

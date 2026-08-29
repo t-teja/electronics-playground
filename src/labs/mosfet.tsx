@@ -104,15 +104,15 @@ export function MosfetLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              battery(ctx, 64, 90);
+              const bat = battery(ctx, 64, 90);
               label(ctx, formatVolt(VDD), 64, 142, { mono: true, size: 12 });
               resistorBody(ctx, 180, 54, 80, p.rd, Math.min(1, p.id * 8));
               const led = ledDome(ctx, 340, 30, Ink.electron, Math.min(1, p.id / 0.015));
               const mos = nMosfet(ctx, 520, 150, on);
 
               wire(ctx, [
-                { x: 80, y: 90 },
-                { x: 80, y: 54 },
+                bat.pos,
+                { x: bat.pos.x, y: 54 },
                 { x: 180, y: 54 },
               ]);
               wire(ctx, [
@@ -128,8 +128,8 @@ export function MosfetLab() {
               wire(ctx, [
                 mos.s,
                 { x: mos.s.x, y: 250 },
-                { x: 48, y: 250 },
-                { x: 48, y: 90 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
               ]);
               wire(ctx, [
                 { x: 200, y: 150 },
@@ -140,6 +140,7 @@ export function MosfetLab() {
               ctx.fill();
               label(ctx, "Vgs", 193, 150, { size: 11, color: Ink.text });
               label(ctx, formatVolt(p.vgs), 193, 178, { mono: true, size: 11 });
+              label(ctx, "N-channel", 520, 194, { size: 11, color: Ink.muted });
               label(ctx, p.region, 520, 210, { size: 12, color: Ink.electron });
 
               const bodyX = 80;
@@ -172,8 +173,12 @@ export function MosfetLab() {
 
               const col: Pt[] = [
                 led.cathode,
+                { x: led.cathode.x, y: mos.d.y },
                 mos.d,
                 mos.s,
+                { x: mos.s.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
               ];
               flow.current.setPath(col, false);
               flow.current.set(
