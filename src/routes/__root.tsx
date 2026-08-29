@@ -1,9 +1,9 @@
 import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { absUrl, ogImage, SITE_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 import { ThemeProvider, THEME_BOOT, useTheme } from "@/lib/theme";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Electronics Playground";
 const BASE = import.meta.env.BASE_URL || "/";
 const asset = (path: string) => `${BASE}${path.replace(/^\//, "")}`;
 
@@ -27,15 +27,24 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: APP_NAME },
+      { title: SITE_NAME },
       {
         name: "description",
-        content:
-          "Interactive electronics laboratory. Watch electrons, fields, and logic — then change the values yourself.",
+        content: SITE_DESCRIPTION,
       },
       { name: "theme-color", content: "#09090b" },
+      { property: "og:title", content: SITE_NAME },
+      { property: "og:description", content: SITE_DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: absUrl() },
+      { property: "og:image", content: ogImage() },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: SITE_NAME },
+      { name: "twitter:description", content: SITE_DESCRIPTION },
+      { name: "twitter:image", content: ogImage() },
     ],
     links: [
+      { rel: "canonical", href: absUrl() },
       { rel: "icon", type: "image/svg+xml", href: asset("favicon.svg") },
       { rel: "stylesheet", href: appCss },
       { rel: "apple-touch-icon", href: asset("favicon.svg") },

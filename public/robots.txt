@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://t-teja.github.io/electronics-playground/sitemap.xml
