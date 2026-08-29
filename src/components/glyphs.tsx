@@ -308,6 +308,82 @@ export function GlyphDac({ className }: { className?: string }) {
   );
 }
 
+export function GlyphRam({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="44" y="12" width="72" height="48" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M52 22 h14 v8 h-14 z M70 22 h14 v8 h-14 z M88 22 h14 v8 h-14 z M52 34 h14 v8 h-14 z M70 34 h14 v8 h-14 z M88 34 h14 v8 h-14 z" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M12 28 H44 M12 44 H44 M116 28 H148 M116 44 H148" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M12 28 H44" dur="1.5s" />
+    </Frame>
+  );
+}
+
+export function GlyphRom({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="44" y="12" width="72" height="48" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M54 22 h52 M54 30 h40 M54 38 h52 M54 46 h28" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M12 28 H44 M12 44 H44 M116 28 H148 M116 44 H148" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M12 28 H44" dur="1.6s" />
+    </Frame>
+  );
+}
+
+export function GlyphEprom({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="44" y="12" width="72" height="48" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <ellipse cx="80" cy="36" rx="18" ry="10" stroke="currentColor" strokeWidth="1.3" className="text-electron" />
+      <path d="M12 28 H44 M12 44 H44 M116 28 H148 M116 44 H148" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M12 28 H44" dur="1.5s" />
+    </Frame>
+  );
+}
+
+export function GlyphPsram({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="44" y="12" width="72" height="48" rx="4" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M52 22 h14 v8 h-14 z M70 22 h14 v8 h-14 z M88 22 h14 v8 h-14 z M52 34 h14 v8 h-14 z M70 34 h14 v8 h-14 z M88 34 h14 v8 h-14 z" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M50 38 H110" stroke="currentColor" strokeWidth="1.3" className="text-electron" />
+      <path d="M12 28 H44 M12 44 H44 M116 28 H148 M116 44 H148" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M12 28 H44" dur="1.4s" />
+    </Frame>
+  );
+}
+
+export function GlyphCpu({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="36" y="14" width="40" height="44" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="84" y="14" width="40" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="84" y="38" width="40" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M76 36 H84" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M12 28 H36 M12 44 H36 M124 24 H148 M124 48 H148" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M12 28 H36" dur="1.3s" />
+    </Frame>
+  );
+}
+
+export function GlyphGpu({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <rect x="28" y="18" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="46" y="18" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="64" y="18" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="82" y="18" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="28" y="36" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="46" y="36" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="64" y="36" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="82" y="36" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <rect x="108" y="16" width="28" height="40" rx="3" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M112 22 h6 v6 h-6 z M120 22 h6 v6 h-6 z M112 30 h6 v6 h-6 z M120 30 h6 v6 h-6 z" stroke="currentColor" strokeWidth="1" />
+      <Electron d="M28 25 H82" dur="1.4s" />
+    </Frame>
+  );
+}
+
 export const GLYPHS = {
   resistor: GlyphResistor,
   capacitor: GlyphCapacitor,
@@ -331,4 +407,10 @@ export const GLYPHS = {
   ir: GlyphIr,
   pir: GlyphPir,
   ultrasonic: GlyphUltrasonic,
+  ram: GlyphRam,
+  rom: GlyphRom,
+  eprom: GlyphEprom,
+  psram: GlyphPsram,
+  cpu: GlyphCpu,
+  gpu: GlyphGpu,
 } as const;
