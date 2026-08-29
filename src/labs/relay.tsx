@@ -39,10 +39,10 @@ export function RelayLab() {
 
   const insight = useMemo(() => {
     if (!armed) {
-      return `Coil open. The spring holds COM on NC. The load is dark. That click you don’t hear is the isolation — coil and lamp never share copper.`;
+      return `Coil open. The spring holds COM on NC. The load is dark. That click you don\u2019t hear is the isolation \u2014 coil and lamp never share copper.`;
     }
     if (!on) {
-      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn’t strong enough to beat the spring yet. Raise the coil supply.`;
+      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn\u2019t strong enough to beat the spring yet. Raise the coil supply.`;
     }
     return `Pulled in. ${formatAmp(icoil)} in the coil slammed COM onto NO, and the lamp lights from its own supply. The diode across the coil is the flyback path for when you drop the field.`;
   }, [armed, on, icoil]);
@@ -97,14 +97,27 @@ export function RelayLab() {
               wire(ctx, [fly.cathode, { x: fly.cathode.x, y: coilBat.pos.y }]);
               wire(ctx, [fly.anode, { x: fly.anode.x, y: R.coilBot.y }, R.coilBot]);
 
-              const loadBat = battery(ctx, 620, 70);
-              label(ctx, "load  9 V", 620, 122, { size: 11 });
-              const lampPads = lamp(ctx, 720, 196, p.on ? 1 : 0.04);
-              label(ctx, "load", 720, 240, { size: 11 });
+              const lampPads = lamp(ctx, 720, 168, p.on ? 1 : 0.04);
+              label(ctx, "load", 720, 214, { size: 11 });
+              const loadBat = battery(ctx, 640, 340);
+              label(ctx, "load  9 V", 640, 392, { size: 11 });
 
-              wire(ctx, [loadBat.pos, { x: lampPads.left.x, y: loadBat.pos.y }, lampPads.left]);
-              wire(ctx, [lampPads.right, { x: 770, y: lampPads.right.y }, { x: 770, y: R.no.y }, R.no]);
-              wire(ctx, [R.com, { x: R.com.x, y: 330 }, { x: loadBat.neg.x, y: 330 }, loadBat.neg]);
+              wire(ctx, [
+                loadBat.pos,
+                { x: loadBat.pos.x, y: lampPads.left.y },
+                lampPads.left,
+              ]);
+              wire(ctx, [
+                lampPads.right,
+                { x: 770, y: lampPads.right.y },
+                { x: 770, y: R.no.y },
+                R.no,
+              ]);
+              wire(ctx, [
+                R.com,
+                { x: R.com.x, y: loadBat.neg.y },
+                loadBat.neg,
+              ]);
 
               const coilPath: Pt[] = [coilBat.pos, { x: R.coilTop.x, y: coilBat.pos.y }, R.coilTop];
               coilFlow.current.setPath(coilPath, false);
@@ -117,10 +130,14 @@ export function RelayLab() {
 
               const loadPath: Pt[] = [
                 loadBat.pos,
+                { x: loadBat.pos.x, y: lampPads.left.y },
                 lampPads.left,
                 lampPads.right,
+                { x: 770, y: lampPads.right.y },
+                { x: 770, y: R.no.y },
                 R.no,
                 R.com,
+                { x: R.com.x, y: loadBat.neg.y },
                 loadBat.neg,
               ];
               loadFlow.current.setPath(loadPath, false);

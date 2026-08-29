@@ -104,7 +104,7 @@ export function LogicGatesLab() {
       meters={
         <>
           <Meter label="A" value={a ? "1" : "0"} />
-          <Meter label="B" value={gate === "NOT" ? "—" : b ? "1" : "0"} />
+          <Meter label="B" value={gate === "NOT" ? "\u2014" : b ? "1" : "0"} />
           <Meter label="Y" value={y ? "1" : "0"} />
         </>
       }
@@ -155,19 +155,22 @@ export function LogicGatesLab() {
               logicShape(ctx, p.gate, 400, 200);
               label(ctx, p.gate, 400, 140, { size: 14, color: Ink.text });
 
-              bitLed(ctx, 140, p.gate === "NOT" ? 200 : 168, p.a);
-              label(ctx, "A", 140, p.gate === "NOT" ? 230 : 198, { size: 12 });
+              const aY = p.gate === "NOT" ? 200 : 188;
+              const bY = 212;
+              const inX = p.gate === "AND" || p.gate === "NAND" ? 376 : 372;
+              bitLed(ctx, 140, aY, p.a);
+              label(ctx, "A", 140, aY + 30, { size: 12 });
               wire(ctx, [
-                { x: 154, y: p.gate === "NOT" ? 200 : 168 },
-                { x: 372, y: p.gate === "NOT" ? 200 : 186 },
+                { x: 154, y: aY },
+                { x: inX, y: aY },
               ]);
 
               if (p.gate !== "NOT") {
-                bitLed(ctx, 140, 232, p.b);
-                label(ctx, "B", 140, 262, { size: 12 });
+                bitLed(ctx, 140, bY, p.b);
+                label(ctx, "B", 140, bY + 30, { size: 12 });
                 wire(ctx, [
-                  { x: 154, y: 232 },
-                  { x: 372, y: 214 },
+                  { x: 154, y: bY },
+                  { x: inX, y: bY },
                 ]);
               }
 
@@ -191,7 +194,7 @@ export function LogicGatesLab() {
                 flow.current.set(0, 0);
               }
 
-              label(ctx, `${p.gate}  ·  Y = ${p.y ? "HIGH" : "LOW"}`, 400, 360, {
+              label(ctx, `${p.gate}  \u00b7  Y = ${p.y ? "HIGH" : "LOW"}`, 400, 360, {
                 mono: true,
                 size: 14,
                 color: Ink.text,
