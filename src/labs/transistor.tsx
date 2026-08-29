@@ -9,7 +9,6 @@ import {
   battery,
   bjtSymbol,
   clearSim,
-  gnd,
   graphPaper,
   Ink,
   junction,
@@ -93,7 +92,7 @@ export function TransistorLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            {"\u03b2"} = {BETA} · Ic sat = (Vcc - Vce_sat - Vf) / Rc = {formatAmp(icSat)}
+            \u03b2 = {BETA} \u00b7 Ic sat = (Vcc \u2212 Vce_sat \u2212 Vf) / Rc = {formatAmp(icSat)}
           </p>
         </>
       }
@@ -104,36 +103,45 @@ export function TransistorLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              const vccY = 64;
-              const botY = 250;
               const bat = battery(ctx, 70, 100);
               label(ctx, formatVolt(VCC), 70, 152, { mono: true, size: 12 });
-
-              const rcX = 200;
-              const rcW = 80;
-              resistorBody(ctx, rcX, vccY, rcW, p.rc, Math.min(1, p.ic * 8));
-              const rcLeft: Pt = { x: rcX - 10, y: vccY };
-              const rcRight: Pt = { x: rcX + rcW + 10, y: vccY };
-
-              const led = ledDome(ctx, 360, vccY - 34, Ink.electron, Math.min(1, p.ic / 0.015));
+              resistorBody(ctx, 200, 64, 80, p.rc, Math.min(1, p.ic * 8));
+              const led = ledDome(ctx, 360, 40, Ink.electron, Math.min(1, p.ic / 0.015));
               const q = bjtSymbol(ctx, 520, 140, "npn");
 
-              wire(ctx, [bat.pos, { x: bat.pos.x, y: vccY }, rcLeft]);
-              wire(ctx, [rcRight, { x: led.anode.x, y: vccY }, led.anode]);
-              wire(ctx, [led.cathode, { x: led.cathode.x, y: q.c.y }, q.c]);
-              wire(ctx, [q.e, { x: q.e.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
-              wire(ctx, [{ x: 240, y: q.b.y }, q.b]);
-              gnd(ctx, 200, botY);
-              junction(ctx, bat.pos.x, vccY);
+              wire(ctx, [
+                bat.pos,
+                { x: bat.pos.x, y: 64 },
+                { x: 200, y: 64 },
+              ]);
+              wire(ctx, [
+                { x: 290, y: 64 },
+                { x: led.anode.x, y: 64 },
+                led.anode,
+              ]);
+              wire(ctx, [
+                led.cathode,
+                { x: led.cathode.x, y: q.c.y },
+                q.c,
+              ]);
+              wire(ctx, [
+                q.e,
+                { x: q.e.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
+              ]);
+              junction(ctx, bat.pos.x, 64);
               junction(ctx, led.cathode.x, q.c.y);
-              junction(ctx, q.e.x, botY);
-              junction(ctx, bat.neg.x, botY);
-
+              junction(ctx, bat.neg.x, 250);
+              wire(ctx, [
+                { x: 200, y: 200 },
+                q.b,
+              ]);
               ctx.fillStyle = Ink.package;
-              ctx.fillRect(160, q.b.y - 12, 80, 24);
-              label(ctx, "Ib source", 200, q.b.y, { size: 10, color: Ink.text });
-              label(ctx, `${p.ibUa.toFixed(0)} \u00b5A`, 200, q.b.y + 24, { mono: true, size: 11 });
-              label(ctx, "NPN", 520, 188, { size: 10 });
+              ctx.fillRect(160, 188, 80, 24);
+              label(ctx, "Ib source", 200, 200, { size: 10, color: Ink.text });
+              label(ctx, `${p.ibUa.toFixed(0)} \u00b5A`, 200, 224, { mono: true, size: 11 });
+              label(ctx, "NPN  (low-side)", 520, 188, { size: 11 });
               label(ctx, p.region, 520, 206, { size: 12, color: Ink.electron });
 
               npnDie(ctx, 80, 288, 300, 70);
@@ -144,8 +152,8 @@ export function TransistorLab() {
                 { x: led.cathode.x, y: q.c.y },
                 q.c,
                 q.e,
-                { x: q.e.x, y: botY },
-                { x: bat.neg.x, y: botY },
+                { x: q.e.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
                 bat.neg,
               ];
               collector.current.setPath(col, false);
@@ -156,7 +164,10 @@ export function TransistorLab() {
               collector.current.step(dt);
               collector.current.draw(ctx);
 
-              const bpath: Pt[] = [{ x: 240, y: q.b.y }, q.b];
+              const bpath: Pt[] = [
+                { x: 240, y: 200 },
+                q.b,
+              ];
               base.current.setPath(bpath, false);
               base.current.radius = 1.7;
               base.current.set(p.ib > 2e-7 ? Math.max(3, Math.min(12, p.ib * 80000)) : 0, -70);
