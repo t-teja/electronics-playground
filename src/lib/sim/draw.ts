@@ -133,8 +133,57 @@ export function battery(ctx: CanvasRenderingContext2D, x: number, y: number, h =
   ctx.lineTo(x + 6, y + posLen / 2);
   ctx.stroke();
   label(ctx, "+", x + 20, y - 10, { size: 14, color: Ink.text, align: "left" });
-  label(ctx, "−", x - 22, y, { size: 16, color: Ink.muted, align: "right" });
+  label(ctx, "\u2212", x - 22, y, { size: 16, color: Ink.muted, align: "right" });
   return { pos: { x: x + 16, y }, neg: { x: x - 16, y } };
+}
+
+/** IEC earth: stem plus three decreasing bars. Tip is the wire attachment. */
+export function gnd(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.strokeStyle = Ink.pin;
+  ctx.lineCap = "butt";
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y + 8);
+  ctx.stroke();
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, y + 8);
+  ctx.lineTo(x + 14, y + 8);
+  ctx.moveTo(x - 9, y + 14);
+  ctx.lineTo(x + 9, y + 14);
+  ctx.moveTo(x - 4, y + 20);
+  ctx.lineTo(x + 4, y + 20);
+  ctx.stroke();
+  return { x, y };
+}
+
+/** Circle + sine. Vertical leads for transformer / AC benches. */
+export function acSource(ctx: CanvasRenderingContext2D, x: number, y: number, r = 22) {
+  ctx.strokeStyle = Ink.pin;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.strokeStyle = Ink.electron;
+  ctx.lineWidth = 1.8;
+  const a = r * 0.58;
+  ctx.moveTo(x - a, y);
+  ctx.bezierCurveTo(x - a * 0.5, y - a, x, y - a, x, y);
+  ctx.bezierCurveTo(x, y + a, x + a * 0.5, y + a, x + a, y);
+  ctx.stroke();
+  ctx.strokeStyle = Ink.copper;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x, y - r - 10);
+  ctx.moveTo(x, y + r);
+  ctx.lineTo(x, y + r + 10);
+  ctx.stroke();
+  label(ctx, "~", x + r + 12, y, { size: 14, color: Ink.text, align: "left" });
+  return { top: { x, y: y - r - 10 }, bot: { x, y: y + r + 10 } };
 }
 
 const BAND = [
@@ -264,27 +313,43 @@ export function inductorCoil(ctx: CanvasRenderingContext2D, x: number, y: number
   return { start: x - 12, end: endX + 12, mid: x + (endX - x) / 2 };
 }
 
-export function diodeSymbol(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1) {
+export function diodeSymbol(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  scale = 1,
+  flip = false,
+) {
   const s = 16 * scale;
+  const dir = flip ? -1 : 1;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir, 1);
   ctx.fillStyle = Ink.pin;
   ctx.beginPath();
-  ctx.moveTo(x - s, y - s * 0.85);
-  ctx.lineTo(x + s * 0.15, y);
-  ctx.lineTo(x - s, y + s * 0.85);
+  ctx.moveTo(-s, -s * 0.85);
+  ctx.lineTo(s * 0.15, 0);
+  ctx.lineTo(-s, s * 0.85);
   ctx.closePath();
   ctx.fill();
   ctx.strokeStyle = Ink.pin;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(x + s * 0.2, y - s * 0.85);
-  ctx.lineTo(x + s * 0.2, y + s * 0.85);
+  ctx.moveTo(s * 0.2, -s * 0.85);
+  ctx.lineTo(s * 0.2, s * 0.85);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x - s - 10, y);
-  ctx.lineTo(x - s, y);
-  ctx.moveTo(x + s * 0.2, y);
-  ctx.lineTo(x + s + 10, y);
+  ctx.moveTo(-s - 10, 0);
+  ctx.lineTo(-s, 0);
+  ctx.moveTo(s * 0.2, 0);
+  ctx.lineTo(s + 10, 0);
   ctx.stroke();
+  ctx.restore();
+  const anode = { x: x - dir * (s + 10), y };
+  const cathode = { x: x + dir * (s + 10), y };
+  label(ctx, "A", anode.x, y + s + 6, { size: 10, color: Ink.muted });
+  label(ctx, "K", cathode.x, y + s + 6, { size: 10, color: Ink.muted });
+  return { anode, cathode };
 }
 
 export function ledDome(
@@ -331,6 +396,7 @@ export function ledDome(
   ctx.moveTo(x + 5, y + 16);
   ctx.lineTo(x + 5, y + 26);
   ctx.stroke();
+  return { anode: { x: x - 5, y: y + 34 }, cathode: { x: x + 5, y: y + 26 } };
 }
 
 export function dipPackage(
@@ -598,6 +664,82 @@ export function lamp(ctx: CanvasRenderingContext2D, x: number, y: number, bright
   ctx.stroke();
 }
 
+function arrowHead(
+  ctx: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  size = 7,
+) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - size * Math.cos(ang - 0.42), y2 - size * Math.sin(ang - 0.42));
+  ctx.lineTo(x2 - size * Math.cos(ang + 0.42), y2 - size * Math.sin(ang + 0.42));
+  ctx.closePath();
+  ctx.fillStyle = Ink.pin;
+  ctx.fill();
+}
+
+/** IEEE NPN/PNP in a circle. Emitter arrow out for NPN, in for PNP. */
+export function bjtSymbol(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  kind: "npn" | "pnp",
+) {
+  const r = 34;
+  ctx.strokeStyle = Ink.pin;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const barX = x - 10;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(barX, y - 16);
+  ctx.lineTo(barX, y + 16);
+  ctx.stroke();
+
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(x - r, y);
+  ctx.lineTo(barX, y);
+  ctx.stroke();
+
+  const c = { x: x + 16, y: y - 34 };
+  const e = { x: x + 16, y: y + 34 };
+  const b = { x: x - r, y };
+
+  ctx.beginPath();
+  ctx.moveTo(barX, y - 10);
+  ctx.lineTo(x + 16, y - 18);
+  ctx.lineTo(c.x, c.y);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(barX, y + 10);
+  ctx.lineTo(x + 16, y + 18);
+  ctx.lineTo(e.x, e.y);
+  ctx.stroke();
+
+  if (kind === "npn") {
+    arrowHead(ctx, barX + 2, y + 11, x + 11, y + 16.5, 8);
+  } else {
+    arrowHead(ctx, x + 12, y + 17, barX + 3, y + 11.2, 8);
+  }
+
+  label(ctx, "C", x + 28, y - 26, { size: 10, color: Ink.muted });
+  label(ctx, "B", x - 42, y - 12, { size: 10, color: Ink.muted });
+  label(ctx, "E", x + 28, y + 26, { size: 10, color: Ink.muted });
+  return { c, b, e };
+}
+
+/** N-channel enhancement MOSFET. Arrow on source/bulk points IN toward the channel. */
 export function nMosfet(ctx: CanvasRenderingContext2D, x: number, y: number, on: boolean) {
   ctx.strokeStyle = Ink.pin;
   ctx.lineWidth = 2.2;
@@ -627,11 +769,14 @@ export function nMosfet(ctx: CanvasRenderingContext2D, x: number, y: number, on:
   ctx.lineTo(x + 16, y);
   ctx.lineTo(x + 16, y + 12);
   ctx.stroke();
+  // IEEE N-MOS: arrow on source/bulk pointing IN toward the channel
   ctx.beginPath();
-  ctx.moveTo(x + 10, y + 6);
-  ctx.lineTo(x + 16, y + 12);
-  ctx.lineTo(x + 10, y + 16);
-  ctx.stroke();
+  ctx.moveTo(x + 4, y);
+  ctx.lineTo(x + 14, y - 5);
+  ctx.lineTo(x + 14, y + 5);
+  ctx.closePath();
+  ctx.fillStyle = Ink.pin;
+  ctx.fill();
   ctx.beginPath();
   ctx.moveTo(x - 34, y);
   ctx.lineTo(x - 10, y);
@@ -647,6 +792,11 @@ export function nMosfet(ctx: CanvasRenderingContext2D, x: number, y: number, on:
   label(ctx, "G", x - 42, y - 12, { size: 10, color: Ink.muted });
   label(ctx, "D", x + 28, y - 26, { size: 10, color: Ink.muted });
   label(ctx, "S", x + 28, y + 26, { size: 10, color: Ink.muted });
+  return {
+    g: { x: x - 34, y },
+    d: { x: x + 16, y: y - 34 },
+    s: { x: x + 16, y: y + 34 },
+  };
 }
 
 export function dcMotor(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, running: number) {
@@ -687,53 +837,87 @@ export function dcMotor(ctx: CanvasRenderingContext2D, x: number, y: number, ang
   ctx.lineTo(x - 52, y + 12);
   ctx.stroke();
   label(ctx, "+", x - 62, y - 12, { size: 11, color: Ink.text, align: "right" });
-  label(ctx, "−", x - 62, y + 12, { size: 11, color: Ink.muted, align: "right" });
+  label(ctx, "\u2212", x - 62, y + 12, { size: 11, color: Ink.muted, align: "right" });
   label(ctx, "M", x, y + 52, { size: 12, color: Ink.text });
 }
 
-export function transformer(ctx: CanvasRenderingContext2D, x: number, y: number, flux = 0) {
-  const left = x - 14;
-  const right = x + 14;
+export function transformer(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  flux = 0,
+  np = 12,
+  ns = 12,
+) {
+  const priN = Math.max(3, Math.min(10, Math.round(np / 4)));
+  const secN = Math.max(3, Math.min(10, Math.round(ns / 4)));
+  const pitch = 12;
+  const coilR = 7;
+  const left = x - 16;
+  const right = x + 16;
+  const priH = (priN - 1) * pitch + coilR * 2;
+  const secH = (secN - 1) * pitch + coilR * 2;
+  const priTopY = y - priH / 2;
+  const priBotY = y + priH / 2;
+  const secTopY = y - secH / 2;
+  const secBotY = y + secH / 2;
+  const coreTop = Math.min(priTopY, secTopY) - 4;
+  const coreBot = Math.max(priBotY, secBotY) + 4;
+
   ctx.strokeStyle = Ink.copper;
   ctx.lineWidth = 2.8;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(left, y - 32);
-  for (let i = 0; i < 4; i++) {
-    ctx.arc(left, y - 24 + i * 16, 8, -Math.PI / 2, Math.PI / 2, true);
+  ctx.moveTo(left, priTopY);
+  for (let i = 0; i < priN; i++) {
+    ctx.arc(left, priTopY + coilR + i * pitch, coilR, -Math.PI / 2, Math.PI / 2, true);
   }
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(right, y - 32);
-  for (let i = 0; i < 4; i++) {
-    ctx.arc(right, y - 24 + i * 16, 8, -Math.PI / 2, Math.PI / 2, false);
+  ctx.moveTo(right, secTopY);
+  for (let i = 0; i < secN; i++) {
+    ctx.arc(right, secTopY + coilR + i * pitch, coilR, -Math.PI / 2, Math.PI / 2, false);
   }
   ctx.stroke();
+
+  const lead = 28;
   ctx.beginPath();
-  ctx.moveTo(left - 28, y - 40);
-  ctx.lineTo(left, y - 32);
-  ctx.moveTo(left - 28, y + 40);
-  ctx.lineTo(left, y + 32);
-  ctx.moveTo(right + 28, y - 40);
-  ctx.lineTo(right, y - 32);
-  ctx.moveTo(right + 28, y + 40);
-  ctx.lineTo(right, y + 32);
+  ctx.moveTo(left - lead, priTopY - 8);
+  ctx.lineTo(left, priTopY);
+  ctx.moveTo(left - lead, priBotY + 8);
+  ctx.lineTo(left, priBotY);
+  ctx.moveTo(right + lead, secTopY - 8);
+  ctx.lineTo(right, secTopY);
+  ctx.moveTo(right + lead, secBotY + 8);
+  ctx.lineTo(right, secBotY);
   ctx.stroke();
+
   ctx.strokeStyle = Ink.pin;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(x - 5, y - 36);
-  ctx.lineTo(x - 5, y + 36);
-  ctx.moveTo(x + 5, y - 36);
-  ctx.lineTo(x + 5, y + 36);
+  ctx.moveTo(x - 5, coreTop);
+  ctx.lineTo(x - 5, coreBot);
+  ctx.moveTo(x + 5, coreTop);
+  ctx.lineTo(x + 5, coreBot);
   ctx.stroke();
+
+  // phasing dots: primary top and secondary top (in phase)
+  ctx.fillStyle = Ink.pin;
+  ctx.beginPath();
+  ctx.arc(left - 11, priTopY + 5, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(right + 11, secTopY + 5, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+
   if (flux > 0.04) {
     ctx.save();
     ctx.globalAlpha = 0.25 + flux * 0.5;
     ctx.strokeStyle = Ink.electron;
     ctx.lineWidth = 1.4;
+    const span = coreBot - coreTop;
     for (let i = 0; i < 3; i++) {
-      const yy = y - 12 + i * 12;
+      const yy = coreTop + span * (0.28 + i * 0.22);
       ctx.beginPath();
       ctx.moveTo(x - 16, yy);
       ctx.lineTo(x + 16, yy);
@@ -742,15 +926,22 @@ export function transformer(ctx: CanvasRenderingContext2D, x: number, y: number,
     ctx.restore();
   }
   return {
-    priTop: { x: left - 28, y: y - 40 },
-    priBot: { x: left - 28, y: y + 40 },
-    secTop: { x: right + 28, y: y - 40 },
-    secBot: { x: right + 28, y: y + 40 },
+    priTop: { x: left - lead, y: priTopY - 8 },
+    priBot: { x: left - lead, y: priBotY + 8 },
+    secTop: { x: right + lead, y: secTopY - 8 },
+    secBot: { x: right + lead, y: secBotY + 8 },
   };
 }
 
-export function potentiometer(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, t: number) {
-  resistorBody(ctx, x, y, w, 1000, 0);
+export function potentiometer(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  t: number,
+  ohm = 1000,
+) {
+  resistorBody(ctx, x, y, w, ohm, 0);
   const u = Math.max(0.08, Math.min(0.92, t));
   const wx = x + w * u;
   ctx.strokeStyle = Ink.electron;
@@ -768,7 +959,10 @@ export function potentiometer(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.moveTo(wx, y - 22);
   ctx.lineTo(wx, y - 34);
   ctx.stroke();
-  return { wiper: { x: wx, y: y - 34 } };
+  label(ctx, "1", x - 16, y + 18, { size: 10, color: Ink.muted });
+  label(ctx, "wiper", wx, y - 46, { size: 10, color: Ink.muted });
+  label(ctx, "3", x + w + 16, y + 18, { size: 10, color: Ink.muted });
+  return { wiper: { x: wx, y: y - 34 }, left: { x: x - 10, y }, right: { x: x + w + 10, y } };
 }
 
 export function relayBody(

@@ -62,9 +62,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useLayoutEffect(() => {
     const next = readTheme();
-    if (next !== theme) setThemeState(next);
+    setThemeState(next);
     applyTheme(next);
-  });
+  }, []);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);

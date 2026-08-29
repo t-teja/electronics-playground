@@ -41,4 +41,30 @@ if (!shell) {
 }
 copyFileSync(shell, join(dest, "index.html"));
 copyFileSync(shell, join(dest, "404.html"));
-console.log(`gh-pages-post: ${src} → ${dest} (index.html + 404.html + .nojekyll)`);
+
+const LAB_SLUGS = [
+  "resistor",
+  "capacitor",
+  "inductor",
+  "potentiometer",
+  "transformer",
+  "diode",
+  "led",
+  "transistor",
+  "mosfet",
+  "logic-gates",
+  "timer-555",
+  "microcontroller",
+  "signal-generator",
+  "dc-motor",
+  "relay",
+];
+for (const slug of LAB_SLUGS) {
+  const dir = join(dest, "lab", slug);
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(shell, join(dir, "index.html"));
+}
+
+console.log(
+  `gh-pages-post: ${src} → ${dest} (index.html + 404.html + lab/*/index.html + .nojekyll)`,
+);
