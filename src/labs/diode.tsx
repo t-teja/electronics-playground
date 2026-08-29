@@ -39,21 +39,22 @@ export function DiodeLab() {
   const i = shockley(v);
   const flow = useRef(new ElectronFlow());
   const holes = useRef(new ElectronFlow());
+  const loop = useRef(new ElectronFlow());
   const samples = useRef<number[]>(Array(80).fill(0.5));
   const params = useRef({ v, i });
   params.current = { v, i };
 
   const insight = useMemo(() => {
     if (v >= 0.7) {
-      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} - the valve is open.`;
+      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} - the LED lights.`;
     }
     if (v > 0.2) {
-      return `Approaching the silicon threshold. Below ~0.7 V the barrier still stops most carriers. Watch the depletion region shrink as you raise voltage.`;
+      return `Approaching the silicon threshold. Below ~0.7 V the barrier still stops most carriers, so the LED stays dark.`;
     }
     if (v >= 0) {
-      return `Barely biased. The built-in potential of the PN junction (~0.7 V for silicon) still owns the story. Current is a trickle.`;
+      return `Barely biased. The built-in potential of the PN junction (~0.7 V for silicon) still owns the story. The LED is off.`;
     }
-    return `Reverse biased at ${formatVolt(v)}. The depletion region widens into an insulator. Only a tiny saturation current leaks through. This is why diodes rectify.`;
+    return `Reverse biased at ${formatVolt(v)}. The schematic stays put. The depletion region widens into an insulator, so the LED stays off.`;
   }, [v, i]);
 
   return (
@@ -63,7 +64,7 @@ export function DiodeLab() {
         <>
           <Meter label="Bias" value={formatVolt(v)} />
           <Meter label="Current" value={formatAmp(i)} />
-          <Meter label="State" value={v >= 0.7 ? "conducting" : "blocking"} />
+          <Meter label="LED" value={v >= 0.7 ? "on" : "off"} />
         </>
       }
       controls={
@@ -75,7 +76,7 @@ export function DiodeLab() {
           max={1.2}
           step={0.01}
           onChange={setV}
-          hint="Negative is reverse. Silicon turns on near +0.7 V."
+          hint="Wiring never moves. Above ~0.7 V the LED turns on. Below that it is off."
         />
       }
       insight={<p>{insight}</p>}
@@ -93,41 +94,31 @@ export function DiodeLab() {
               const bat = battery(ctx, 70, y);
               const d = diodeSymbol(ctx, 380, y, 1.15);
               resistorBody(ctx, 150, y, 70, 330, 0);
+              const on = p.v >= 0.7;
               const led = ledDome(
                 ctx,
                 560,
                 76,
                 Ink.electron,
-                p.v >= 0.7 ? Math.min(1, Math.abs(p.i) / 0.02) : 0.04,
+                on ? Math.min(1, Math.abs(p.i) / 0.02) : 0.04,
               );
-              label(ctx, p.v >= 0 ? "forward" : "reverse", 380, y - 48, { size: 12 });
+              label(ctx, on ? "forward  LED on" : "LED off", 380, y - 48, { size: 12 });
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
               label(ctx, "330", 185, y + 28, { size: 10, mono: true });
 
               const rLeft = { x: 140, y };
               const rRight = { x: 230, y };
-              if (p.v >= 0) {
-                wire(ctx, [bat.pos, rLeft]);
-                wire(ctx, [rRight, d.anode]);
-                wire(ctx, [d.cathode, { x: led.anode.x, y }, led.anode]);
-                wire(ctx, [
-                  led.cathode,
-                  { x: led.cathode.x, y: botY },
-                  { x: bat.neg.x, y: botY },
-                  bat.neg,
-                ]);
-              } else {
-                wire(ctx, [
-                  bat.pos,
-                  { x: bat.pos.x, y: 48 },
-                  { x: led.cathode.x, y: 48 },
-                  led.cathode,
-                ]);
-                wire(ctx, [led.anode, { x: led.anode.x, y }, d.cathode]);
-                wire(ctx, [d.anode, rRight]);
-                wire(ctx, [rLeft, { x: rLeft.x, y: botY }, { x: bat.neg.x, y: botY }, bat.neg]);
-              }
+              wire(ctx, [bat.pos, rLeft]);
+              wire(ctx, [rRight, d.anode]);
+              wire(ctx, [d.cathode, { x: led.anode.x, y }, led.anode]);
+              wire(ctx, [
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ]);
               junction(ctx, bat.neg.x, botY);
+              junction(ctx, led.cathode.x, botY);
 
               const deplete = p.v >= 0 ? Math.max(0.08, 1 - p.v / 0.85) : Math.min(1, 0.55 + Math.abs(p.v) / 8);
               const j = pnJunction(ctx, 160, 220, 480, 110, deplete);
@@ -140,19 +131,36 @@ export function DiodeLab() {
                 { x: 180, y: 275 },
                 { x: j.mid - 8, y: 275 },
               ];
-              const conducting = p.v >= 0.7;
               flow.current.setPath(nE, false);
-              flow.current.set(conducting ? 16 : 4, conducting ? -70 : -12);
+              flow.current.set(on ? 16 : 4, on ? -70 : -12);
               flow.current.step(dt);
               flow.current.draw(ctx);
               holes.current.kind = "hole";
               holes.current.glow = false;
               holes.current.setPath(pH, false);
-              holes.current.set(conducting ? 16 : 4, conducting ? 70 : 12);
+              holes.current.set(on ? 16 : 4, on ? 70 : 12);
               holes.current.step(dt);
               holes.current.draw(ctx);
 
-              if (conducting) {
+              const copper: Pt[] = [
+                bat.pos,
+                rLeft,
+                rRight,
+                d.anode,
+                d.cathode,
+                { x: led.anode.x, y },
+                led.anode,
+                led.cathode,
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
+              ];
+              loop.current.setPath(copper, true);
+              loop.current.set(on ? 18 : 0, on ? -90 : 0);
+              loop.current.step(dt);
+              loop.current.draw(ctx);
+
+              if (on) {
                 for (let k = 0; k < 4; k++) {
                   const px = j.mid + Math.sin(t * 6 + k) * 10;
                   ctx.globalAlpha = 0.35;
