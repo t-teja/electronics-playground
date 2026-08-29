@@ -1,5 +1,7 @@
 export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor" | "computer";
 
+export type LabBadge = "new" | "updated";
+
 export type LabMeta = {
   slug: string;
   name: string;
@@ -10,6 +12,7 @@ export type LabMeta = {
   principle: string;
   formula: string;
   uses: string[];
+  badge?: LabBadge;
 };
 
 export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
@@ -102,6 +105,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "potentiometer",
+    badge: "updated",
     name: "Potentiometer",
     symbol: "POT",
     category: "passive",
@@ -138,6 +142,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "diode",
+    badge: "updated",
     name: "Diode",
     symbol: "D",
     category: "semiconductor",
@@ -174,6 +179,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "transistor",
+    badge: "updated",
     name: "NPN transistor",
     symbol: "Q",
     category: "semiconductor",
@@ -192,6 +198,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "pnp",
+    badge: "new",
     name: "PNP transistor",
     symbol: "Q",
     category: "semiconductor",
@@ -210,6 +217,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "mosfet",
+    badge: "updated",
     name: "N-MOSFET",
     symbol: "M",
     category: "semiconductor",
@@ -228,6 +236,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "logic-gates",
+    badge: "updated",
     name: "Logic gates",
     symbol: "Σ",
     category: "digital",
@@ -300,6 +309,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "adc",
+    badge: "new",
     name: "ADC",
     symbol: "ADC",
     category: "digital",
@@ -318,6 +328,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "dac",
+    badge: "new",
     name: "DAC",
     symbol: "DAC",
     category: "digital",
@@ -354,6 +365,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "relay",
+    badge: "updated",
     name: "Relay",
     symbol: "K",
     category: "electromechanical",
@@ -372,6 +384,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "ldr",
+    badge: "new",
     name: "LDR",
     symbol: "LDR",
     category: "sensor",
@@ -390,6 +403,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "ir",
+    badge: "new",
     name: "IR sensor",
     symbol: "IR",
     category: "sensor",
@@ -408,6 +422,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "pir",
+    badge: "new",
     name: "PIR",
     symbol: "PIR",
     category: "sensor",
@@ -426,6 +441,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "ultrasonic",
+    badge: "new",
     name: "Ultrasonic",
     symbol: "US",
     category: "sensor",
@@ -444,6 +460,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "ram",
+    badge: "new",
     name: "RAM",
     symbol: "RAM",
     category: "computer",
@@ -461,6 +478,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "rom",
+    badge: "new",
     name: "ROM",
     symbol: "ROM",
     category: "computer",
@@ -478,6 +496,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "eprom",
+    badge: "new",
     name: "EPROM",
     symbol: "EPROM",
     category: "computer",
@@ -494,6 +513,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "psram",
+    badge: "new",
     name: "PSRAM",
     symbol: "PSRAM",
     category: "computer",
@@ -511,6 +531,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "cpu",
+    badge: "new",
     name: "CPU",
     symbol: "CPU",
     category: "computer",
@@ -526,6 +547,7 @@ export const LABS: LabMeta[] = [
   },
   {
     slug: "gpu",
+    badge: "new",
     name: "GPU",
     symbol: "GPU",
     category: "computer",
