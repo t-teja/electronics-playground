@@ -47,9 +47,9 @@ export function MosfetLab() {
       return `Vgs = ${formatVolt(vgs)} is below the ${formatVolt(VTH)} threshold. No inversion layer, no channel, the LED is dark. The gate draws (almost) no DC current.`;
     }
     if (region === "linear") {
-      return `The channel is a resistor. Drain current is limited by ${formatOhm(rd)} to ${formatAmp(idMax)} \u2014 the MOSFET is a closed switch.`;
+      return `The channel is a resistor. Drain current is limited by ${formatOhm(rd)} to ${formatAmp(idMax)} - the MOSFET is a closed switch.`;
     }
-    return `Saturation. The inverted n-channel is pinched off at the drain. Id \u2248 k(Vgs \u2212 Vth)\u00b2 = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
+    return `Saturation. The inverted n-channel is pinched off at the drain. Id ~ k(Vgs - Vth)^2 = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
   }, [region, vgs, id, idMax, rd]);
 
   return (
@@ -89,7 +89,7 @@ export function MosfetLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            Vth = {formatVolt(VTH)} \u00b7 Id sat = k (Vgs \u2212 Vth)\u00b2
+            Vth = {formatVolt(VTH)} * Id sat = k (Vgs - Vth)^2
           </p>
           <p className="text-xs text-subtle">
             Region names are a current clamp against VDD/Rd, not a full Vds MOSFET model.
@@ -188,7 +188,7 @@ export function MosfetLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `Id = k (Vgs \u2212 Vth)\u00b2 = ${formatAmp(p.id)}`, 560, 392, {
+              label(ctx, `Id = k (Vgs - Vth)^2 = ${formatAmp(p.id)}`, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

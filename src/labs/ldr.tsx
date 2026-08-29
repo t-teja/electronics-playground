@@ -52,15 +52,15 @@ export function LdrLab() {
 
   const insight = useMemo(() => {
     if (lux < 2) {
-      return `Dark. Photons are scarce, so almost no extra carriers are freed. The LDR sits near ${formatOhm(RDARK)} and ${formatVolt(vout)} appears at the tap — too low to light the LED.`;
+      return `Dark. Photons are scarce, so almost no extra carriers are freed. The LDR sits near ${formatOhm(RDARK)} and ${formatVolt(vout)} appears at the tap - too low to light the LED.`;
     }
     if (lux < 40) {
       return `Photoconductivity has started: R_LDR = R_dark / (1 + (E/${LUX0})^${GAMMA}) = ${formatOhm(rLdr)}. The divider with ${formatOhm(rFixed)} yields ${formatVolt(vout)}.`;
     }
     if (iLed < 0.00015) {
-      return `Brighter, lower R. Vout is ${formatVolt(vout)}, still under the LED’s ~${VF_LED.toFixed(1)} V forward drop, so the indicator stays dark even though the meter is moving.`;
+      return `Brighter, lower R. Vout is ${formatVolt(vout)}, still under the LED's ~${VF_LED.toFixed(1)} V forward drop, so the indicator stays dark even though the meter is moving.`;
     }
-    return `Photons flood the lattice and resistance falls to ${formatOhm(rLdr)}. Vout = VCC · Rbot / (Rbot + Rtop) = ${formatVolt(vout)}. The LED sees that voltage and glows.`;
+    return `Photons flood the lattice and resistance falls to ${formatOhm(rLdr)}. Vout = VCC * Rbot / (Rbot + Rtop) = ${formatVolt(vout)}. The LED sees that voltage and glows.`;
   }, [lux, rLdr, rFixed, vout, iLed]);
 
   return (
@@ -86,7 +86,7 @@ export function LdrLab() {
             hint="Photons free carriers. More light, less resistance."
           />
           <LogControl
-            label="Fixed resistor"
+            label="R2"
             value={rFixed}
             display={formatOhm(rFixed)}
             min={1000}
@@ -100,7 +100,7 @@ export function LdrLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            R ∝ 1 / E^{GAMMA} · Vout = {formatVolt(VCC)} · {formatOhm(rBot)} / ({formatOhm(rBot)} + {formatOhm(rTop)})
+            R proportional to 1 / E^{GAMMA} * Vout = {formatVolt(VCC)} * {formatOhm(rBot)} / ({formatOhm(rBot)} + {formatOhm(rTop)})
           </p>
         </>
       }
@@ -172,9 +172,6 @@ export function LdrLab() {
                 { x: bat.neg.x, y: botY },
               ]);
               junction(ctx, node.x, node.y);
-              junction(ctx, bat.neg.x, botY);
-              junction(ctx, node.x, topY);
-              junction(ctx, node.x, botY);
 
               label(ctx, `Vout ${formatVolt(p.vout)}`, node.x + 36, midY - 16, {
                 mono: true,
@@ -221,7 +218,7 @@ export function LdrLab() {
                 ledFlow.current.draw(ctx);
               }
 
-              label(ctx, `R ∝ 1 / E^γ   γ = ${GAMMA}`, 400, 392, {
+              label(ctx, `R ~ 1 / E^g   g = ${GAMMA}`, 400, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
