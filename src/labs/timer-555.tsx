@@ -11,8 +11,10 @@ import {
   capPlates,
   clearSim,
   dipPackage,
+  gnd,
   graphPaper,
   Ink,
+  junction,
   label,
   ledDome,
   resistorBody,
@@ -56,12 +58,12 @@ export function Timer555Lab() {
 
   const insight = useMemo(() => {
     if (mode === "monostable") {
-      return `One-shot. A falling edge on TRIG sets the latch; the capacitor charges through RA until ⅔ VCC, then the discharge transistor dumps it. Pulse width = 1.1 · RA · C = ${formatSec(tMono)}.`;
+      return `One-shot. A falling edge on TRIG sets the latch; the capacitor charges through RA until \u2154 VCC, then the discharge transistor dumps it. Pulse width = 1.1 \u00b7 RA \u00b7 C = ${formatSec(tMono)}.`;
     }
     if (duty > 0.7) {
-      return `Astable, but RA is large compared with RB so the high time dominates (${Math.round(duty * 100)}% duty). Frequency is ${formatHz(fAstable)} — TH = ${formatSec(th)}, TL = ${formatSec(tl)}.`;
+      return `Astable, but RA is large compared with RB so the high time dominates (${Math.round(duty * 100)}% duty). Frequency is ${formatHz(fAstable)} \u2014 TH = ${formatSec(th)}, TL = ${formatSec(tl)}.`;
     }
-    return `Astable heartbeat. The capacitor hunts between ⅓ and ⅔ of VCC. Charge through RA+RB, discharge through RB. f = 1.44 / ((RA + 2 RB) C) = ${formatHz(fAstable)}.`;
+    return `Astable heartbeat. The capacitor hunts between \u2153 and \u2154 of VCC. Charge through RA+RB, discharge through RB. f = 1.44 / ((RA + 2 RB) C) = ${formatHz(fAstable)}.`;
   }, [mode, duty, fAstable, th, tl, tMono]);
 
   return (
@@ -91,7 +93,7 @@ export function Timer555Lab() {
           </Control>
           <ToggleControl label="Power" checked={run} on="on" off="off" onCheckedChange={setRun} />
           {mode === "monostable" ? (
-            <Control label="Trigger" hint="Pulls pin 2 below ⅓ VCC for a moment.">
+            <Control label="Trigger" hint="Pulls pin 2 below \u2153 VCC for a moment.">
               <Button
                 type="button"
                 variant="secondary"
@@ -184,85 +186,157 @@ export function Timer555Lab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              label(ctx, p.mode === "astable" ? "astable oscillator" : "monostable pulse", 400, 20, {
+              label(ctx, p.mode === "astable" ? "astable oscillator" : "monostable pulse", 400, 14, {
                 size: 13,
                 color: Ink.text,
               });
 
-              battery(ctx, 50, 120);
-              label(ctx, formatVolt(VCC), 50, 172, { mono: true, size: 11 });
+              const bat = battery(ctx, 48, 160);
+              label(ctx, formatVolt(VCC), 48, 212, { mono: true, size: 11 });
 
-              resistorBody(ctx, 100, 70, 80, p.ra, s.high ? 0.14 : 0.04);
-              label(ctx, "RA", 140, 46, { size: 11 });
+              const chipX = 455;
+              const chipY = 148;
+              const dip = dipPackage(ctx, chipX, chipY, 8, ["GND", "TRIG", "OUT", "RESET", "CONT", "THR", "DIS", "VCC"], {
+                3: out,
+                7: s.high ? 0 : 1,
+                8: p.run ? 1 : 0,
+                4: p.run ? 1 : 0,
+                2: p.mode === "monostable" && s.trigger > 0 ? 1 : 0,
+                1: 1,
+              });
+              label(ctx, "555", chipX, chipY, { size: 18, color: Ink.text, mono: true });
 
+              const pinX = (i: number) => dip.left + 28 + i * dip.pinW;
+              const botY = dip.top + dip.bodyH + 14;
+              const topY = dip.top - 14;
+              const P = {
+                1: { x: pinX(0), y: botY },
+                2: { x: pinX(1), y: botY },
+                3: { x: pinX(2), y: botY },
+                4: { x: pinX(3), y: botY },
+                5: { x: pinX(3), y: topY },
+                6: { x: pinX(2), y: topY },
+                7: { x: pinX(1), y: topY },
+                8: { x: pinX(0), y: topY },
+              };
+
+              const vccY = 40;
+              const gndY = 280;
+              const rightBus = dip.left + dip.bodyW + 20;
+
+              // Pin 8 VCC: left along the pin row (does not drop across other top pins)
+              wire(ctx, [
+                bat.pos,
+                { x: bat.pos.x, y: vccY },
+                { x: 64, y: vccY },
+              ]);
+              wire(ctx, [P[8], { x: 64, y: topY }, { x: 64, y: vccY }]);
+              junction(ctx, 64, vccY);
+
+              // Pin 4 RESET to VCC, around the right of the package
+              wire(ctx, [
+                P[4],
+                { x: rightBus, y: botY },
+                { x: rightBus, y: vccY },
+                { x: 64, y: vccY },
+              ]);
+              junction(ctx, rightBus, vccY);
+
+              // RA from VCC to pin 7 DIS
+              resistorBody(ctx, 90, 62, 80, p.ra, s.high ? 0.14 : 0.04);
+              label(ctx, "RA", 130, 42, { size: 11 });
+              wire(ctx, [
+                { x: 90, y: vccY },
+                { x: 90, y: 62 },
+              ]);
+              const disNode = { x: 190, y: 62 };
+              wire(ctx, [disNode, { x: P[7].x, y: 62 }, P[7]]);
+              junction(ctx, disNode.x, disNode.y);
+
+              const tie = { x: 190, y: 168 };
               if (p.mode === "astable") {
-                resistorBody(ctx, 100, 148, 80, p.rb, s.high ? 0.04 : 0.18);
-                label(ctx, "RB", 140, 124, { size: 11 });
+                resistorBody(ctx, 90, 114, 80, p.rb, s.high ? 0.04 : 0.18);
+                label(ctx, "RB", 130, 94, { size: 11 });
+                wire(ctx, [disNode, { x: 190, y: 114 }]);
+                wire(ctx, [
+                  { x: 90, y: 114 },
+                  { x: 90, y: 168 },
+                  tie,
+                ]);
+              } else {
+                wire(ctx, [disNode, tie]);
               }
+              junction(ctx, tie.x, tie.y);
 
-              capPlates(ctx, 140, 220, s.vc / VCC);
-              label(ctx, formatFarad(p.c), 140, 268, { mono: true, size: 10 });
-              label(ctx, p.run ? (s.high ? "charging" : "discharging") : "idle", 140, 286, {
+              // Pin 6 THR: approach from above the pin row so we do not scrape pin 7
+              wire(ctx, [
+                tie,
+                { x: 250, y: 168 },
+                { x: 250, y: 50 },
+                { x: P[6].x, y: 50 },
+                P[6],
+              ]);
+              // Pin 2 TRIG: below the package, then up onto the pin
+              wire(ctx, [
+                tie,
+                { x: 190, y: botY + 16 },
+                { x: P[2].x, y: botY + 16 },
+                P[2],
+              ]);
+
+              capPlates(ctx, 140, 222, s.vc / VCC);
+              label(ctx, formatFarad(p.c), 86, 222, { mono: true, size: 10, align: "right" });
+              label(ctx, p.run ? (s.high ? "charging" : "discharging") : "idle", 140, 256, {
                 size: 11,
                 color: Ink.electron,
               });
+              wire(ctx, [
+                { x: 140, y: 206 },
+                { x: 140, y: 168 },
+                tie,
+              ]);
+              wire(ctx, [
+                { x: 140, y: 238 },
+                { x: 140, y: gndY },
+              ]);
+              junction(ctx, 140, gndY);
 
-              dipPackage(ctx, 400, 130, 8, ["", "", "OUT", "", "", "", "DIS", "VCC"], {
-                3: out,
-                7: s.high ? 0 : 1,
-                8: 1,
-                2: p.mode === "monostable" && s.trigger > 0 ? 1 : 0,
-              });
-              label(ctx, "555", 400, 130, { size: 18, color: Ink.text, mono: true });
+              // Pin 1 GND: left first so the TRIG run below the pins does not hit it
+              wire(ctx, [P[1], { x: 64, y: botY }, { x: 64, y: gndY }]);
+              wire(ctx, [
+                bat.neg,
+                { x: bat.neg.x, y: gndY },
+                { x: 64, y: gndY },
+                { x: 140, y: gndY },
+              ]);
+              gnd(ctx, 100, gndY);
+              junction(ctx, 64, gndY);
 
-              wire(ctx, [
-                { x: 70, y: 120 },
-                { x: 70, y: 70 },
-                { x: 100, y: 70 },
-              ]);
-              wire(ctx, [
-                { x: 190, y: 70 },
-                { x: 250, y: 70 },
-                { x: 250, y: 90 },
-                { x: 322, y: 90 },
-              ]);
-              wire(ctx, [
-                { x: 140, y: 204 },
-                { x: 140, y: 184 },
-                { x: 190, y: 184 },
-                { x: 190, y: p.mode === "astable" ? 148 : 70 },
-              ]);
-              wire(ctx, [
-                { x: 140, y: 236 },
-                { x: 140, y: 312 },
-                { x: 50, y: 312 },
-                { x: 50, y: 148 },
-              ]);
-
-              ledDome(ctx, 660, 86, Ink.electron, out);
-              label(ctx, out ? "OUT  HIGH" : "OUT  LOW", 660, 146, {
+              const led = ledDome(ctx, 680, 64, Ink.electron, out);
+              label(ctx, out ? "OUT  HIGH" : "OUT  LOW", 680, 128, {
                 size: 11,
                 color: out ? Ink.electron : Ink.muted,
               });
               wire(ctx, [
-                { x: 434, y: 184 },
-                { x: 434, y: 200 },
-                { x: 660, y: 200 },
-                { x: 660, y: 118 },
+                P[3],
+                { x: 620, y: botY },
+                { x: 620, y: led.anode.y },
+                led.anode,
+              ]);
+              wire(ctx, [
+                led.cathode,
+                { x: led.cathode.x, y: gndY },
+                { x: 140, y: gndY },
               ]);
 
-              const path: Pt[] = [
-                { x: 190, y: 70 },
-                { x: 140, y: 70 },
-                { x: 140, y: 204 },
-              ];
+              const path: Pt[] = [disNode, tie, { x: 140, y: 206 }];
               flow.current.setPath(path, false);
               flow.current.set(p.run ? 12 : 0, s.high ? -80 : 80);
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              scope(ctx, 280, 300, 220, 100, vcSamples.current, Ink.electron, "Vc  1/3-2/3 VCC");
-              scope(ctx, 520, 300, 250, 100, outSamples.current, Ink.pin, "OUT  pin 3");
+              scope(ctx, 280, 308, 220, 96, vcSamples.current, Ink.electron, "Vc  1/3-2/3 VCC");
+              scope(ctx, 520, 308, 250, 96, outSamples.current, Ink.pin, "OUT  pin 3");
             });
 
             ui.current += dt;
