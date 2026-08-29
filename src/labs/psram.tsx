@@ -77,7 +77,7 @@ export function PsramLab() {
       return `VCC gone. DRAM capacitors dumped. PSRAM is still volatile — the "static" is a lie the refresh engine tells the bus.`;
     }
     if (!refresh) {
-      return `Refresh engine off. Charge leaks: Q(t) = Q0 e^{−t/RC} with RC ≈ ${formatSec(RC)}. Rows will read 0 once they fall under 0.5. Pseudo-static means a DRAM with a built-in refresh engine.`;
+      return `Refresh engine off. Charge leaks: Q(t) = Q0 exp(-t/RC) with RC ≈ ${formatSec(RC)}. Rows will read 0 once they fall under 0.5. Pseudo-static means a DRAM with a built-in refresh engine.`;
     }
     if (weHold.current > 0) {
       return `WRITE. Row ${addr} capacitors charged to din=${hex4(din)}h. The refresh cursor will top them up as it walks past.`;
@@ -138,7 +138,7 @@ export function PsramLab() {
       insight={
         <>
           <p>{insight}</p>
-          <p className="font-mono text-xs text-subtle">Q(t) = Q0 e^{−t/RC} unless refreshed</p>
+          <p className="font-mono text-xs text-subtle">Q(t) = Q0 exp(-t/RC) unless refreshed</p>
         </>
       }
       canvas={
@@ -185,7 +185,7 @@ export function PsramLab() {
               ctx.fill();
               ctx.strokeStyle = "rgba(128,128,128,0.22)";
               ctx.stroke();
-              label(ctx, "PSRAM  16 × 4", left + bodyW / 2, top + 18, {
+              label(ctx, "PSRAM  16 x 4", left + bodyW / 2, top + 18, {
                 size: 13,
                 color: Ink.text,
                 mono: true,
@@ -311,7 +311,7 @@ export function PsramLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `Q(t) = Q0 e^{−t/RC}   row ${refreshRow}   dout=${hex4(liveDout)}h`, 400, 408, {
+              label(ctx, `Q(t) = Q0 exp(-t/RC)   row ${refreshRow}   dout=${hex4(liveDout)}h`, 400, 408, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
