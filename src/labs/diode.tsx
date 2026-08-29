@@ -42,7 +42,7 @@ export function DiodeLab() {
 
   const insight = useMemo(() => {
     if (v >= 0.7) {
-      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} — the valve is open.`;
+      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} \u2014 the valve is open.`;
     }
     if (v > 0.2) {
       return `Approaching the silicon threshold. Below ~0.7 V the barrier still stops most carriers. Watch the depletion region shrink as you raise voltage.`;
@@ -87,19 +87,23 @@ export function DiodeLab() {
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 110;
               battery(ctx, 70, y);
-              diodeSymbol(ctx, 400, y, 1.15);
+              const d = diodeSymbol(ctx, 400, y, 1.15, p.v < 0);
+              const leftPad = p.v < 0 ? d.cathode : d.anode;
+              const rightPad = p.v < 0 ? d.anode : d.cathode;
               wire(ctx, [
                 { x: 88, y },
-                { x: 372, y },
+                leftPad,
               ]);
               wire(ctx, [
-                { x: 428, y },
+                rightPad,
                 { x: 700, y },
                 { x: 700, y: 190 },
                 { x: 70, y: 190 },
                 { x: 70, y: y + 28 },
               ]);
-              label(ctx, p.v >= 0 ? "forward" : "reverse", 400, y - 40, { size: 12 });
+              label(ctx, p.v >= 0 ? "forward" : "reverse", 400, y - 44, { size: 12 });
+              label(ctx, "anode", d.anode.x, y - 22, { size: 10 });
+              label(ctx, "cathode", d.cathode.x, y - 22, { size: 10 });
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
 
               const deplete = p.v >= 0 ? Math.max(0.08, 1 - p.v / 0.85) : Math.min(1, 0.55 + Math.abs(p.v) / 8);
@@ -139,7 +143,7 @@ export function DiodeLab() {
 
               label(ctx, "depletion", j.mid, 210, { size: 10 });
               scope(ctx, 560, 28, 200, 72, samples.current, Ink.electron, "bias");
-              label(ctx, "I = Is (e^{V/nVt} − 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
+              label(ctx, "I = Is (e^{V/nVt} \u2212 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
             });
           }}
         />

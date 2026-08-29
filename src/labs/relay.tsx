@@ -86,58 +86,27 @@ export function RelayLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              battery(ctx, 70, 150);
+              const coilBat = battery(ctx, 70, 150);
               label(ctx, formatVolt(p.vcoil), 70, 202, { mono: true, size: 12 });
               const R = relayBody(ctx, 340, 168, p.on);
-              diodeSymbol(ctx, 200, 248, 0.85);
-              label(ctx, "flyback", 200, 278, { size: 10 });
+              const fly = diodeSymbol(ctx, 200, 200, 0.85);
+              label(ctx, "flyback", 200, 236, { size: 10 });
 
-              wire(ctx, [
-                { x: 86, y: 150 },
-                { x: 200, y: 150 },
-                { x: 200, y: R.coilTop.y },
-                R.coilTop,
-              ]);
-              wire(ctx, [
-                R.coilBot,
-                { x: 200, y: R.coilBot.y },
-                { x: 200, y: 232 },
-              ]);
-              wire(ctx, [
-                { x: 168, y: 248 },
-                { x: 54, y: 248 },
-                { x: 54, y: 150 },
-              ]);
-              wire(ctx, [
-                { x: 232, y: 248 },
-                { x: 302, y: 248 },
-                { x: 302, y: R.coilBot.y },
-                R.coilBot,
-              ]);
+              wire(ctx, [coilBat.pos, { x: R.coilTop.x, y: coilBat.pos.y }, R.coilTop]);
+              wire(ctx, [R.coilBot, { x: coilBat.neg.x, y: R.coilBot.y }, coilBat.neg]);
+              wire(ctx, [fly.cathode, { x: fly.cathode.x, y: coilBat.pos.y }]);
+              wire(ctx, [fly.anode, { x: fly.anode.x, y: R.coilBot.y }, R.coilBot]);
 
-              battery(ctx, 620, 70);
+              const loadBat = battery(ctx, 620, 70);
               label(ctx, "load  9 V", 620, 122, { size: 11 });
-              lamp(ctx, 720, 196, p.on ? 1 : 0.04);
-              wire(ctx, [
-                { x: 636, y: 70 },
-                { x: 720, y: 70 },
-                { x: 720, y: 168 },
-              ]);
-              wire(ctx, [
-                { x: 748, y: 196 },
-                { x: 770, y: 196 },
-                { x: 770, y: 320 },
-                { x: R.com.x, y: 320 },
-                R.com,
-              ]);
-              wire(ctx, [R.no, { x: 692, y: R.no.y }, { x: 692, y: 196 }]);
+              const lampPads = lamp(ctx, 720, 196, p.on ? 1 : 0.04);
               label(ctx, "load", 720, 240, { size: 11 });
 
-              const coilPath: Pt[] = [
-                { x: 86, y: 150 },
-                { x: 200, y: 150 },
-                R.coilTop,
-              ];
+              wire(ctx, [loadBat.pos, { x: lampPads.left.x, y: loadBat.pos.y }, lampPads.left]);
+              wire(ctx, [lampPads.right, { x: 770, y: lampPads.right.y }, { x: 770, y: R.no.y }, R.no]);
+              wire(ctx, [R.com, { x: R.com.x, y: 330 }, { x: loadBat.neg.x, y: 330 }, loadBat.neg]);
+
+              const coilPath: Pt[] = [coilBat.pos, { x: R.coilTop.x, y: coilBat.pos.y }, R.coilTop];
               coilFlow.current.setPath(coilPath, false);
               coilFlow.current.set(
                 p.icoil > 0.004 ? Math.max(5, Math.min(22, p.icoil * 400)) : 0,
@@ -147,9 +116,12 @@ export function RelayLab() {
               coilFlow.current.draw(ctx);
 
               const loadPath: Pt[] = [
-                { x: 636, y: 70 },
-                { x: 720, y: 70 },
-                { x: 720, y: 168 },
+                loadBat.pos,
+                lampPads.left,
+                lampPads.right,
+                R.no,
+                R.com,
+                loadBat.neg,
               ];
               loadFlow.current.setPath(loadPath, false);
               loadFlow.current.set(p.on ? 14 : 0, -100);

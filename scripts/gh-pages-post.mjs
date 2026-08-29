@@ -51,13 +51,20 @@ const LAB_SLUGS = [
   "diode",
   "led",
   "transistor",
+  "pnp",
   "mosfet",
   "logic-gates",
   "timer-555",
   "microcontroller",
   "signal-generator",
+  "adc",
+  "dac",
   "dc-motor",
   "relay",
+  "ldr",
+  "ir",
+  "pir",
+  "ultrasonic",
 ];
 for (const slug of LAB_SLUGS) {
   const dir = join(dest, "lab", slug);

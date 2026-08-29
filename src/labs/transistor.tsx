@@ -7,6 +7,7 @@ import { formatAmp, formatOhm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
   battery,
+  bjtSymbol,
   clearSim,
   graphPaper,
   Ink,
@@ -22,6 +23,7 @@ import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 const BETA = 100;
 const VCC = 9;
 const VCE_SAT = 0.2;
+const VF_LED = 2.0;
 
 export function TransistorLab() {
   const lab = LAB_BY_SLUG.transistor!;
@@ -31,7 +33,7 @@ export function TransistorLab() {
   const [ibUa, setIbUa] = useState(20);
   const [rc, setRc] = useState(470);
   const ib = ibUa * 1e-6;
-  const icSat = (VCC - VCE_SAT) / rc;
+  const icSat = (VCC - VCE_SAT - VF_LED) / rc;
   const icActive = BETA * ib;
   const sat = icActive > icSat;
   const ic = sat ? icSat : icActive;
@@ -47,9 +49,9 @@ export function TransistorLab() {
       return `Base current is essentially zero. The BE junction is off, the collector path is closed, the LED is dark. A transistor at rest is an open switch.`;
     }
     if (region === "saturation") {
-      return `Saturated. The collector cannot deliver more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted — this is the ON switch.`;
+      return `Saturated. The collector cannot deliver more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted \u2014 this is the ON switch.`;
     }
-    return `Active region. ${formatAmp(ib)} into the base becomes ${formatAmp(ic)} at the collector — a gain of β = ${BETA}. The small stream is steering the large one.`;
+    return `Active region. ${formatAmp(ib)} into the base becomes ${formatAmp(ic)} at the collector \u2014 a gain of \u03b2 = ${BETA}. The small stream is steering the large one.`;
   }, [region, ib, ic, icSat, rc]);
 
   return (
@@ -67,7 +69,7 @@ export function TransistorLab() {
           <LinearControl
             label="Base current"
             value={ibUa}
-            display={`${ibUa.toFixed(0)} µA`}
+            display={`${ibUa.toFixed(0)} \u00b5A`}
             min={0}
             max={120}
             step={1}
@@ -89,7 +91,7 @@ export function TransistorLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            β = {BETA} · Ic sat = (Vcc − 0.2) / Rc = {formatAmp(icSat)}
+            \u03b2 = {BETA} \u00b7 Ic sat = (Vcc \u2212 Vce_sat \u2212 Vf) / Rc = {formatAmp(icSat)}
           </p>
         </>
       }
@@ -103,26 +105,8 @@ export function TransistorLab() {
               battery(ctx, 70, 100);
               label(ctx, formatVolt(VCC), 70, 152, { mono: true, size: 12 });
               resistorBody(ctx, 200, 64, 80, p.rc, Math.min(1, p.ic * 8));
-              ledDome(ctx, 360, 40, Ink.electron, Math.min(1, p.ic / 0.015));
-
-              ctx.strokeStyle = Ink.pin;
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.arc(520, 140, 34, 0, Math.PI * 2);
-              ctx.stroke();
-              ctx.beginPath();
-              ctx.moveTo(498, 122);
-              ctx.lineTo(498, 158);
-              ctx.moveTo(498, 130);
-              ctx.lineTo(536, 112);
-              ctx.moveTo(498, 150);
-              ctx.lineTo(536, 168);
-              ctx.stroke();
-              ctx.beginPath();
-              ctx.moveTo(528, 164);
-              ctx.lineTo(536, 168);
-              ctx.lineTo(528, 172);
-              ctx.stroke();
+              const led = ledDome(ctx, 360, 40, Ink.electron, Math.min(1, p.ic / 0.015));
+              const q = bjtSymbol(ctx, 520, 140, "npn");
 
               wire(ctx, [
                 { x: 88, y: 100 },
@@ -131,37 +115,38 @@ export function TransistorLab() {
               ]);
               wire(ctx, [
                 { x: 290, y: 64 },
-                { x: 360, y: 64 },
+                { x: led.anode.x, y: 64 },
+                led.anode,
               ]);
               wire(ctx, [
-                { x: 360, y: 80 },
-                { x: 360, y: 112 },
-                { x: 536, y: 112 },
+                led.cathode,
+                { x: led.cathode.x, y: q.c.y },
+                q.c,
               ]);
               wire(ctx, [
-                { x: 536, y: 168 },
-                { x: 536, y: 250 },
+                q.e,
+                { x: q.e.x, y: 250 },
                 { x: 70, y: 250 },
                 { x: 70, y: 128 },
               ]);
               wire(ctx, [
                 { x: 200, y: 200 },
-                { x: 498, y: 140 },
+                q.b,
               ]);
               ctx.fillStyle = Ink.package;
               ctx.fillRect(160, 188, 80, 24);
               label(ctx, "Ib source", 200, 200, { size: 10, color: Ink.text });
-              label(ctx, `${p.ibUa.toFixed(0)} µA`, 200, 224, { mono: true, size: 11 });
-              label(ctx, "NPN", 520, 140, { size: 10 });
-              label(ctx, p.region, 520, 190, { size: 12, color: Ink.electron });
+              label(ctx, `${p.ibUa.toFixed(0)} \u00b5A`, 200, 224, { mono: true, size: 11 });
+              label(ctx, "NPN", 520, 188, { size: 10 });
+              label(ctx, p.region, 520, 206, { size: 12, color: Ink.electron });
 
               npnDie(ctx, 80, 288, 300, 70);
               label(ctx, "die cross-section", 230, 276, { size: 11, color: Ink.text });
 
               const col: Pt[] = [
-                { x: 360, y: 112 },
-                { x: 536, y: 112 },
-                { x: 536, y: 168 },
+                led.cathode,
+                q.c,
+                q.e,
               ];
               collector.current.setPath(col, false);
               collector.current.set(
@@ -173,7 +158,7 @@ export function TransistorLab() {
 
               const bpath: Pt[] = [
                 { x: 240, y: 200 },
-                { x: 498, y: 140 },
+                q.b,
               ];
               base.current.setPath(bpath, false);
               base.current.radius = 1.7;
@@ -181,7 +166,7 @@ export function TransistorLab() {
               base.current.step(dt);
               base.current.draw(ctx);
 
-              label(ctx, `Ic = β Ib = ${formatAmp(p.ic)}`, 560, 392, {
+              label(ctx, `Ic = \u03b2 Ib = ${formatAmp(p.ic)}`, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

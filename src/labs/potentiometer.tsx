@@ -42,7 +42,7 @@ export function PotentiometerLab() {
 
   const insight = useMemo(() => {
     if (rload < rtot * 0.2) {
-      return `The load (${formatOhm(rload)}) is small compared with the track. It pulls the wiper down — Vout is ${formatVolt(vout)}, not the unloaded ${formatVolt(v * k)}. Buffer it if you care about the ratio.`;
+      return `The load (${formatOhm(rload)}) is small compared with the track. It pulls the wiper down \u2014 Vout is ${formatVolt(vout)}, not the unloaded ${formatVolt(v * k)}. Buffer it if you care about the ratio.`;
     }
     return `Wiper at ${(k * 100).toFixed(0)}%. Unloaded, Vout would be ${formatVolt(v * k)}. With ${formatOhm(rload)} on the tap, Vout is ${formatVolt(vout)}. The LED brightness follows the tap, not the supply.`;
   }, [k, rload, rtot, v, vout]);
@@ -109,9 +109,8 @@ export function PotentiometerLab() {
               const y = 200;
               battery(ctx, 70, y);
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
-              const pot = potentiometer(ctx, 260, y, 220, p.k);
+              const pot = potentiometer(ctx, 260, y, 220, p.k, p.rtot);
               label(ctx, formatOhm(p.rtot), 370, y + 36, { mono: true, size: 11 });
-              label(ctx, "wiper", pot.wiper.x, pot.wiper.y - 16, { size: 11 });
 
               ledDome(ctx, 620, 80, Ink.electron, Math.min(1, p.iled / 0.008));
               resistorBody(ctx, 560, 200, 80, p.rload, Math.min(1, p.iled * 20));

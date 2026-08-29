@@ -1,4 +1,4 @@
-export type Category = "passive" | "semiconductor" | "digital" | "electromechanical";
+export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor";
 
 export type LabMeta = {
   slug: string;
@@ -32,6 +32,11 @@ export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
     id: "electromechanical",
     label: "Electromechanical",
     blurb: "Current becomes torque, or a magnetic click that throws a switch.",
+  },
+  {
+    id: "sensor",
+    label: "Sensors",
+    blurb: "Light, heat, distance, and motion turned into voltage.",
   },
 ];
 
@@ -181,6 +186,24 @@ export const LABS: LabMeta[] = [
     ],
   },
   {
+    slug: "pnp",
+    name: "PNP transistor",
+    symbol: "Q",
+    category: "semiconductor",
+    tagline: "Holes as the majority, current out of the base",
+    summary:
+      "A PNP sandwich. Pull a whisper of current out of the base and a wide path opens from emitter to collector — the high-side twin of the NPN.",
+    principle:
+      "Forward-biasing the emitter–base junction injects holes into the base. Most of them are swept into the collector before they recombine. Collector current is β times the current leaving the base, until the device saturates. Emitter sits at +VCC; the load hangs off the collector toward ground.",
+    formula: "I_c = β · I_b  (active)",
+    uses: [
+      "High-side switches that source current into a load",
+      "Complementary pairs with NPN (push-pull stages)",
+      "Level shifting and analog front-ends",
+      "Discrete linear regulators and current sources",
+    ],
+  },
+  {
     slug: "mosfet",
     name: "MOSFET",
     symbol: "M",
@@ -271,6 +294,42 @@ export const LABS: LabMeta[] = [
     ],
   },
   {
+    slug: "adc",
+    name: "ADC",
+    symbol: "ADC",
+    category: "digital",
+    tagline: "A ruler for voltage",
+    summary:
+      "Analog in, bits out. The converter snaps a voltage onto the nearest code of a 2ⁿ−1 step ladder.",
+    principle:
+      "An n-bit ADC divides Vref into 2ⁿ−1 equal slices. The code is round(Vin/Vref × (2ⁿ−1)). The reconstructed voltage Vq never quite equals Vin — that leftover is quantization error.",
+    formula: "D = round(Vin/Vref · (2ⁿ − 1))",
+    uses: [
+      "Microphone and sensor front-ends on microcontrollers",
+      "Audio interfaces and SDR receivers",
+      "Battery-voltage monitoring",
+      "Touch and temperature measurement",
+    ],
+  },
+  {
+    slug: "dac",
+    name: "DAC",
+    symbol: "DAC",
+    category: "digital",
+    tagline: "Bits into a voltage",
+    summary:
+      "Bits in, analog out. Weighted resistors (or an R-2R ladder) turn a code into a fraction of Vref.",
+    principle:
+      "Vout = Vref × D / (2ⁿ − 1). Each bit is a switch onto a binary-weighted rung. The LED on the output sees a voltage, not a number.",
+    formula: "Vout = Vref · D / (2ⁿ − 1)",
+    uses: [
+      "Audio playback and synthesizer voices",
+      "Analog control voltages from a microcontroller",
+      "Function generators and AWG outputs",
+      "Calibration and offset trim",
+    ],
+  },
+  {
     slug: "dc-motor",
     name: "DC motor",
     symbol: "M",
@@ -304,6 +363,78 @@ export const LABS: LabMeta[] = [
       "Automotive horns, lamps, and starters",
       "PLC discrete outputs switching mains",
       "Isolating a low-voltage MCU from a dirty load",
+    ],
+  },
+  {
+    slug: "ldr",
+    name: "LDR",
+    symbol: "LDR",
+    category: "sensor",
+    tagline: "Light as a resistor",
+    summary:
+      "A photocell. Photons free carriers; resistance falls as the room brightens, and a divider turns that into a voltage.",
+    principle:
+      "Photoconductivity: absorbed photons lift electrons into the conduction band, so R falls with illuminance roughly as 1/E^γ. A voltage divider with a fixed resistor turns that resistance into a voltage a microcontroller can read.",
+    formula: "R ∝ 1 / E^γ",
+    uses: [
+      "Night lights and street-lamp dusk sensors",
+      "Camera exposure meters",
+      "Solar trackers and greenhouse shading",
+      "DIY light-following robots",
+    ],
+  },
+  {
+    slug: "ir",
+    name: "IR sensor",
+    symbol: "IR",
+    category: "sensor",
+    tagline: "Bounce light, measure closeness",
+    summary:
+      "An IR LED shouts; a photodiode listens for the echo. Close objects return more photons — intensity falls as 1/d².",
+    principle:
+      "Reflected optical power drops with the square of distance. Photodiode current follows that intensity. A comparator against a threshold turns proximity into a bit.",
+    formula: "I ∝ 1 / d²",
+    uses: [
+      "Line-following robots and cliff sensors",
+      "TV remotes and IR break-beams",
+      "Proximity detect on hand dryers and taps",
+      "Encoder wheels and slot sensors",
+    ],
+  },
+  {
+    slug: "pir",
+    name: "PIR",
+    symbol: "PIR",
+    category: "sensor",
+    tagline: "It sees change, not people",
+    summary:
+      "A pyroelectric element that only cares about a changing infrared flux. A still room is invisible; a walk-by is a pulse.",
+    principle:
+      "Pyroelectric crystals generate charge proportional to dΦ/dt, not Φ. Dual elements of opposite polarity cancel ambient temperature. A retriggerable window stretches the pulse into a usable alarm.",
+    formula: "dΦ/dt",
+    uses: [
+      "Burglar alarms and hallway lighting",
+      "Automatic doors and restroom faucets",
+      "Wildlife cameras",
+      "HVAC occupancy sensing",
+    ],
+  },
+  {
+    slug: "ultrasonic",
+    name: "Ultrasonic",
+    symbol: "US",
+    category: "sensor",
+    tagline: "Time of flight you can hear",
+    summary:
+      "A 40 kHz click, a wall, an echo. Distance is how long the sound took, times speed, over two.",
+    principle:
+      "The HC-SR04 fires a trigger pulse; the onboard transducer rings, the sound flies, reflects, and the echo pin stays high for the round trip. d = v t / 2 with v ≈ 343 m/s in air.",
+    formula: "d = v t / 2",
+    uses: [
+      "Robot obstacle avoidance",
+      "Parking sensors and tank level gauges",
+      "Range finders in drones and toys",
+      "Anemometers and flow meters",
     ],
   },
 ];

@@ -43,15 +43,15 @@ export function CapacitorLab() {
   const insight = useMemo(() => {
     const frac = read.vc / Math.max(0.01, vsrc);
     if (!closed) {
-      return `Switch open. The capacitor is discharging through ${formatOhm(r)}. Voltage falls as ${formatVolt(read.vc)} with τ = ${formatSec(tau)}.`;
+      return `Switch open. The capacitor is discharging through ${formatOhm(r)}. Voltage falls as ${formatVolt(read.vc)} with \u03c4 = ${formatSec(tau)}.`;
     }
     if (frac > 0.95) {
-      return `Charged. Plate voltage matches the source, so the field cancels further current. I ≈ ${formatAmp(read.i)}. The field is now storing ½CV².`;
+      return `Charged. Plate voltage matches the source, so the field cancels further current. I \u2248 ${formatAmp(read.i)}. The field is now storing \u00bdCV\u00b2.`;
     }
     if (frac < 0.08) {
-      return `Just connected. The empty capacitor looks like a short — a surge of ${formatAmp(read.i)} is rushing onto the plates. τ = ${formatSec(tau)}.`;
+      return `Just connected. The empty capacitor looks like a short \u2014 a surge of ${formatAmp(read.i)} is rushing onto the plates. \u03c4 = ${formatSec(tau)}.`;
     }
-    return `Charging. Electrons pile onto the lower plate; the upper plate loses them. The growing field fights the source. Time constant τ = RC = ${formatSec(tau)}.`;
+    return `Charging. Electrons pile onto the right (\u2212) plate; the left (+) plate is stripped of them. The growing field fights the source. Time constant \u03c4 = RC = ${formatSec(tau)}.`;
   }, [closed, read.vc, read.i, r, tau, vsrc]);
 
   return (
@@ -146,15 +146,17 @@ export function CapacitorLab() {
               label(ctx, formatVolt(p.vsrc), 56, y + 52, { mono: true, size: 12 });
               label(ctx, formatOhm(p.r), 345, y - 32, { mono: true, size: 12 });
               label(ctx, formatFarad(p.c), 520, y - 48, { mono: true, size: 12 });
+              label(ctx, "+", 500, y - 40, { size: 12, color: Ink.hole });
+              label(ctx, "\u2212", 540, y - 40, { size: 14, color: Ink.electron });
               label(ctx, p.closed ? "charging" : "discharging", 206, y - 28, { size: 11 });
 
               const q01 = s.vc / Math.max(p.vsrc, 0.01);
               for (let n = 0; n < Math.round(q01 * 14); n++) {
                 ctx.beginPath();
-                ctx.fillStyle = Ink.electron;
+                ctx.fillStyle = Ink.hole;
                 ctx.arc(512 - (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = Ink.hole;
+                ctx.fillStyle = Ink.electron;
                 ctx.beginPath();
                 ctx.arc(530 + (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
                 ctx.fill();
@@ -175,7 +177,7 @@ export function CapacitorLab() {
               flow.current.draw(ctx);
 
               scope(ctx, 540, 36, 220, 90, samples.current, Ink.electron, "Vc(t)");
-              label(ctx, `τ = RC = ${formatSec(p.r * p.c)}`, 400, 380, {
+              label(ctx, `\u03c4 = RC = ${formatSec(p.r * p.c)}`, 400, 380, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

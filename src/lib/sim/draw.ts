@@ -662,6 +662,7 @@ export function lamp(ctx: CanvasRenderingContext2D, x: number, y: number, bright
   ctx.moveTo(x + 16, y);
   ctx.lineTo(x + 28, y);
   ctx.stroke();
+  return { left: { x: x - 28, y }, right: { x: x + 28, y } };
 }
 
 function arrowHead(
