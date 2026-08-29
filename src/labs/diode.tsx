@@ -45,7 +45,7 @@ export function DiodeLab() {
 
   const insight = useMemo(() => {
     if (v >= 0.7) {
-      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} \u2014 the valve is open.`;
+      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} - the valve is open.`;
     }
     if (v > 0.2) {
       return `Approaching the silicon threshold. Below ~0.7 V the barrier still stops most carriers. Watch the depletion region shrink as you raise voltage.`;
@@ -63,7 +63,7 @@ export function DiodeLab() {
         <>
           <Meter label="Bias" value={formatVolt(v)} />
           <Meter label="Current" value={formatAmp(i)} />
-          <Meter label="State" value={v >= 0.7 ? "conducting" : v < 0 ? "blocking" : "threshold"} />
+          <Meter label="State" value={v >= 0.7 ? "conducting" : "blocking"} />
         </>
       }
       controls={
@@ -166,7 +166,7 @@ export function DiodeLab() {
 
               label(ctx, "depletion", j.mid, 210, { size: 10 });
               scope(ctx, 560, 28, 200, 72, samples.current, Ink.electron, "bias");
-              label(ctx, "I = Is (e^{V/nVt} \u2212 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
+              label(ctx, "I = Is (e^{V/nVt} - 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
             });
           }}
         />

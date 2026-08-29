@@ -92,7 +92,7 @@ export function TransistorLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            \u03b2 = {BETA} \u00b7 Ic sat = (Vcc \u2212 Vce_sat \u2212 Vf) / Rc = {formatAmp(icSat)}
+            \u03b2 = {BETA} \u00b7 Ic sat = (Vcc - Vce_sat - Vf) / Rc = {formatAmp(icSat)}
           </p>
         </>
       }
