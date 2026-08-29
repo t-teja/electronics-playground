@@ -75,9 +75,17 @@ function Home() {
                       <div className="grid h-14 w-full max-w-[11rem] place-items-center overflow-hidden rounded-lg bg-sim">
                         {Glyph ? <Glyph className="h-14 w-full" /> : null}
                       </div>
-                      {seen ? (
-                        <Check className="size-4 shrink-0 text-electron" strokeWidth={2} aria-label="Visited" />
-                      ) : null}
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        {lab.badge === "new" ? (
+                          <Badge className="bg-electron/15 text-electron">New</Badge>
+                        ) : null}
+                        {lab.badge === "updated" ? (
+                          <Badge className="bg-raised text-fg">Updated</Badge>
+                        ) : null}
+                        {seen ? (
+                          <Check className="size-4 text-electron" strokeWidth={2} aria-label="Visited" />
+                        ) : null}
+                      </div>
                     </div>
                     <div className="mb-2 flex items-center gap-2">
                       <h3 className="text-base font-semibold tracking-tight">{lab.name}</h3>
