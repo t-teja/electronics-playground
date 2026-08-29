@@ -64,7 +64,8 @@ export function GlyphLed({ className }: { className?: string }) {
       <path d="M12 40 H58 M96 40 H148" stroke="currentColor" strokeWidth="1.6" />
       <path d="M58 24 L88 40 L58 56 Z" stroke="currentColor" strokeWidth="1.6" />
       <path d="M92 24 V56" stroke="currentColor" strokeWidth="2" />
-      <path d="M104 18 l10 -8 M112 22 l10 -8" stroke="currentColor" strokeWidth="1.3" className="text-electron" />
+      <path d="M72 22 l10 -10 M80 20 l10 -10" stroke="currentColor" strokeWidth="1.3" className="text-electron" />
+      <path d="M80 12 l-3 1 M80 12 l1 3 M90 10 l-3 1 M90 10 l1 3" stroke="currentColor" strokeWidth="1.2" className="text-electron" />
       <Electron d="M12 40 H58" dur="1.5s" />
     </Frame>
   );
@@ -73,10 +74,22 @@ export function GlyphLed({ className }: { className?: string }) {
 export function GlyphTransistor({ className }: { className?: string }) {
   return (
     <Frame className={className}>
-      <circle cx="86" cy="36" r="20" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M74 24 V48" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M12 36 H74 M86 22 L104 10 M86 50 L104 62" stroke="currentColor" strokeWidth="1.6" />
-      <Electron d="M12 36 H74" dur="2s" />
+      <circle cx="90" cy="36" r="20" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M78 24 V48" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 36 H78" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M78 28 L110 14" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M78 44 L110 58" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M96 50 L110 58 L102 59" stroke="currentColor" strokeWidth="1.5" />
+      <text x="118" y="16" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        C
+      </text>
+      <text x="64" y="24" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        B
+      </text>
+      <text x="118" y="62" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        E
+      </text>
+      <Electron d="M12 36 H78" dur="2s" />
     </Frame>
   );
 }
@@ -132,6 +145,8 @@ export function GlyphTransformer({ className }: { className?: string }) {
       <path d="M78 16 V56 M86 16 V56" stroke="currentColor" strokeWidth="1.5" />
       <path d="M106 18 a8 8 0 0 0 0 16 a8 8 0 0 0 0 16 a8 8 0 0 0 0 4" stroke="currentColor" strokeWidth="1.5" />
       <path d="M106 18 H142 M106 54 H142" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="50" cy="22" r="2.2" fill="currentColor" />
+      <circle cx="114" cy="22" r="2.2" fill="currentColor" />
       <Electron d="M18 18 H58" dur="1.8s" />
     </Frame>
   );
@@ -141,8 +156,21 @@ export function GlyphMosfet({ className }: { className?: string }) {
   return (
     <Frame className={className}>
       <circle cx="90" cy="36" r="20" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M12 36 H78 M78 24 V48 M84 22 V50 M84 28 H104 V12 M84 44 H104 V60" stroke="currentColor" strokeWidth="1.5" />
-      <Electron d="M12 36 H78" dur="1.8s" />
+      <path d="M12 36 H76" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M76 22 V50" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M82 16 V26 M82 30 V42 M82 46 V56" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M82 22 H108 V12 M82 50 H108 V60 M82 36 H108 L108 50" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M100 32 L88 36 L100 40 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.6" />
+      <text x="64" y="24" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        G
+      </text>
+      <text x="118" y="14" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        D
+      </text>
+      <text x="118" y="64" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        S
+      </text>
+      <Electron d="M12 36 H76" dur="1.8s" />
     </Frame>
   );
 }
