@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { cn } from "@/lib/cn";
 import { useProgress } from "@/lib/progress";
 import { useTheme } from "@/lib/theme";
+import { APP_VERSION } from "@/lib/version";
 
 function ThemeToggle() {
   const { theme, toggle } = useTheme();
@@ -57,6 +58,9 @@ export function AppHeader({ className }: { className?: string }) {
         </span>
         <span className="truncate text-[13px] font-semibold tracking-tight sm:text-sm">
           Electronics Playground
+        </span>
+        <span className="shrink-0 font-mono text-[11px] tabular-nums text-subtle">
+          v{APP_VERSION}
         </span>
       </Link>
       <div className="flex items-center gap-1">
