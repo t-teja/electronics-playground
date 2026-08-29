@@ -14,7 +14,6 @@ import {
   junction,
   label,
   ledDome,
-  npnDie,
   resistorBody,
   wire,
   withFrame,
@@ -149,7 +148,24 @@ export function PnpLab() {
               label(ctx, "E → +VCC", 420, topY - 16, { size: 10, color: Ink.text });
               label(ctx, "arrow in", q.e.x + 36, q.e.y, { size: 10, align: "left" });
 
-              npnDie(ctx, 80, 300, 300, 70, "pnp");
+              const dx = 80;
+              const dy = 300;
+              const dw = 300;
+              const dh = 70;
+              const eW = dw * 0.34;
+              const bW = dw * 0.16;
+              const cW = dw * 0.5;
+              ctx.fillStyle = Ink.pType;
+              ctx.fillRect(dx, dy, eW, dh);
+              ctx.fillStyle = Ink.nType;
+              ctx.fillRect(dx + eW, dy, bW, dh);
+              ctx.fillStyle = Ink.pType;
+              ctx.fillRect(dx + eW + bW, dy, cW, dh);
+              ctx.strokeStyle = "rgba(128,128,128,0.25)";
+              ctx.strokeRect(dx, dy, dw, dh);
+              label(ctx, "E  p", dx + eW / 2, dy + dh + 14, { size: 11, color: Ink.hole });
+              label(ctx, "B  n", dx + eW + bW / 2, dy + dh + 14, { size: 11, color: Ink.electron });
+              label(ctx, "C  p", dx + eW + bW + cW / 2, dy + dh + 14, { size: 11, color: Ink.hole });
               label(ctx, "die cross-section", 230, 288, { size: 11, color: Ink.text });
 
               const col: Pt[] = [
