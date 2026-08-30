@@ -51,15 +51,15 @@ export function IrLab() {
 
   const insight = useMemo(() => {
     if (distance <= 3) {
-      return `Almost touching. Reflected intensity ~ 1/d² is huge, so the photodiode dumps ${formatAmp(iPd)} through the ${formatVolt(vSense)} load. The comparator is well above ${formatVolt(threshold)} — output LED on.`;
+      return `Almost touching. Reflected intensity ~ 1/d\u00b2 is huge, so the photodiode dumps ${formatAmp(iPd)} through the 10 k\u03a9 load. V_sense is ${formatVolt(vSense)}. The comparator is well above ${formatVolt(threshold)}. Output LED on.`;
     }
     if (close) {
-      return `Close enough. I_pd ∝ 1/d² = ${formatAmp(iPd)}, V_sense = ${formatVolt(vSense)} which beats the ${formatVolt(threshold)} threshold. A few centimetres is all this pair needs.`;
+      return `Close enough. I_pd \u221d 1/d\u00b2 = ${formatAmp(iPd)}, V_sense = ${formatVolt(vSense)} which beats the ${formatVolt(threshold)} threshold. A few centimetres is all this pair needs.`;
     }
     if (distance > 20) {
       return `Far. Inverse-square has starved the detector: I_pd is only ${formatAmp(iPd)} and V_sense = ${formatVolt(vSense)} sits below ${formatVolt(threshold)}. The output LED stays dark.`;
     }
-    return `The IR LED is always on. Photons bounce off the block and a fraction ~ 1/d² reach the photodiode. ${formatVolt(vSense)} vs ${formatVolt(threshold)} — not quite over the line.`;
+    return `The IR LED is always on. Photons bounce off the block and a fraction ~ 1/d\u00b2 reach the photodiode. ${formatVolt(vSense)} vs ${formatVolt(threshold)}. Not quite over the line.`;
   }, [distance, iPd, vSense, threshold, close]);
 
   return (
@@ -82,7 +82,7 @@ export function IrLab() {
             max={30}
             step={0.1}
             onChange={setDistance}
-            hint="Move the block. Intensity falls as 1/d²."
+            hint="Move the block. Intensity falls as 1/d\u00b2."
           />
           <LinearControl
             label="Threshold"
@@ -92,7 +92,7 @@ export function IrLab() {
             max={3}
             step={0.05}
             onChange={setThreshold}
-            hint="Comparator trip point. Lower it and ‘close’ reaches farther."
+            hint="Comparator trip point. Lower it and close reaches farther."
           />
         </>
       }
@@ -100,7 +100,7 @@ export function IrLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            I ∝ 1 / d² · V_sense = min(VCC, I_pd · 10 kΩ) = {formatVolt(vSense)}
+            {"I \u221d 1 / d\u00b2 \u00b7 V_sense = min(VCC, I_pd \u00b7 10 k\u03a9) = "}{formatVolt(vSense)}
           </p>
         </>
       }
@@ -128,8 +128,8 @@ export function IrLab() {
                 ctx,
                 720,
                 46,
-                Ink.electron,
-                p.close ? Math.min(1, p.iOut / 0.012) : 0,
+                p.close ? "#5eead4" : Ink.body,
+                p.close ? 1 : 0,
               );
               label(ctx, "OUT", 720, 22, { size: 10 });
 
@@ -290,7 +290,7 @@ export function IrLab() {
                 outFlow.current.draw(ctx);
               }
 
-              label(ctx, "I ∝ 1 / d²", 400, 392, { mono: true, size: 13, color: Ink.text });
+              label(ctx, "I \u221d 1 / d\u00b2", 400, 392, { mono: true, size: 13, color: Ink.text });
             });
           }}
         />
