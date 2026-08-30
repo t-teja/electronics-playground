@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { GlyphPerceptron, GlyphNeuralNet, GlyphAttention } from "@/components/neural-glyphs";
 
 function Frame({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -413,4 +414,7 @@ export const GLYPHS = {
   psram: GlyphPsram,
   cpu: GlyphCpu,
   gpu: GlyphGpu,
+  perceptron: GlyphPerceptron,
+  "neural-net": GlyphNeuralNet,
+  attention: GlyphAttention,
 } as const;
