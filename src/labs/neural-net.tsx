@@ -119,11 +119,11 @@ export function NeuralNetLab() {
   params.current = { a, c, w, live, fire, gate };
 
   const insight = useMemo(() => {
-    const bits = `${a}${c}`;
+    const pair = `(${a}, ${c})`;
     if (gate === "XOR") {
-      return `Two hidden units bend the plane. ${bits} maps to ${live.y.toFixed(2)}, so the output is ${fire ? "1" : "0"}.`;
+      return `Two hidden units bend the plane. ${pair} maps to ${live.y.toFixed(2)}, so the output is ${fire ? "1" : "0"}.`;
     }
-    return `AND of ${bits} is ${fire ? "1" : "0"} (${live.y.toFixed(2)}). Shuffle the weights to watch it fall apart.`;
+    return `AND of ${pair} is ${fire ? "1" : "0"} (${live.y.toFixed(2)}). Shuffle the weights to watch it fall apart.`;
   }, [a, c, fire, gate, live.y]);
 
   return (

@@ -51,13 +51,13 @@ export function SignalGeneratorLab() {
 
   const insight = useMemo(() => {
     if (shape === "pwm") {
-      return `PWM is a fast square. Duty ${Math.round(duty * 100)}% means the pulse is high that fraction of each period. Average voltage is ${formatVolt(avg)} — a motor winding or an RC filter cannot follow the edges, so it feels that DC. Chargers and LED dimmers work this way instead of burning the rest in a resistor.`;
+      return `PWM is a fast square. Duty ${Math.round(duty * 100)}% means the pulse is high that fraction of each period. Average voltage is ${formatVolt(avg)}. A motor winding or an RC filter cannot follow the edges, so it feels that DC. Chargers and LED dimmers work this way instead of burning the rest in a resistor.`;
     }
     if (shape === "square") {
-      return `Square wave. Duty cycle is on-time / period. At ${Math.round(duty * 100)}% the average is V × D = ${formatVolt(avg)}. Stretch the high part and the lamp gets brighter without changing amplitude.`;
+      return `Square wave. Duty cycle is on-time / period. At ${Math.round(duty * 100)}% the average is V \u00d7 D = ${formatVolt(avg)}. Stretch the high part and the lamp gets brighter without changing amplitude.`;
     }
     if (shape === "sine") {
-      return `Sine. Defined by frequency and amplitude — there is no “on time.” Duty cycle does not apply; that knob is for pulses. This is the shape AC mains and audio tones want.`;
+      return `Sine. Defined by frequency and amplitude. There is no on time. Duty cycle does not apply; that knob is for pulses. This is the shape AC mains and audio tones want.`;
     }
     if (shape === "triangle") {
       return `Triangle. Linear rise, linear fall. Frequency sets how often it folds; amplitude sets the peak. Used as a modulator and as a cheap stand-in for a sine.`;
@@ -117,7 +117,7 @@ export function SignalGeneratorLab() {
             disabled={!usesDuty(shape)}
             hint={
               usesDuty(shape)
-                ? "On-time / period. Average = amplitude × duty."
+                ? "On-time / period. Average = amplitude \u00d7 duty."
                 : "Duty is a pulse-width idea. Sine, triangle, and saw are set by frequency and amplitude."
             }
           />
@@ -142,7 +142,16 @@ export function SignalGeneratorLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              scope(ctx, 40, 36, 480, 150, wave.current, Ink.electron, `${p.shape}  ${formatHz(p.freq)}`);
+              scope(
+                ctx,
+                40,
+                36,
+                480,
+                150,
+                wave.current,
+                Ink.electron,
+                p.shape === "pwm" ? `envelope  ${formatHz(p.freq)}` : `${p.shape}  ${formatHz(p.freq)}`,
+              );
               scope(
                 ctx,
                 40,
@@ -151,7 +160,11 @@ export function SignalGeneratorLab() {
                 120,
                 pwm.current,
                 Ink.pin,
-                p.shape === "pwm" || p.shape === "square" ? "pulses  (duty)" : "same wave",
+                p.shape === "pwm"
+                  ? `carrier  ${formatHz(pwmF)}`
+                  : p.shape === "square"
+                    ? "pulses  (duty)"
+                    : "same wave",
               );
 
               lamp(ctx, 660, 160, bright);
@@ -171,7 +184,7 @@ export function SignalGeneratorLab() {
                 ctx.fillRect(barX, barY, barW, 16);
                 ctx.fillStyle = Ink.electron;
                 ctx.fillRect(barX, barY, barW * p.duty, 16);
-                label(ctx, `duty ${Math.round(p.duty * 100)}%   Vavg = V × D`, barX + barW / 2, barY + 36, {
+                label(ctx, `duty ${Math.round(p.duty * 100)}%   Vavg = V \u00d7 D`, barX + barW / 2, barY + 36, {
                   size: 12,
                   color: Ink.text,
                 });
@@ -179,7 +192,7 @@ export function SignalGeneratorLab() {
                 label(ctx, "duty does not apply to this shape", 670, 292, { size: 12, color: Ink.muted });
               }
 
-              label(ctx, "Vavg = V × D   on pulses; analog shapes ignore D", 400, 392, {
+              label(ctx, "Vavg = V \u00d7 D   on pulses; analog shapes ignore D", 400, 392, {
                 mono: true,
                 size: 12,
                 color: Ink.text,
