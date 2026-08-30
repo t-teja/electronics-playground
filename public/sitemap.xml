@@ -87,4 +87,13 @@
   <url>
     <loc>https://t-teja.github.io/electronics-playground/lab/gpu</loc>
   </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/perceptron</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/neural-net</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/attention</loc>
+  </url>
 </urlset>

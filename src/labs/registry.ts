@@ -27,6 +27,9 @@ import { Timer555Lab } from "@/labs/timer-555";
 import { TransformerLab } from "@/labs/transformer";
 import { TransistorLab } from "@/labs/transistor";
 import { UltrasonicLab } from "@/labs/ultrasonic";
+import { PerceptronLab } from "@/labs/perceptron";
+import { NeuralNetLab } from "@/labs/neural-net";
+import { AttentionLab } from "@/labs/attention";
 
 export const LAB_COMPONENTS: Record<string, ComponentType> = {
   resistor: ResistorLab,
@@ -57,4 +60,7 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   psram: PsramLab,
   cpu: CpuLab,
   gpu: GpuLab,
+  perceptron: PerceptronLab,
+  "neural-net": NeuralNetLab,
+  attention: AttentionLab,
 };

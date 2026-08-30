@@ -28,7 +28,7 @@ function Home() {
             Watch charge move.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
-            {LABS.length} live benches — resistor to motor. Real equations, drifting
+            {LABS.length} live benches — from resistors to neurons. Real equations, drifting
             electrons, fields you can feel. Drag a slider. The physics follows.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
