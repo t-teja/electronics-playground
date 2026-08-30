@@ -9,6 +9,11 @@ export function Slider({
   max = 100,
   step = 1,
   disabled = false,
+  id,
+  valuetext,
+  valueNow,
+  valueMin,
+  valueMax,
   "aria-label": ariaLabel,
 }: {
   className?: string;
@@ -18,6 +23,11 @@ export function Slider({
   max?: number;
   step?: number;
   disabled?: boolean;
+  id?: string;
+  valuetext?: string;
+  valueNow?: number;
+  valueMin?: number;
+  valueMax?: number;
   "aria-label"?: string;
 }) {
   return (
@@ -37,7 +47,15 @@ export function Slider({
       <SliderPrimitive.Track className="relative h-1 w-full grow overflow-hidden rounded-full bg-border">
         <SliderPrimitive.Range className="absolute h-full bg-electron" />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className="block size-4 rounded-full bg-accent shadow-[var(--ep-thumb-ring)] outline-none transition-[scale] duration-150 ease-out hover:scale-110 focus-visible:scale-110" />
+      <SliderPrimitive.Thumb
+        id={id}
+        className="block size-4 rounded-full bg-accent shadow-[var(--ep-thumb-ring)] outline-none transition-[scale] duration-150 ease-out hover:scale-110 focus-visible:scale-110"
+        aria-label={ariaLabel}
+        aria-valuetext={valuetext}
+        aria-valuenow={valueNow ?? value}
+        aria-valuemin={valueMin ?? min}
+        aria-valuemax={valueMax ?? max}
+      />
     </SliderPrimitive.Root>
   );
 }

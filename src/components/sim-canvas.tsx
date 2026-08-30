@@ -72,13 +72,23 @@ export function SimCanvas({
     if (canvas.parentElement) ro.observe(canvas.parentElement);
     resize();
 
+    let lastW = 0;
+    let lastH = 0;
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       const raw = (now - last) / 1000;
       last = now;
       const dt = Math.min(raw, 0.05);
       if (!visible && document.visibilityState === "hidden") return;
-      resize();
+      const parent = canvas.parentElement;
+      const rect = parent ? parent.getBoundingClientRect() : canvas.getBoundingClientRect();
+      const cw = Math.max(1, Math.floor(rect.width));
+      const ch = Math.max(1, Math.floor(rect.height));
+      if (cw !== lastW || ch !== lastH) {
+        lastW = cw;
+        lastH = ch;
+        resize();
+      }
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       if (w < 2 || h < 2) return;
