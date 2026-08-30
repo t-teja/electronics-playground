@@ -59,7 +59,7 @@ function BenchLink({
           dense ? "size-7" : "size-8",
         )}
       >
-        {Glyph ? <Glyph className={dense ? "h-7 w-12 text-muted" : "h-8 w-14 text-muted"} /> : null}
+        {Glyph ? <Glyph className="h-full w-full text-muted" /> : null}
       </span>
       <span className="min-w-0 flex-1 truncate">{item.name}</span>
       {seen ? <Check className="size-3.5 shrink-0 text-electron" strokeWidth={2} /> : null}
