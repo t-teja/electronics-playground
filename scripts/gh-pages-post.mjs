@@ -39,7 +39,6 @@ if (!shell) {
   console.error("gh-pages-post: no index.html or _shell.html in", dest);
   process.exit(1);
 }
-copyFileSync(shell, join(dest, "index.html"));
 copyFileSync(shell, join(dest, "404.html"));
 
 const LAB_SLUGS = [
@@ -71,13 +70,17 @@ const LAB_SLUGS = [
   "psram",
   "cpu",
   "gpu",
+  "perceptron",
+  "neural-net",
+  "attention",
 ];
 for (const slug of LAB_SLUGS) {
   const dir = join(dest, "lab", slug);
   mkdirSync(dir, { recursive: true });
-  copyFileSync(shell, join(dir, "index.html"));
+  const index = join(dir, "index.html");
+  if (!existsSync(index)) copyFileSync(shell, index);
 }
 
 console.log(
-  `gh-pages-post: ${src} → ${dest} (index.html + 404.html + lab/*/index.html + .nojekyll)`,
+  `gh-pages-post: ${src} \u2192 ${dest} (404.html + lab/*/index.html fallback + .nojekyll)`,
 );

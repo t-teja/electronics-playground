@@ -28,7 +28,7 @@ function Home() {
             Watch charge move.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
-            {LABS.length} live benches — from resistors to neurons. Real equations, drifting
+            {LABS.length} live benches, from resistor to attention. Real equations, drifting
             electrons, fields you can feel. Drag a slider. The physics follows.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -42,7 +42,7 @@ function Home() {
             </Link>
             <p className="text-sm text-subtle">
               {done === 0
-                ? "Nothing visited yet — pick a component."
+                ? "Nothing visited yet. Pick a component."
                 : `${done} of ${LABS.length} benches visited`}
             </p>
           </div>
@@ -100,7 +100,7 @@ function Home() {
         ))}
       </main>
       <footer className="border-t border-line px-4 py-6 text-center text-xs text-subtle md:px-8">
-        Electronics Playground — electrons left to right, conventional current the other way.
+        Electronics Playground. Electrons left to right, conventional current the other way.
       </footer>
     </div>
   );

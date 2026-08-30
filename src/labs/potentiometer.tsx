@@ -35,7 +35,8 @@ export function PotentiometerLab() {
   const rpar = 1 / (1 / rlo + 1 / rload);
   const vout = v * (rpar / (rhi + rpar));
   const VF = 1.8;
-  const iled = Math.max(0, (vout - VF) / rload);
+  const R_LED = 470;
+  const iled = Math.max(0, (vout - VF) / R_LED);
 
   const flow = useRef(new ElectronFlow());
   const flowTap = useRef(new ElectronFlow());
@@ -44,7 +45,7 @@ export function PotentiometerLab() {
 
   const insight = useMemo(() => {
     if (rload < rtot * 0.2) {
-      return `The load (${formatOhm(rload)}) is small compared with the track. It pulls the wiper down \u2014 Vout is ${formatVolt(vout)}, not the unloaded ${formatVolt(v * k)}. Buffer it if you care about the ratio.`;
+      return `The load (${formatOhm(rload)}) is small compared with the track. It pulls the wiper down. Vout is ${formatVolt(vout)}, not the unloaded ${formatVolt(v * k)}. Buffer it if you care about the ratio.`;
     }
     return `Wiper at ${(k * 100).toFixed(0)}%. Unloaded, Vout would be ${formatVolt(v * k)}. With ${formatOhm(rload)} on the tap, Vout is ${formatVolt(vout)}. The LED brightness follows the tap, not the supply.`;
   }, [k, rload, rtot, v, vout]);
@@ -116,9 +117,11 @@ export function PotentiometerLab() {
               const pot = potentiometer(ctx, 260, y, 220, 1 - p.k, p.rtot);
               label(ctx, formatOhm(p.rtot), 370, y + 36, { mono: true, size: 11 });
 
-              const led = ledDome(ctx, 620, 70, Ink.electron, Math.min(1, p.iled / 0.008));
-              resistorBody(ctx, 580, y, 80, p.rload, Math.min(1, p.iled * 20));
+              resistorBody(ctx, 580, y, 80, p.rload, 0);
               label(ctx, "load", 620, y - 28, { size: 11 });
+              const led = ledDome(ctx, 620, 70, p.iled >= 0.001 ? "#5eead4" : Ink.body, p.iled >= 0.001 ? 1 : 0);
+              resistorBody(ctx, 500, 104, 60, 470, Math.min(1, p.iled * 20));
+              label(ctx, "Rs", 530, 82, { size: 10 });
 
               wire(ctx, [bat.pos, pot.left]);
               wire(ctx, [
@@ -130,13 +133,22 @@ export function PotentiometerLab() {
               ]);
               wire(ctx, [
                 pot.wiper,
-                { x: pot.wiper.x, y: led.anode.y },
+                { x: pot.wiper.x, y: 104 },
+                { x: 490, y: 104 },
+              ]);
+              wire(ctx, [
+                { x: 570, y: 104 },
+                { x: led.anode.x, y: 104 },
                 { x: led.anode.x, y: led.anode.y },
                 led.anode,
               ]);
               wire(ctx, [
                 led.cathode,
-                { x: led.cathode.x, y },
+                { x: led.cathode.x, y: botY },
+                { x: bat.neg.x, y: botY },
+              ]);
+              wire(ctx, [
+                pot.wiper,
                 { x: 570, y },
               ]);
               wire(ctx, [
@@ -144,7 +156,9 @@ export function PotentiometerLab() {
                 { x: 720, y },
               ]);
               junction(ctx, 720, y);
-              junction(ctx, led.cathode.x, y);
+              junction(ctx, pot.wiper.x, y);
+              junction(ctx, pot.wiper.x, 104);
+              junction(ctx, led.cathode.x, botY);
               junction(ctx, bat.neg.x, botY);
 
               const loop: Pt[] = [
@@ -163,10 +177,13 @@ export function PotentiometerLab() {
 
               const tap: Pt[] = [
                 pot.wiper,
-                { x: pot.wiper.x, y: led.anode.y },
+                { x: pot.wiper.x, y: 104 },
+                { x: 490, y: 104 },
+                { x: 570, y: 104 },
+                { x: led.anode.x, y: 104 },
                 led.anode,
                 led.cathode,
-                { x: led.cathode.x, y },
+                { x: led.cathode.x, y: botY },
               ];
               flowTap.current.setPath(tap, false);
               flowTap.current.set(

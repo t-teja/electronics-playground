@@ -34,9 +34,7 @@ const PINS = ["GND", "P0", "P1", "P2", "P3", "RST", "CLK", "VCC"];
 function firmware(kind: Kind, duty: number): Op[] {
   if (kind === "blink") {
     return [
-      { k: "SBI", pin: 0, asm: "sbi PORT, 0" },
-      { k: "WAIT", n: 6, asm: "rcall delay" },
-      { k: "CBI", pin: 0, asm: "cbi PORT, 0" },
+      { k: "TOG", pin: 0, asm: "sbi PIN, 0" },
       { k: "WAIT", n: 6, asm: "rcall delay" },
       { k: "JMP", a: 0, asm: "rjmp loop" },
     ];
@@ -148,7 +146,7 @@ export function MicrocontrollerLab() {
 
   const insight = useMemo(() => {
     if (kind === "blink") {
-      return `A two-state loop. GPIO0 is just a bit in a register. Each clock edge fetches, decodes, executes — then the pin follows. Frequency of the blink is the delay, not the CPU clock.`;
+      return `A two-state loop. TOG flips GPIO0 each pass (write 1 to PIN). Each clock edge fetches, decodes, executes. Then the pin follows. Blink rate is the delay, not the CPU clock.`;
     }
     if (kind === "chase") {
       return `Walk a one across four pins. Same instructions, different addresses. This is how a microcontroller becomes a turn signal, a VU meter, a walking robot.`;
@@ -156,7 +154,7 @@ export function MicrocontrollerLab() {
     if (kind === "pwm") {
       return `Software PWM: the pin is only ever on or off. Duty cycle (${Math.round(duty * 100)}%) is the fraction of WAIT ticks spent high. The LED integrates the pulses into brightness.`;
     }
-    return `PORT is a four-bit register. INC walks 0000 → 1111 and wraps. You are watching a program counter, not a 555 — the pattern is the firmware.`;
+    return `PORT is a four-bit register. INC walks 0000 \u2192 1111 and wraps. You are watching a program counter, not a 555. The pattern is the firmware.`;
   }, [kind, duty]);
 
   return (
@@ -249,9 +247,9 @@ export function MicrocontrollerLab() {
                 8: 1,
               });
               label(ctx, "EP-8", 280, 154, { size: 14, color: Ink.text, mono: true });
-              label(ctx, "flash · alu · gpio", 280, 176, { size: 10, color: Ink.faint });
+              label(ctx, "flash \u00b7 alu \u00b7 gpio", 280, 176, { size: 10, color: Ink.faint });
 
-              ledDome(ctx, 520, 70, Ink.electron, g0 ? 1 : 0.04);
+              ledDome(ctx, 520, 70, g0 ? "#5eead4" : Ink.body, g0 ? 1 : 0);
               label(ctx, "P0 LED", 520, 128, { size: 11 });
               wire(ctx, [
                 { x: pkg.left + 28 + 1 * 34, y: pkg.top + pkg.bodyH + 14 },
@@ -284,7 +282,7 @@ export function MicrocontrollerLab() {
                 });
               });
 
-              label(ctx, `PC = ${String(c.pc).padStart(2, "0")}   clk ${clk ? "↑" : "·"}`, 280, 54, {
+              label(ctx, `PC = ${String(c.pc).padStart(2, "0")}   clk ${clk ? "\u2191" : "\u00b7"}`, 280, 54, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

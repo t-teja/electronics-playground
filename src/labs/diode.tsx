@@ -22,12 +22,35 @@ import {
 } from "@/lib/sim/draw";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
-function shockley(v: number) {
-  const is = 1e-12;
-  const nVt = 0.026 * 1.8;
-  const raw = is * (Math.exp(Math.min(v, 0.9) / nVt) - 1);
-  if (v < -50) return -1e-6;
-  return Math.max(-1e-6, Math.min(raw, 0.08));
+const IS = 1e-12;
+const N_VT = 0.026 * 1.8;
+const R = 330;
+const VF_LED = 1.8;
+const I_GLOW = 0.001;
+
+function shockley(vd: number) {
+  const v = Math.min(vd, 0.95);
+  return IS * (Math.exp(v / N_VT) - 1);
+}
+
+function solveSeries(vsrc: number) {
+  if (vsrc <= VF_LED) {
+    const vd = Math.min(vsrc, 0.95);
+    const i = vsrc < 0 ? Math.max(-IS, shockley(vd)) : Math.max(0, shockley(Math.min(vd, 0.4)));
+    return { vd, i };
+  }
+  let lo = 0;
+  let hi = Math.max((vsrc - VF_LED) / R, 1e-18);
+  for (let n = 0; n < 48; n++) {
+    const mid = (lo + hi) / 2;
+    const vd = N_VT * Math.log(mid / IS + 1);
+    const drop = mid * R + vd + VF_LED;
+    if (drop > vsrc) hi = mid;
+    else lo = mid;
+  }
+  const i = (lo + hi) / 2;
+  const vd = N_VT * Math.log(i / IS + 1);
+  return { vd, i };
 }
 
 export function DiodeLab() {
@@ -35,48 +58,46 @@ export function DiodeLab() {
   const mark = useProgress((s) => s.mark);
   useEffect(() => mark(lab.slug), [lab.slug, mark]);
 
-  const [v, setV] = useState(0.8);
-  const i = shockley(v);
+  const [vsrc, setVsrc] = useState(5);
+  const { vd, i } = useMemo(() => solveSeries(vsrc), [vsrc]);
+  const on = i >= I_GLOW;
   const flow = useRef(new ElectronFlow());
   const holes = useRef(new ElectronFlow());
   const loop = useRef(new ElectronFlow());
   const samples = useRef<number[]>(Array(80).fill(0.5));
-  const params = useRef({ v, i });
-  params.current = { v, i };
+  const params = useRef({ vsrc, vd, i, on });
+  params.current = { vsrc, vd, i, on };
 
   const insight = useMemo(() => {
-    if (v >= 0.7) {
-      return `Forward biased at ${formatVolt(v)}. The depletion wall is thin; electrons from N and holes from P flood the junction. Current is ${formatAmp(i)} - the LED lights.`;
+    if (on) {
+      return `Forward biased. Source ${formatVolt(vsrc)} drives ${formatAmp(i)} through the 330 \u03a9 resistor, the silicon diode (Vd = ${formatVolt(vd)}), and the LED. The LED lights.`;
     }
-    if (v > 0.2) {
-      return `Approaching the silicon threshold. Below ~0.7 V the barrier still stops most carriers, so the LED stays dark.`;
+    if (vsrc > 0) {
+      return `Source ${formatVolt(vsrc)} is below the silicon diode plus LED drop (~2.5 V). Current is ${formatAmp(i)} leakage. The LED stays off.`;
     }
-    if (v >= 0) {
-      return `Barely biased. The built-in potential of the PN junction (~0.7 V for silicon) still owns the story. The LED is off.`;
-    }
-    return `Reverse biased at ${formatVolt(v)}. The depletion region widens into an insulator, so the LED stays off.`;
-  }, [v, i]);
+    return `Reverse biased at ${formatVolt(vsrc)}. The depletion region widens. Current is ${formatAmp(i)}. The LED stays off.`;
+  }, [on, vsrc, i, vd]);
 
   return (
     <LabShell
       lab={lab}
       meters={
         <>
-          <Meter label="Bias" value={formatVolt(v)} />
+          <Meter label="Bias" value={formatVolt(vsrc)} />
           <Meter label="Current" value={formatAmp(i)} />
-          <Meter label="LED" value={v >= 0.7 ? "on" : "off"} />
+          <Meter label="LED" value={on ? "on" : "off"} />
         </>
       }
       controls={
         <LinearControl
-          label="Bias voltage"
-          value={v}
-          display={formatVolt(v)}
+          label="Source voltage"
+          value={vsrc}
+          display={formatVolt(vsrc)}
           min={-5}
-          max={1.2}
+          max={9}
           step={0.01}
-          onChange={setV}
-          hint="Silicon conducts near 0.7 V. That's when the LED lights."
+          onChange={setVsrc}
+          hint="Battery in series with 330 \u03a9, a silicon diode, and an LED."
         />
       }
       insight={<p>{insight}</p>}
@@ -84,7 +105,7 @@ export function DiodeLab() {
         <SimCanvas
           onFrame={(ctx, size, t, dt) => {
             const p = params.current;
-            samples.current.push((p.v + 5) / 6.2);
+            samples.current.push((p.vsrc + 5) / 14);
             if (samples.current.length > 100) samples.current.shift();
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
@@ -94,20 +115,19 @@ export function DiodeLab() {
               const bat = battery(ctx, 70, y);
               const d = diodeSymbol(ctx, 380, y, 1.15);
               resistorBody(ctx, 150, y, 70, 330, 0);
-              const on = p.v >= 0.7;
               const led = ledDome(
                 ctx,
                 560,
                 76,
-                on ? "#5eead4" : Ink.body,
-                on ? 1 : 0,
+                p.on ? "#5eead4" : Ink.body,
+                p.on ? 1 : 0,
               );
-              label(ctx, on ? "LED on" : "LED off", 560, 42, {
+              label(ctx, p.on ? "LED on" : "LED off", 560, 42, {
                 size: 12,
-                color: on ? Ink.electron : Ink.muted,
+                color: p.on ? "#5eead4" : Ink.muted,
               });
-              label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
-              label(ctx, "330", 185, y + 28, { size: 10, mono: true });
+              label(ctx, formatVolt(p.vsrc), 70, y + 52, { mono: true, size: 12 });
+              label(ctx, "330 \u03a9", 185, y + 28, { size: 10, mono: true });
 
               const rLeft = { x: 140, y };
               const rRight = { x: 230, y };
@@ -123,7 +143,7 @@ export function DiodeLab() {
               junction(ctx, bat.neg.x, botY);
               junction(ctx, led.cathode.x, botY);
 
-              const deplete = p.v >= 0 ? Math.max(0.08, 1 - p.v / 0.85) : Math.min(1, 0.55 + Math.abs(p.v) / 8);
+              const deplete = p.vd >= 0 ? Math.max(0.08, 1 - p.vd / 0.85) : Math.min(1, 0.55 + Math.abs(p.vd) / 8);
               const j = pnJunction(ctx, 160, 220, 480, 110, deplete);
 
               const nE: Pt[] = [
@@ -135,13 +155,13 @@ export function DiodeLab() {
                 { x: j.mid - 8, y: 275 },
               ];
               flow.current.setPath(nE, false);
-              flow.current.set(on ? 16 : 4, on ? -70 : -12);
+              flow.current.set(p.on ? 16 : 4, p.on ? -70 : -12);
               flow.current.step(dt);
               flow.current.draw(ctx);
               holes.current.kind = "hole";
               holes.current.glow = false;
               holes.current.setPath(pH, false);
-              holes.current.set(on ? 16 : 4, on ? 70 : 12);
+              holes.current.set(p.on ? 16 : 4, p.on ? 70 : 12);
               holes.current.step(dt);
               holes.current.draw(ctx);
 
@@ -159,11 +179,11 @@ export function DiodeLab() {
                 bat.neg,
               ];
               loop.current.setPath(copper, true);
-              loop.current.set(on ? 18 : 0, on ? -90 : 0);
+              loop.current.set(p.on ? 18 : 0, p.on ? -90 : 0);
               loop.current.step(dt);
               loop.current.draw(ctx);
 
-              if (on) {
+              if (p.on) {
                 for (let k = 0; k < 4; k++) {
                   const px = j.mid + Math.sin(t * 6 + k) * 10;
                   ctx.globalAlpha = 0.35;
@@ -177,7 +197,7 @@ export function DiodeLab() {
 
               label(ctx, "depletion", j.mid, 210, { size: 10 });
               scope(ctx, 560, 28, 200, 72, samples.current, Ink.electron, "bias");
-              label(ctx, "I = Is (e^{V/nVt} - 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
+              label(ctx, "I = Is (exp(Vd/nVt) - 1)", 400, 392, { mono: true, size: 13, color: Ink.text });
             });
           }}
         />

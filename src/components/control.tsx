@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/cn";
@@ -8,17 +8,21 @@ export function Control({
   label,
   value,
   hint,
+  htmlFor,
   children,
 }: {
   label: string;
   value?: string;
   hint?: string;
+  htmlFor?: string;
   children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
-        <label className="text-sm font-medium text-fg">{label}</label>
+        <label htmlFor={htmlFor} className="text-sm font-medium text-fg">
+          {label}
+        </label>
         {value ? (
           <span className="font-mono text-sm tabular-nums text-electron">{value}</span>
         ) : null}
@@ -50,15 +54,21 @@ export function LinearControl({
   hint?: string;
   disabled?: boolean;
 }) {
+  const id = useId();
   return (
-    <Control label={label} value={display} hint={hint}>
+    <Control label={label} value={display} hint={hint} htmlFor={id}>
       <Slider
+        id={id}
         value={value}
         min={min}
         max={max}
         step={step}
         onValueChange={onChange}
         aria-label={label}
+        valuetext={display}
+        valueNow={value}
+        valueMin={min}
+        valueMax={max}
         disabled={disabled}
       />
     </Control>
@@ -82,16 +92,22 @@ export function LogControl({
   onChange: (n: number) => void;
   hint?: string;
 }) {
+  const id = useId();
   const t = valueToLogSlider(value, min, max);
   return (
-    <Control label={label} value={display} hint={hint}>
+    <Control label={label} value={display} hint={hint} htmlFor={id}>
       <Slider
+        id={id}
         value={t}
         min={0}
         max={1}
         step={0.001}
         onValueChange={(n) => onChange(logSliderToValue(n, min, max))}
         aria-label={label}
+        valuetext={display}
+        valueNow={value}
+        valueMin={min}
+        valueMax={max}
       />
     </Control>
   );
@@ -127,7 +143,9 @@ export function Meter({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1 rounded-xl bg-sim px-3 py-2.5">
       <span className="text-[10px] font-medium tracking-[0.14em] text-subtle uppercase">{label}</span>
-      <span className="font-mono text-lg leading-none font-medium tabular-nums text-fg">{value}</span>
+      <span className="min-w-0 truncate font-mono text-lg leading-none font-medium tabular-nums text-fg">
+        {value}
+      </span>
     </div>
   );
 }
@@ -147,6 +165,7 @@ export function Segmented<T extends string>({
         <button
           key={o.id}
           type="button"
+          aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
             "h-9 min-w-11 flex-1 rounded-md px-3 text-xs font-medium transition-[background-color,color] duration-150 ease-out",

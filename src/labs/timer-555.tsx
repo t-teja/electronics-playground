@@ -61,7 +61,7 @@ export function Timer555Lab() {
       return `One-shot. A falling edge on TRIG sets the latch; the capacitor charges through RA until \u2154 VCC, then the discharge transistor dumps it. Pulse width = 1.1 \u00b7 RA \u00b7 C = ${formatSec(tMono)}.`;
     }
     if (duty > 0.7) {
-      return `Astable, but RA is large compared with RB so the high time dominates (${Math.round(duty * 100)}% duty). Frequency is ${formatHz(fAstable)} \u2014 TH = ${formatSec(th)}, TL = ${formatSec(tl)}.`;
+      return `Astable, but RA is large compared with RB so the high time dominates (${Math.round(duty * 100)}% duty). Frequency is ${formatHz(fAstable)}. TH = ${formatSec(th)}, TL = ${formatSec(tl)}.`;
     }
     return `Astable heartbeat. The capacitor hunts between \u2153 and \u2154 of VCC. Charge through RA+RB, discharge through RB. f = 1.44 / ((RA + 2 RB) C) = ${formatHz(fAstable)}.`;
   }, [mode, duty, fAstable, th, tl, tMono]);
@@ -173,7 +173,8 @@ export function Timer555Lab() {
                   s.high = false;
                 }
               } else {
-                s.vc = Math.max(0, s.vc - (s.vc / (p.ra * 0.05) + 8) * dt);
+                const rDis = 12;
+                s.vc = Math.max(0, s.vc - (s.vc / rDis / p.c) * dt);
               }
             }
 
@@ -201,8 +202,8 @@ export function Timer555Lab() {
                 7: s.high ? 0 : 1,
                 8: p.run ? 1 : 0,
                 4: p.run ? 1 : 0,
-                2: p.mode === "monostable" && s.trigger > 0 ? 1 : 0,
-                1: 1,
+                2: p.mode === "monostable" ? (s.trigger > 0 ? 0 : 1) : s.vc < LO ? 0 : 1,
+                1: 0,
               });
               label(ctx, "555", chipX, chipY, { size: 18, color: Ink.text, mono: true });
 
@@ -224,7 +225,6 @@ export function Timer555Lab() {
               const gndY = 280;
               const rightBus = dip.left + dip.bodyW + 20;
 
-              // Pin 8 VCC: left along the pin row (does not drop across other top pins)
               wire(ctx, [
                 bat.pos,
                 { x: bat.pos.x, y: vccY },
@@ -233,7 +233,6 @@ export function Timer555Lab() {
               wire(ctx, [P[8], { x: 64, y: topY }, { x: 64, y: vccY }]);
               junction(ctx, 64, vccY);
 
-              // Pin 4 RESET to VCC, around the right of the package
               wire(ctx, [
                 P[4],
                 { x: rightBus, y: botY },
@@ -242,7 +241,6 @@ export function Timer555Lab() {
               ]);
               junction(ctx, rightBus, vccY);
 
-              // RA from VCC to pin 7 DIS
               resistorBody(ctx, 90, 62, 80, p.ra, s.high ? 0.14 : 0.04);
               label(ctx, "RA", 130, 42, { size: 11 });
               wire(ctx, [
@@ -268,7 +266,6 @@ export function Timer555Lab() {
               }
               junction(ctx, tie.x, tie.y);
 
-              // Pin 6 THR: approach from above the pin row so we do not scrape pin 7
               wire(ctx, [
                 tie,
                 { x: 250, y: 168 },
@@ -276,7 +273,6 @@ export function Timer555Lab() {
                 { x: P[6].x, y: 50 },
                 P[6],
               ]);
-              // Pin 2 TRIG: below the package, then up onto the pin
               wire(ctx, [
                 tie,
                 { x: 190, y: botY + 16 },
@@ -301,7 +297,6 @@ export function Timer555Lab() {
               ]);
               junction(ctx, 140, gndY);
 
-              // Pin 1 GND: left first so the TRIG run below the pins does not hit it
               wire(ctx, [P[1], { x: 64, y: botY }, { x: 64, y: gndY }]);
               wire(ctx, [
                 bat.neg,
@@ -312,7 +307,7 @@ export function Timer555Lab() {
               gnd(ctx, 100, gndY);
               junction(ctx, 64, gndY);
 
-              const led = ledDome(ctx, 680, 64, Ink.electron, out);
+              const led = ledDome(ctx, 680, 64, out ? "#5eead4" : Ink.body, out ? 1 : 0);
               label(ctx, out ? "OUT  HIGH" : "OUT  LOW", 680, 128, {
                 size: 11,
                 color: out ? Ink.electron : Ink.muted,

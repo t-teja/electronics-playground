@@ -61,6 +61,7 @@ export function GpuLab() {
   const [clocks, setClocks] = useState(0);
 
   const fb = useRef(new Float32Array(PIX));
+  const filled = useRef(new Uint8Array(PIX));
   const workers = useRef<Core[]>(makeCores(4));
   const cpu = useRef({ acc: 0, last: -1 });
   const flow = useRef(new ElectronFlow());
@@ -68,6 +69,7 @@ export function GpuLab() {
 
   const resetJob = () => {
     fb.current = new Float32Array(PIX);
+    filled.current = new Uint8Array(PIX);
     workers.current = makeCores(nCores(cores));
     cpu.current.acc = 0;
     cpu.current.last = -1;
@@ -77,6 +79,7 @@ export function GpuLab() {
 
   useEffect(() => {
     fb.current = new Float32Array(PIX);
+    filled.current = new Uint8Array(PIX);
     workers.current = makeCores(nCores(cores));
     cpu.current.acc = 0;
     cpu.current.last = -1;
@@ -95,12 +98,12 @@ export function GpuLab() {
       return `POWER off. The framebuffer keeps the last picture (like video RAM), but the ALUs stop. GPUs win by doing the same math on many pixels at once, not by being a faster CPU.`;
     }
     if (done) {
-      return `Job done in ${clocks} clocks. ${n} core${n === 1 ? "" : "s"} × clocks ≈ ${clocks * n} pixel-slots. A CPU painter (${n === 1 ? "this is one" : "one core"}) would need ${PIX} clocks for 64 pixels.`;
+      return `Job done in ${clocks} clocks. ${n} core${n === 1 ? "" : "s"} \u00d7 clocks \u2248 ${clocks * n} pixel-slots. A CPU painter (${n === 1 ? "this is one" : "one core"}) would need ${PIX} clocks for 64 pixels.`;
     }
     if (n === 1) {
       return `CPU painter: one pixel per clock. ${painted}/64. Same ALU, just walking the framebuffer. GPUs look slow per core and still win.`;
     }
-    return `${n} cores claiming tiles. Each clock, every live ALU paints one pixel. pixels/s ≈ cores × clocks = ${n} × ${hz} = ${pps}. ${painted}/64 filled.`;
+    return `${n} cores claiming tiles. Each clock, every live ALU paints one pixel. pixels/s \u2248 cores \u00d7 clocks = ${n} \u00d7 ${hz} = ${pps}. ${painted}/64 filled.`;
   }, [power, done, clocks, n, painted, hz, pps]);
 
   return (
@@ -116,7 +119,7 @@ export function GpuLab() {
       controls={
         <>
           <ToggleControl label="POWER" checked={power} on="run" off="hold" onCheckedChange={setPower} />
-          <Control label="Cores" hint="1 is a CPU painter. 4 and 8 split the 8×8 into tiles.">
+          <Control label="Cores" hint="1 is a CPU painter. 4 and 8 split the 8\u00d78 into tiles.">
             <Segmented
               value={cores}
               onChange={(v) => setCores(v)}
@@ -154,7 +157,7 @@ export function GpuLab() {
       insight={
         <>
           <p>{insight}</p>
-          <p className="font-mono text-xs text-subtle">pixels/s ≈ cores × clocks</p>
+          <p className="font-mono text-xs text-subtle">{"pixels/s \u2248 cores \u00b7 clocks"}</p>
         </>
       }
       canvas={
@@ -172,6 +175,7 @@ export function GpuLab() {
                   if (core.next < core.end) {
                     const i = core.next;
                     fb.current[i] = pixelTarget(i, p.job);
+                    filled.current[i] = 1;
                     core.next += 1;
                     cpu.current.last = i;
                     stepped = true;
@@ -180,7 +184,8 @@ export function GpuLab() {
                 if (stepped) clocksAdd += 1;
               }
               if (clocksAdd > 0) {
-                const nPaint = fb.current.reduce((s, v) => s + (v > 0 ? 1 : 0), 0);
+                let nPaint = 0;
+                for (let i = 0; i < PIX; i++) nPaint += filled.current[i] ?? 0;
                 setClocks((c) => c + clocksAdd);
                 setPainted(nPaint);
               }
@@ -192,13 +197,13 @@ export function GpuLab() {
               const bat = battery(ctx, 56, 200);
               label(ctx, p.power ? "5 V" : "0 V", 56, 256, { mono: true, size: 11 });
 
-              label(ctx, "8 ALUs", 200, 40, { size: 12, color: Ink.muted });
-              for (let i = 0; i < 8; i++) {
+              label(ctx, `${p.n} ALU${p.n === 1 ? "" : "s"}`, 200, 40, { size: 12, color: Ink.muted });
+              for (let i = 0; i < p.n; i++) {
                 const col = i % 4;
                 const row = Math.floor(i / 4);
                 const x = 120 + col * 54;
                 const y = 58 + row * 54;
-                const live = p.power && i < p.n;
+                const live = p.power;
                 const worker = wrk[i];
                 const busy = live && worker !== undefined && worker.next < worker.end;
                 roundRect(ctx, x, y, 46, 46, 6);
@@ -227,7 +232,7 @@ export function GpuLab() {
               ctx.fill();
               ctx.strokeStyle = "rgba(128,128,128,0.22)";
               ctx.stroke();
-              label(ctx, "framebuffer  8×8", fx + (W * cell) / 2, fy - 12, {
+              label(ctx, "framebuffer  8x8", fx + (W * cell) / 2, fy - 12, {
                 size: 12,
                 color: Ink.text,
                 mono: true,
@@ -240,8 +245,9 @@ export function GpuLab() {
                 const px = fx + x * cell;
                 const py = fy + y * cell;
                 const v = fb.current[i] ?? 0;
+                const written = filled.current[i] === 1;
                 roundRect(ctx, px + 2, py + 2, cell - 4, cell - 4, 3);
-                if (v > 0) {
+                if (written) {
                   ctx.fillStyle = Ink.electron;
                   ctx.globalAlpha = 0.2 + v * 0.75;
                   ctx.fill();
@@ -302,7 +308,7 @@ export function GpuLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `pixels/s ≈ ${p.n} × ${p.hz} = ${p.n * p.hz}`, 400, 408, {
+              label(ctx, `pixels/s \u2248 ${p.n} x ${p.hz} = ${p.n * p.hz}`, 400, 408, {
                 mono: true,
                 size: 13,
                 color: Ink.text,

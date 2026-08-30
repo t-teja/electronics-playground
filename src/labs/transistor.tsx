@@ -42,17 +42,17 @@ export function TransistorLab() {
 
   const collector = useRef(new ElectronFlow());
   const base = useRef(new ElectronFlow());
-  const params = useRef({ ib, ic, rc, region, ibUa });
-  params.current = { ib, ic, rc, region, ibUa };
+  const params = useRef({ ib, ic, rc, region, ibUa, icSat });
+  params.current = { ib, ic, rc, region, ibUa, icSat };
 
   const insight = useMemo(() => {
     if (region === "cutoff") {
       return `Base current is essentially zero. The BE junction is off, the collector path is closed, the LED is dark. A transistor at rest is an open switch.`;
     }
     if (region === "saturation") {
-      return `Saturated. The collector cannot deliver more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted \u2014 this is the ON switch.`;
+      return `Saturated. The collector cannot deliver more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted. This is the ON switch.`;
     }
-    return `Active region. ${formatAmp(ib)} into the base becomes ${formatAmp(ic)} at the collector \u2014 a gain of \u03b2 = ${BETA}. The small stream is steering the large one.`;
+    return `Active region. ${formatAmp(ib)} into the base becomes ${formatAmp(ic)} at the collector. A gain of \u03b2 = ${BETA}. The small stream is steering the large one.`;
   }, [region, ib, ic, icSat, rc]);
 
   return (
@@ -92,7 +92,7 @@ export function TransistorLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            \u03b2 = {BETA} \u00b7 Ic sat = (Vcc - Vce_sat - Vf) / Rc = {formatAmp(icSat)}
+            {"\u03b2 = "}{BETA}{" \u00b7 Ic sat = (Vcc - Vce_sat - Vf) / Rc = "}{formatAmp(icSat)}
           </p>
         </>
       }
@@ -100,13 +100,14 @@ export function TransistorLab() {
         <SimCanvas
           onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
+            const lit = p.ic >= 0.001;
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const bat = battery(ctx, 70, 100);
               label(ctx, formatVolt(VCC), 70, 152, { mono: true, size: 12 });
               resistorBody(ctx, 200, 64, 80, p.rc, Math.min(1, p.ic * 8));
-              const led = ledDome(ctx, 360, 40, Ink.electron, Math.min(1, p.ic / 0.015));
+              const led = ledDome(ctx, 360, 40, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               const q = bjtSymbol(ctx, 520, 140, "npn");
 
               wire(ctx, [
@@ -174,7 +175,13 @@ export function TransistorLab() {
               base.current.step(dt);
               base.current.draw(ctx);
 
-              label(ctx, `Ic = \u03b2 Ib = ${formatAmp(p.ic)}`, 560, 392, {
+              const overlay =
+                p.region === "saturation"
+                  ? `Ic = (Vcc - Vce_sat - Vf) / Rc = ${formatAmp(p.ic)}`
+                  : p.region === "cutoff"
+                    ? "Ic = 0  (cutoff)"
+                    : `Ic = \u03b2 Ib = ${formatAmp(p.ic)}`;
+              label(ctx, overlay, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
