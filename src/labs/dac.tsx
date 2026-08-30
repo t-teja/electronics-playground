@@ -22,10 +22,11 @@ import {
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const N = 4;
-const LEVELS = 2 ** N - 1;
+const LEVELS = 2 ** N;
 const VREF = 5;
 const R = 10000;
 const VF_LED = 1.8;
+const R_LED = 470;
 
 export function DacLab() {
   const lab = LAB_BY_SLUG.dac!;
@@ -35,21 +36,22 @@ export function DacLab() {
   const [code, setCode] = useState(10);
   const vout = VREF * (code / LEVELS);
   const bits = [0, 1, 2, 3].map((i) => ((code >> (N - 1 - i)) & 1) === 1);
-  const iLed = Math.max(0, (vout - VF_LED) / 470);
+  const iLed = Math.max(0, (vout - VF_LED) / R_LED);
+  const ledOn = iLed >= 0.001;
 
   const flow = useRef(new ElectronFlow());
   const outFlow = useRef(new ElectronFlow());
-  const params = useRef({ code, vout, bits, iLed });
-  params.current = { code, vout, bits, iLed };
+  const params = useRef({ code, vout, bits, iLed, ledOn });
+  params.current = { code, vout, bits, iLed, ledOn };
 
   const insight = useMemo(() => {
     if (code === 0) {
       return `Code 0. Every R-2R switch sits on ground, Vout is 0 V, the LED is dark. The ladder is a well-behaved voltage divider waiting for a bit.`;
     }
-    if (code === LEVELS) {
-      return `Full scale. All four bits high, Vout = Vref · 15/15 = ${formatVolt(VREF)}. The LED is as bright as this rail allows.`;
+    if (code === 15) {
+      return `Full scale for a 4-bit word. Vout = Vref \u00b7 15 / 16 = ${formatVolt(VREF * 15 / 16)}. An R-2R ladder never quite reaches Vref.`;
     }
-    return `Vout = Vref · D / (2ⁿ − 1) = ${formatVolt(VREF)} · ${code} / ${LEVELS} = ${formatVolt(vout)}. Each bit is a switch onto a binary-weighted rung of the R-2R ladder.`;
+    return `Vout = Vref \u00b7 D / 2\u207f = ${formatVolt(VREF)} \u00b7 ${code} / ${LEVELS} = ${formatVolt(vout)}. Each bit is a switch onto a binary-weighted rung of the R-2R ladder.`;
   }, [code, vout]);
 
   return (
@@ -57,7 +59,7 @@ export function DacLab() {
       lab={lab}
       meters={
         <>
-          <Meter label="Code" value={`${code} / ${LEVELS}`} />
+          <Meter label="Code" value={`${code} / 15`} />
           <Meter label="Vout" value={formatVolt(vout)} />
           <Meter label="Bits" value={bits.map((b) => (b ? "1" : "0")).join("")} />
         </>
@@ -68,17 +70,17 @@ export function DacLab() {
           value={code}
           display={`${code}`}
           min={0}
-          max={LEVELS}
+          max={15}
           step={1}
           onChange={setCode}
-          hint="4-bit integer 0–15. Bits in, analog out."
+          hint="4-bit integer 0\u201315. Bits in, analog out."
         />
       }
       insight={
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            Vout = Vref · D / (2ⁿ − 1) = {formatVolt(vout)} · R = {formatOhm(R)}
+            {"Vout = Vref \u00b7 D / 2\u207f = "}{formatVolt(vout)}{" \u00b7 R = "}{formatOhm(R)}
           </p>
         </>
       }
@@ -161,9 +163,15 @@ export function DacLab() {
               label(ctx, "buf", 119, 232, { size: 10, color: Ink.text });
               wire(ctx, [voutPt, { x: voutPt.x, y: 232 }, { x: 154, y: 232 }]);
 
-              const led = ledDome(ctx, 720, 198, Ink.electron, Math.min(1, p.vout / VREF));
+              resistorBody(ctx, 280, 232, 70, R_LED, Math.min(1, p.iLed * 20));
+              label(ctx, "470 \u03a9", 315, 210, { size: 10, mono: true });
+              const led = ledDome(ctx, 720, 198, p.ledOn ? "#5eead4" : Ink.body, p.ledOn ? 1 : 0);
               wire(ctx, [
                 { x: 172, y: 232 },
+                { x: 270, y: 232 },
+              ]);
+              wire(ctx, [
+                { x: 360, y: 232 },
                 { x: led.anode.x, y: 232 },
                 led.anode,
               ]);
@@ -192,9 +200,11 @@ export function DacLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              if (p.vout > 0.2) {
+              if (p.ledOn) {
                 const o: Pt[] = [
                   { x: 172, y: 232 },
+                  { x: 270, y: 232 },
+                  { x: 360, y: 232 },
                   { x: led.anode.x, y: 232 },
                   led.anode,
                   led.cathode,
@@ -207,7 +217,7 @@ export function DacLab() {
                 outFlow.current.draw(ctx);
               }
 
-              label(ctx, `Vout = Vref · D / (2ⁿ − 1) = ${formatVolt(p.vout)}`, 400, 392, {
+              label(ctx, `Vout = Vref \u00b7 D / 2^n = ${formatVolt(p.vout)}`, 400, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
