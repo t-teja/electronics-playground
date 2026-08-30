@@ -21,6 +21,14 @@ import {
 } from "@/lib/sim/draw";
 import { ElectronFlow, SparkField, type Pt } from "@/lib/sim/flow";
 
+const R_ARC = 1e6;
+const I_MAX = 2;
+const VL_MAX = 2000;
+
+function finite(n: number, fallback = 0) {
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export function InductorLab() {
   const lab = LAB_BY_SLUG.inductor!;
   const mark = useProgress((s) => s.mark);
@@ -45,7 +53,7 @@ export function InductorLab() {
 
   const insight = useMemo(() => {
     if (!closed) {
-      return `Switch opened. Current cannot stop instantly — the collapsing field induces a voltage that tries to keep I flowing through the lamp. That spark is the stored magnetic energy leaving.`;
+      return `Switch opened. Current cannot stop instantly. The collapsing field induces a voltage that tries to keep I flowing through the lamp. That spark is the stored magnetic energy leaving.`;
     }
     const frac = read.i / Math.max(0.001, iinf);
     if (frac > 0.95) {
@@ -108,14 +116,20 @@ export function InductorLab() {
           onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
             const s = sim.current;
+            const dtStep = clamp(dt, 1e-4, 0.05);
             if (s.lastClosed && !p.closed && Math.abs(s.i) > 0.01) {
               sparks.current.burst(206, 190, 22);
             }
             s.lastClosed = p.closed;
-            const vL = p.closed ? p.vsrc - s.i * p.r : -s.i * (p.r + 800);
-            const di = (vL / p.l) * dt;
-            s.i = p.closed ? clamp(s.i + di, 0, p.vsrc / p.r) : s.i + di;
-            if (!p.closed) s.i *= Math.exp(-dt / Math.max(0.004, p.l / (p.r + 800)));
+
+            const rLoop = p.closed ? p.r : p.r + R_ARC;
+            const vBat = p.closed ? p.vsrc : 0;
+            const iInf = vBat / rLoop;
+            const tauL = Math.max(p.l / rLoop, 1e-9);
+            s.i = iInf + (s.i - iInf) * Math.exp(-dtStep / tauL);
+            s.i = clamp(finite(s.i), -I_MAX, I_MAX);
+            const vL = clamp(finite(vBat - s.i * rLoop), -VL_MAX, VL_MAX);
+
             sparks.current.step(dt);
             const i01 = Math.abs(s.i) / Math.max(0.01, p.vsrc / p.r);
             samples.current.push(clamp(i01, 0, 1));
@@ -154,6 +168,9 @@ export function InductorLab() {
                 { x: 46, y },
               ]);
               label(ctx, "load", 520, y - 36, { size: 11 });
+              if (!p.closed) {
+                label(ctx, "1 MΩ arc", 206, y + 36, { size: 10, mono: true, color: Ink.heat });
+              }
               label(ctx, formatHenry(p.l), coil.mid, y + 64, { mono: true, size: 12 });
               label(ctx, p.closed ? "building field" : "field collapsing", coil.mid, y - 58, { size: 12 });
               sparks.current.draw(ctx);
@@ -173,7 +190,7 @@ export function InductorLab() {
               flow.current.draw(ctx);
 
               scope(ctx, 540, 36, 220, 90, samples.current, Ink.electron, "I(t)");
-              label(ctx, `V = L dI/dt   ·   ${formatAmp(s.i)}`, 400, 380, {
+              label(ctx, `V = L dI/dt   ·   ${formatVolt(vL)}`, 400, 380, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
@@ -184,7 +201,7 @@ export function InductorLab() {
             if (ui.current > 0.08) {
               ui.current = 0;
               setRead((prev) => {
-                if (Math.abs(prev.i - s.i) < 0.0004) return prev;
+                if (Math.abs(prev.i - s.i) < 0.0004 && Math.abs(prev.vl - vL) < 0.05) return prev;
                 return { i: s.i, vl: vL };
               });
             }
