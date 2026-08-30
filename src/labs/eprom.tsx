@@ -55,7 +55,8 @@ export function EpromLab() {
   const ui = useRef(0);
 
   const din = (d3 ? 8 : 0) | (d2 ? 4 : 0) | (d1 ? 2 : 0) | (d0 ? 1 : 0);
-  const dout = nibbleFrom(bits.current, addr);
+  const stored = nibbleFrom(bits.current, addr);
+  const dout = power ? stored : 0;
   const erased = bits.current.reduce((s, x) => s + x, 0) / BITS;
 
   const params = useRef({ power, vpp, uv, addr, din, dout, erased });
@@ -69,15 +70,15 @@ export function EpromLab() {
       return `WRITE without Vpp is a no-op. Programming needs a high-voltage pulse on Vpp to push electrons onto the gate.`;
     }
     if (weHold.current > 0 && vpp) {
-      return `Vpp is high. Programming can only write 0s — electrons trapped on the floating gate. Ones stay ones until UV.`;
+      return `Vpp is high. Programming can only write 0s. Electrons trapped on the floating gate. Ones stay ones until UV.`;
     }
     if (!power) {
-      return `POWER is off, data is still ${hex4(dout)}h at address ${addr}. EPROM is non-volatile: the floating gate holds charge with no VCC.`;
+      return `POWER is off. Floating gates still hold charge, but the outputs and LEDs go dark. WRITE cannot program without VCC.`;
     }
     if (!vpp) {
       return `Quartz window, floating gates. Row ${addr} reads ${hex4(dout)}h. Raise Vpp to program 0s, or hold UV to erase toward 0xF.`;
     }
-    return `Vpp armed. Pulse WRITE to program din=${hex4(din)}h into row ${addr} (1→0 only). UV is the only way back to 1.`;
+    return `Vpp armed. Pulse WRITE to program din=${hex4(din)}h into row ${addr} (1 to 0 only). UV is the only way back to 1.`;
   }, [uv, vpp, power, addr, din, dout, snap]);
 
   return (
@@ -86,7 +87,7 @@ export function EpromLab() {
       meters={
         <>
           <Meter label="ADDR" value={`${addr}  ${hex4(addr)}h`} />
-          <Meter label="DOUT" value={`${hex4(dout)}h  ${dout.toString(2).padStart(4, "0")}`} />
+          <Meter label="DOUT" value={power ? `${hex4(dout)}h  ${dout.toString(2).padStart(4, "0")}` : "----"} />
           <Meter label="ERASED" value={`${Math.round(erased * 100)}%`} />
         </>
       }
@@ -109,7 +110,9 @@ export function EpromLab() {
           <ToggleControl label="DIN0" checked={d0} on="1" off="0" onCheckedChange={setD0} />
           <Button
             variant="electron"
+            disabled={!power}
             onClick={() => {
+              if (!power) return;
               weHold.current = 0.22;
               if (vpp) {
                 for (let b = 0; b < 4; b++) {
@@ -257,10 +260,10 @@ export function EpromLab() {
                 mono: true,
                 color: p.vpp ? Ink.heat : Ink.electron,
               });
-              const shown = we && p.vpp ? p.din : liveDout;
+              const shown = !p.power ? 0 : we && p.vpp ? p.din : liveDout;
               for (let b = 0; b < 4; b++) {
                 const y = 88 + b * 40;
-                const on = ((shown >> (3 - b)) & 1) === 1;
+                const on = p.power && ((shown >> (3 - b)) & 1) === 1;
                 bitLed(ctx, 620, y, on, we && p.vpp ? Ink.heat : Ink.electron);
                 label(ctx, `D${3 - b}`, 650, y, { size: 11, mono: true, align: "left" });
                 wire(ctx, [
@@ -300,11 +303,19 @@ export function EpromLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `UV → 1s   Vpp programs 0s   dout=${hex4(liveDout)}h`, 400, 408, {
-                mono: true,
-                size: 13,
-                color: Ink.text,
-              });
+              label(
+                ctx,
+                p.power
+                  ? `UV -> 1s   Vpp programs 0s   dout=${hex4(liveDout)}h`
+                  : "POWER off  outputs blank",
+                400,
+                408,
+                {
+                  mono: true,
+                  size: 13,
+                  color: Ink.text,
+                },
+              );
             });
           }}
         />
