@@ -11,14 +11,38 @@ import {
   clearSim,
   graphPaper,
   Ink,
+  junction,
   label,
   resistorBody,
   scope,
-  toggleSwitch,
   wire,
   withFrame,
 } from "@/lib/sim/draw";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
+
+function spdt(ctx: CanvasRenderingContext2D, x: number, y: number, charge: boolean) {
+  const pole = { x: x + 36, y };
+  const ch = { x, y: y - 22 };
+  const dis = { x, y: y + 22 };
+  ctx.strokeStyle = Ink.pin;
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(pole.x, pole.y, 3.4, 0, Math.PI * 2);
+  ctx.arc(ch.x, ch.y, 3.4, 0, Math.PI * 2);
+  ctx.arc(dis.x, dis.y, 3.4, 0, Math.PI * 2);
+  ctx.fillStyle = Ink.pin;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(pole.x, pole.y);
+  if (charge) ctx.lineTo(ch.x, ch.y);
+  else ctx.lineTo(dis.x, dis.y);
+  ctx.strokeStyle = Ink.copper;
+  ctx.stroke();
+  label(ctx, "charge", ch.x - 8, ch.y - 14, { size: 10, align: "right" });
+  label(ctx, "discharge", dis.x - 8, dis.y + 14, { size: 10, align: "right" });
+  return { pole, charge: ch, discharge: dis };
+}
 
 export function CapacitorLab() {
   const lab = LAB_BY_SLUG.capacitor!;
@@ -43,13 +67,13 @@ export function CapacitorLab() {
   const insight = useMemo(() => {
     const frac = read.vc / Math.max(0.01, vsrc);
     if (!closed) {
-      return `Switch open. The capacitor is discharging through ${formatOhm(r)}. Voltage falls as ${formatVolt(read.vc)} with \u03c4 = ${formatSec(tau)}.`;
+      return `Thrown to discharge. The capacitor dumps through ${formatOhm(r)}. Voltage is ${formatVolt(read.vc)}. \u03c4 = ${formatSec(tau)}.`;
     }
     if (frac > 0.95) {
-      return `Charged. Plate voltage matches the source, so the field cancels further current. I \u2248 ${formatAmp(read.i)}. The field is now storing \u00bdCV\u00b2.`;
+      return `Charged. Plate voltage matches the source, so the field cancels further current. I \u2248 ${formatAmp(read.i)}. The field stores \u00bdCV\u00b2.`;
     }
     if (frac < 0.08) {
-      return `Just connected. The empty capacitor looks like a short \u2014 a surge of ${formatAmp(read.i)} is rushing onto the plates. \u03c4 = ${formatSec(tau)}.`;
+      return `Just thrown to charge. The empty capacitor looks like a short. A surge of ${formatAmp(read.i)} rushes onto the plates. \u03c4 = ${formatSec(tau)}.`;
     }
     return `Charging. Electrons pile onto the right (\u2212) plate; the left (+) plate is stripped of them. The growing field fights the source. Time constant \u03c4 = RC = ${formatSec(tau)}.`;
   }, [closed, read.vc, read.i, r, tau, vsrc]);
@@ -119,54 +143,72 @@ export function CapacitorLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 190;
-              battery(ctx, 56, y);
-              toggleSwitch(ctx, 190, y, p.closed);
-              resistorBody(ctx, 300, y, 90, p.r, Math.min(1, Math.abs(s.i) * 40));
-              capPlates(ctx, 520, y, s.vc / Math.max(p.vsrc, 0.01));
+              const botY = 310;
+              const bat = battery(ctx, 56, y);
+              const sw = spdt(ctx, 168, y, p.closed);
+              resistorBody(ctx, 330, y, 90, p.r, Math.min(1, Math.abs(s.i) * 40));
+              capPlates(ctx, 540, y, s.vc / Math.max(p.vsrc, 0.01));
+
+              wire(ctx, [bat.pos, { x: 120, y }, { x: 120, y: sw.charge.y }, sw.charge]);
+              wire(ctx, [sw.pole, { x: 320, y }]);
               wire(ctx, [
-                { x: 76, y },
-                { x: 190, y },
+                { x: 430, y },
+                { x: 524, y },
               ]);
               wire(ctx, [
-                { x: 224, y },
-                { x: 300, y },
+                { x: 556, y },
+                { x: 680, y },
+                { x: 680, y: botY },
+                { x: bat.neg.x, y: botY },
+                bat.neg,
               ]);
               wire(ctx, [
-                { x: 400, y },
-                { x: 504, y },
+                sw.discharge,
+                { x: 120, y: sw.discharge.y },
+                { x: 120, y: botY },
+                { x: bat.neg.x, y: botY },
               ]);
-              wire(ctx, [
-                { x: 536, y },
-                { x: 660, y },
-                { x: 660, y: 310 },
-                { x: 56, y: 310 },
-                { x: 56, y: y + 28 },
-              ]);
+              junction(ctx, bat.neg.x, botY);
+              junction(ctx, 120, botY);
 
               label(ctx, formatVolt(p.vsrc), 56, y + 52, { mono: true, size: 12 });
-              label(ctx, formatOhm(p.r), 345, y - 32, { mono: true, size: 12 });
-              label(ctx, formatFarad(p.c), 520, y - 48, { mono: true, size: 12 });
-              label(ctx, "+", 500, y - 40, { size: 12, color: Ink.hole });
-              label(ctx, "\u2212", 540, y - 40, { size: 14, color: Ink.electron });
-              label(ctx, p.closed ? "charging" : "discharging", 206, y - 28, { size: 11 });
+              label(ctx, formatOhm(p.r), 375, y - 32, { mono: true, size: 12 });
+              label(ctx, formatFarad(p.c), 540, y - 48, { mono: true, size: 12 });
+              label(ctx, "+", 520, y - 40, { size: 12, color: Ink.hole });
+              label(ctx, "-", 560, y - 40, { size: 14, color: Ink.electron });
+              label(ctx, p.closed ? "charging" : "discharging", 204, y - 52, { size: 11 });
 
               const q01 = s.vc / Math.max(p.vsrc, 0.01);
               for (let n = 0; n < Math.round(q01 * 14); n++) {
                 ctx.beginPath();
                 ctx.fillStyle = Ink.hole;
-                ctx.arc(512 - (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
+                ctx.arc(532 - (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.fillStyle = Ink.electron;
                 ctx.beginPath();
-                ctx.arc(530 + (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
+                ctx.arc(550 + (n % 2) * 6, y - 22 + (n % 7) * 7, 2, 0, Math.PI * 2);
                 ctx.fill();
               }
 
-              const loop: Pt[] = [
-                { x: 76, y },
-                { x: 300, y },
-                { x: 504, y },
-              ];
+              const loop: Pt[] = p.closed
+                ? [
+                    bat.pos,
+                    { x: 120, y },
+                    { x: 120, y: sw.charge.y },
+                    sw.charge,
+                    sw.pole,
+                    { x: 330, y },
+                    { x: 524, y },
+                  ]
+                : [
+                    { x: 524, y },
+                    { x: 330, y },
+                    sw.pole,
+                    sw.discharge,
+                    { x: 120, y: sw.discharge.y },
+                    { x: 120, y: botY },
+                    { x: bat.neg.x, y: botY },
+                  ];
               const mag = Math.abs(s.i);
               flow.current.setPath(loop, false);
               flow.current.set(

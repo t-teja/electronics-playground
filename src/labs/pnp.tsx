@@ -42,17 +42,17 @@ export function PnpLab() {
   const collector = useRef(new ElectronFlow());
   const base = useRef(new ElectronFlow());
   const holes = useRef(new ElectronFlow());
-  const params = useRef({ ib, ic, rc, region, ibUa });
-  params.current = { ib, ic, rc, region, ibUa };
+  const params = useRef({ ib, ic, rc, region, ibUa, icSat });
+  params.current = { ib, ic, rc, region, ibUa, icSat };
 
   const insight = useMemo(() => {
     if (region === "cutoff") {
       return `No current is being pulled out of the base. The emitter-base junction is off, the high-side path is closed, the LED is dark. A PNP at rest is an open switch sitting on VCC.`;
     }
     if (region === "saturation") {
-      return `Saturated. The collector cannot source more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted - this is the ON high-side switch.`;
+      return `Saturated. The collector cannot source more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted. This is the ON high-side switch.`;
     }
-    return `Active region. ${formatAmp(ib)} leaving the base becomes ${formatAmp(ic)} at the collector - a gain of beta = ${BETA}. Holes stream from emitter to collector; the load hangs toward ground.`;
+    return `Active region. ${formatAmp(ib)} leaving the base becomes ${formatAmp(ic)} at the collector. A gain of \u03b2 = ${BETA}. Holes stream from emitter to collector; the load hangs toward ground.`;
   }, [region, ib, ic, icSat, rc]);
 
   return (
@@ -70,7 +70,7 @@ export function PnpLab() {
           <LinearControl
             label="Base current (out)"
             value={ibUa}
-            display={`${ibUa.toFixed(0)} uA`}
+            display={`${ibUa.toFixed(0)} \u00b5A`}
             min={0}
             max={120}
             step={1}
@@ -92,7 +92,7 @@ export function PnpLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            beta = {BETA} * Ic sat = (Vcc - Vce_sat - Vf) / Rc = {formatAmp(icSat)}
+            {"\u03b2 = "}{BETA}{" \u00b7 Ic sat = (Vcc - Vce_sat - Vf) / Rc = "}{formatAmp(icSat)}
           </p>
         </>
       }
@@ -100,6 +100,7 @@ export function PnpLab() {
         <SimCanvas
           onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
+            const lit = p.ic >= 0.001;
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
@@ -109,10 +110,9 @@ export function PnpLab() {
               label(ctx, formatVolt(VCC), 70, 206, { mono: true, size: 12 });
 
               const q = bjtSymbol(ctx, 340, 168, "pnp");
-              const led = ledDome(ctx, 560, 90, Ink.electron, Math.min(1, p.ic / 0.015));
+              const led = ledDome(ctx, 560, 90, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               resistorBody(ctx, 520, botY, 80, p.rc, Math.min(1, p.ic * 8));
 
-              // Emitter (bottom pad) to VCC around the LEFT. Collector never joins this rail.
               wire(ctx, [
                 q.e,
                 { x: 250, y: q.e.y },
@@ -120,7 +120,6 @@ export function PnpLab() {
                 { x: bat.pos.x, y: topY },
                 bat.pos,
               ]);
-              // Collector (top pad) to LED on the right, below VCC.
               wire(ctx, [
                 q.c,
                 { x: led.anode.x, y: q.c.y },
@@ -141,7 +140,7 @@ export function PnpLab() {
               ctx.fillStyle = Ink.package;
               ctx.fillRect(160, q.b.y - 12, 80, 24);
               label(ctx, "Ib sink", 200, q.b.y, { size: 10, color: Ink.text });
-              label(ctx, `${p.ibUa.toFixed(0)} uA out`, 200, q.b.y + 24, { mono: true, size: 11 });
+              label(ctx, `${p.ibUa.toFixed(0)} \u00b5A out`, 200, q.b.y + 24, { mono: true, size: 11 });
 
               junction(ctx, 250, topY);
               junction(ctx, bat.pos.x, topY);
@@ -214,7 +213,13 @@ export function PnpLab() {
               holes.current.step(dt);
               holes.current.draw(ctx);
 
-              label(ctx, `Ic = beta Ib = ${formatAmp(p.ic)}`, 560, 392, {
+              const overlay =
+                p.region === "saturation"
+                  ? `Ic = (Vcc - Vce_sat - Vf) / Rc = ${formatAmp(p.ic)}`
+                  : p.region === "cutoff"
+                    ? "Ic = 0  (cutoff)"
+                    : `Ic = \u03b2 Ib = ${formatAmp(p.ic)}`;
+              label(ctx, overlay, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
