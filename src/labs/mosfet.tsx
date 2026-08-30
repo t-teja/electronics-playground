@@ -23,6 +23,7 @@ import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 const VDD = 9;
 const VTH = 2;
 const K = 0.08;
+const VF_LED = 2.0;
 
 export function MosfetLab() {
   const lab = LAB_BY_SLUG.mosfet!;
@@ -33,23 +34,23 @@ export function MosfetLab() {
   const [rd, setRd] = useState(470);
   const over = Math.max(0, vgs - VTH);
   const idSat = K * over * over;
-  const idMax = VDD / rd;
+  const idMax = (VDD - VF_LED) / rd;
   const sat = idSat < idMax;
   const id = vgs < VTH ? 0 : sat ? idSat : idMax;
-  const region = vgs < VTH ? "cutoff" : sat ? "saturation" : "linear";
+  const region = vgs < VTH ? "cutoff" : sat ? "saturation" : "ohmic";
 
   const flow = useRef(new ElectronFlow());
-  const params = useRef({ vgs, rd, id, region, over });
-  params.current = { vgs, rd, id, region, over };
+  const params = useRef({ vgs, rd, id, region, over, idSat, idMax });
+  params.current = { vgs, rd, id, region, over, idSat, idMax };
 
   const insight = useMemo(() => {
     if (region === "cutoff") {
       return `Vgs = ${formatVolt(vgs)} is below the ${formatVolt(VTH)} threshold. No inversion layer, no channel, the LED is dark. The gate draws (almost) no DC current.`;
     }
-    if (region === "linear") {
-      return `The channel is a resistor. Drain current is limited by ${formatOhm(rd)} to ${formatAmp(idMax)} - the MOSFET is a closed switch.`;
+    if (region === "ohmic") {
+      return `Ohmic. The channel is a closed switch. Drain current is limited by ${formatOhm(rd)} and the LED drop to ${formatAmp(idMax)}.`;
     }
-    return `Saturation. The inverted n-channel is pinched off at the drain. Id ~ k(Vgs - Vth)^2 = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
+    return `Saturation. The inverted n-channel is pinched off at the drain. Id \u2248 k \u00b7 (Vgs - Vth)^2 = ${formatAmp(id)}. Raise the gate, the channel gets denser.`;
   }, [region, vgs, id, idMax, rd]);
 
   return (
@@ -89,10 +90,10 @@ export function MosfetLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            Vth = {formatVolt(VTH)} * Id sat = k (Vgs - Vth)^2
+            {"Vth = "}{formatVolt(VTH)}{" \u00b7 Id sat = k \u00b7 (Vgs - Vth)^2"}
           </p>
           <p className="text-xs text-subtle">
-            Region names are a current clamp against VDD/Rd, not a full Vds MOSFET model.
+            Region names are a current clamp against (VDD - Vf)/Rd, not a full Vds MOSFET model.
           </p>
         </>
       }
@@ -101,13 +102,14 @@ export function MosfetLab() {
           onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
             const on = p.region !== "cutoff";
+            const lit = p.id >= 0.001;
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const bat = battery(ctx, 64, 90);
               label(ctx, formatVolt(VDD), 64, 142, { mono: true, size: 12 });
               resistorBody(ctx, 180, 54, 80, p.rd, Math.min(1, p.id * 8));
-              const led = ledDome(ctx, 340, 30, Ink.electron, Math.min(1, p.id / 0.015));
+              const led = ledDome(ctx, 340, 30, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               const mos = nMosfet(ctx, 520, 150, on);
 
               wire(ctx, [
@@ -188,7 +190,13 @@ export function MosfetLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `Id = k (Vgs - Vth)^2 = ${formatAmp(p.id)}`, 560, 392, {
+              const overlay =
+                p.region === "cutoff"
+                  ? "Id = 0  (cutoff)"
+                  : p.region === "ohmic"
+                    ? `Id = (VDD - Vf) / Rd = ${formatAmp(p.id)}`
+                    : `Id = k (Vgs - Vth)^2 = ${formatAmp(p.id)}`;
+              label(ctx, overlay, 560, 392, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
