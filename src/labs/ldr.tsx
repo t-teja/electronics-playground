@@ -21,13 +21,16 @@ import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const VCC = 5;
 const RDARK = 1e6;
+const R10 = 10000;
 const LUX0 = 10;
-const GAMMA = 0.7;
+const GAMMA = 0.6;
 const VF_LED = 1.8;
 const R_LED = 4700;
 
 function ldrResistance(lux: number) {
-  return RDARK / (1 + (Math.max(0, lux) / LUX0) ** GAMMA);
+  const e = Math.max(lux, 0.05);
+  const rLight = R10 * (LUX0 / e) ** GAMMA;
+  return 1 / (1 / RDARK + 1 / rLight);
 }
 
 function verticalResistor(
@@ -74,7 +77,8 @@ export function LdrLab() {
       return `Dark. The LDR sits near ${formatOhm(RDARK)}, so almost all of VCC drops across it. Vout is only ${formatVolt(vout)} - under the LED drop, so the indicator stays off.`;
     }
     if (iLed < 0.00015) {
-      return `R_LDR = ${formatOhm(rLdr)}. The divider with ${formatOhm(rFixed)} yields ${formatVolt(vout)}, still under the LED's ~${VF_LED.toFixed(1)} V drop. More light, or a larger R2, will light it.`;
+      const moreR2 = rFixed < 100000 - 1 ? " More light, or a larger R2, will light it." : " More light will light it.";
+      return `R_LDR = ${formatOhm(rLdr)}. The divider with ${formatOhm(rFixed)} yields ${formatVolt(vout)}, still under the LED's ~${VF_LED.toFixed(1)} V drop.${moreR2}`;
     }
     return `Photons free carriers, R_LDR falls to ${formatOhm(rLdr)}. Vout = VCC * R2 / (R2 + R_LDR) = ${formatVolt(vout)}. That is enough to light the LED through Rs.`;
   }, [lux, rLdr, rFixed, vout, iLed]);
@@ -124,6 +128,7 @@ export function LdrLab() {
         <SimCanvas
           onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
+            const lit = p.iLed >= 0.00015;
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
@@ -174,7 +179,7 @@ export function LdrLab() {
 
               resistorBody(ctx, 400, tap.y, 70, R_LED, Math.min(1, p.iLed * 30));
               label(ctx, "Rs", 435, tap.y - 24, { size: 11 });
-              const led = ledDome(ctx, 620, tap.y - 34, Ink.electron, Math.min(1, p.iLed / 0.0008));
+              const led = ledDome(ctx, 620, tap.y - 34, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               label(ctx, "out", 620, tap.y - 58, { size: 11 });
 
               wire(ctx, [bat.pos, { x: bat.pos.x, y: ldr.top.y }, ldr.top]);
