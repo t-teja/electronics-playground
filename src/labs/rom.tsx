@@ -45,7 +45,8 @@ export function RomLab() {
   const [writeTries, setWriteTries] = useState(0);
 
   const din = (d3 ? 8 : 0) | (d2 ? 4 : 0) | (d1 ? 2 : 0) | (d0 ? 1 : 0);
-  const dout = MASK[addr] ?? 0;
+  const stored = MASK[addr] ?? 0;
+  const dout = power ? stored : 0;
 
   const flow = useRef(new ElectronFlow());
   const params = useRef({ power, addr, din, dout, writeTries });
@@ -56,7 +57,7 @@ export function RomLab() {
       return `There is no write pin. Mask ROM is a pattern of vias and implants, not latches. The fab printed ${(addr + 1) & 0xf} at address ${addr}; toggling din (${hex4(din)}h) does not change a thing.`;
     }
     if (!power) {
-      return `POWER is off, and the nibble is still ${hex4(dout)}h. Metal links do not need VCC. That is non-volatile: the increment table survives a brown-out.`;
+      return `POWER is off. The mask still holds the increment table, but the outputs and LEDs go dark. No VCC, no drive on the pins.`;
     }
     return `Address ${addr} reads ${hex4(dout)}h — that is (addr + 1) masked to 4 bits, burned in at fab. Walk the slider: every row is a lookup, never a latch.`;
   }, [power, addr, din, dout, writeTries]);
@@ -67,7 +68,7 @@ export function RomLab() {
       meters={
         <>
           <Meter label="ADDR" value={`${addr}  ${hex4(addr)}h`} />
-          <Meter label="DOUT" value={`${hex4(dout)}h  ${dout.toString(2).padStart(4, "0")}`} />
+          <Meter label="DOUT" value={power ? `${hex4(dout)}h  ${dout.toString(2).padStart(4, "0")}` : "----"} />
           <Meter label="MASK" value="increment" />
         </>
       }
@@ -91,6 +92,7 @@ export function RomLab() {
           <Button
             variant="secondary"
             className="opacity-40"
+            disabled
             onClick={() => setWriteTries((n) => n + 1)}
           >
             WRITE (no pin)
@@ -100,7 +102,7 @@ export function RomLab() {
       insight={
         <>
           <p>{insight}</p>
-          <p className="font-mono text-xs text-subtle">dout = ROM[addr]  ·  mask ROM is baked in; there is no write pin.</p>
+          <p className="font-mono text-xs text-subtle">{"dout = ROM[addr]  \u00b7  mask ROM is baked in; there is no write pin."}</p>
         </>
       }
       canvas={
@@ -122,12 +124,12 @@ export function RomLab() {
               ctx.fill();
               ctx.strokeStyle = "rgba(128,128,128,0.22)";
               ctx.stroke();
-              label(ctx, "MASK ROM  16 × 4", left + bodyW / 2, top + 18, {
+              label(ctx, "MASK ROM  16 \u00d7 4", left + bodyW / 2, top + 18, {
                 size: 13,
                 color: Ink.text,
                 mono: true,
               });
-              label(ctx, "increment table · fab links", left + bodyW / 2, top + 34, {
+              label(ctx, "increment table \u00b7 fab links", left + bodyW / 2, top + 34, {
                 size: 10,
                 color: Ink.muted,
               });
@@ -237,7 +239,7 @@ export function RomLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `dout = ROM[${p.addr}] = ${hex4(p.dout)}h`, 400, 408, {
+              label(ctx, p.power ? `dout = ROM[${p.addr}] = ${hex4(p.dout)}h` : "POWER off  outputs blank", 400, 408, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
