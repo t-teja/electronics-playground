@@ -54,7 +54,7 @@ export function DiodeLab() {
     if (v >= 0) {
       return `Barely biased. The built-in potential of the PN junction (~0.7 V for silicon) still owns the story. The LED is off.`;
     }
-    return `Reverse biased at ${formatVolt(v)}. The schematic stays put. The depletion region widens into an insulator, so the LED stays off.`;
+    return `Reverse biased at ${formatVolt(v)}. The depletion region widens into an insulator, so the LED stays off.`;
   }, [v, i]);
 
   return (
@@ -76,7 +76,7 @@ export function DiodeLab() {
           max={1.2}
           step={0.01}
           onChange={setV}
-          hint="Wiring never moves. Above ~0.7 V the LED turns on. Below that it is off."
+          hint="Silicon conducts near 0.7 V. That's when the LED lights."
         />
       }
       insight={<p>{insight}</p>}
@@ -99,10 +99,13 @@ export function DiodeLab() {
                 ctx,
                 560,
                 76,
-                Ink.electron,
-                on ? Math.min(1, Math.abs(p.i) / 0.02) : 0.04,
+                on ? "#5eead4" : Ink.body,
+                on ? 1 : 0,
               );
-              label(ctx, on ? "forward  LED on" : "LED off", 380, y - 48, { size: 12 });
+              label(ctx, on ? "LED on" : "LED off", 560, 42, {
+                size: 12,
+                color: on ? Ink.electron : Ink.muted,
+              });
               label(ctx, formatVolt(p.v), 70, y + 52, { mono: true, size: 12 });
               label(ctx, "330", 185, y + 28, { size: 10, mono: true });
 
