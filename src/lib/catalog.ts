@@ -1,4 +1,6 @@
-export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor" | "computer";
+import { NEURAL_CATEGORY, NEURAL_LABS } from "./neural-labs";
+
+export type Category = "passive" | "semiconductor" | "digital" | "electromechanical" | "sensor" | "computer" | "neural";
 
 export type LabBadge = "new" | "updated";
 
@@ -46,6 +48,7 @@ export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
     label: "Computers",
     blurb: "Memory that keeps bits, and processors that walk through them.",
   },
+  NEURAL_CATEGORY,
 ];
 
 export const LABS: LabMeta[] = [
@@ -563,6 +566,7 @@ export const LABS: LabMeta[] = [
       "ML matmuls (same idea: lots of ALUs)",
     ],
   },
+  ...NEURAL_LABS,
 ];
 
 export const LAB_BY_SLUG = Object.fromEntries(LABS.map((l) => [l.slug, l])) as Record<
