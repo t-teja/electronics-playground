@@ -52,6 +52,27 @@
     <loc>https://t-teja.github.io/electronics-playground/lab/dac/</loc>
   </url>
   <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/uart/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/i2c/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/spi/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/can/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/lin/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/one-wire/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/rs485/</loc>
+  </url>
+  <url>
     <loc>https://t-teja.github.io/electronics-playground/lab/dc-motor/</loc>
   </url>
   <url>

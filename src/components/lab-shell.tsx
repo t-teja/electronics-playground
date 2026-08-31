@@ -170,7 +170,7 @@ export function LabShell({
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">
-                  <Badge>{lab.category}</Badge>
+                  <Badge>{CATEGORIES.find((c) => c.id === lab.category)?.label ?? lab.category}</Badge>
                   <span className="font-mono text-xs text-subtle">{lab.formula}</span>
                 </div>
                 <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{lab.name}</h1>

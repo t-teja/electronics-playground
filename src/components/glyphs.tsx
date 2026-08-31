@@ -385,6 +385,76 @@ export function GlyphGpu({ className }: { className?: string }) {
   );
 }
 
+export function GlyphUart({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M16 24 H144 M16 48 H144" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M40 24 v-8 h20 v8 M88 48 v8 h20 v-8" stroke="currentColor" strokeWidth="1.5" />
+      <Electron d="M16 24 H144" dur="1.6s" />
+    </Frame>
+  );
+}
+
+export function GlyphI2c({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M16 26 H144 M16 46 H144" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M50 26 V14 M90 26 V14 M50 46 V58 M90 46 V58" stroke="currentColor" strokeWidth="1.3" />
+      <Electron d="M16 26 H144" dur="2s" />
+    </Frame>
+  );
+}
+
+export function GlyphSpi({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M16 18 H144 M16 32 H144 M16 46 H144 M16 58 H144" stroke="currentColor" strokeWidth="1.3" />
+      <Electron d="M16 32 H144" dur="1.3s" />
+    </Frame>
+  );
+}
+
+export function GlyphCan({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M20 26 Q50 10 80 26 T140 26" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M20 46 Q50 62 80 46 T140 46" stroke="currentColor" strokeWidth="1.5" />
+      <Electron d="M20 26 Q50 10 80 26 T140 26" dur="1.8s" />
+    </Frame>
+  );
+}
+
+export function GlyphLin({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M16 36 H144" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M40 36 V22 M80 36 V50 M120 36 V22" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M16 36 H144" dur="1.7s" />
+    </Frame>
+  );
+}
+
+export function GlyphOneWire({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M16 36 H144" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="52" cy="36" r="8" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="108" cy="36" r="8" stroke="currentColor" strokeWidth="1.4" />
+      <Electron d="M16 36 H144" dur="2.2s" />
+    </Frame>
+  );
+}
+
+export function GlyphRs485({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M20 24 H140 M20 48 H140" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M40 24 L40 48 M80 24 L80 48 M120 24 L120 48" stroke="currentColor" strokeWidth="1.2" />
+      <Electron d="M20 24 H140" dur="1.5s" />
+    </Frame>
+  );
+}
+
 export const GLYPHS = {
   resistor: GlyphResistor,
   capacitor: GlyphCapacitor,
@@ -414,6 +484,13 @@ export const GLYPHS = {
   psram: GlyphPsram,
   cpu: GlyphCpu,
   gpu: GlyphGpu,
+  uart: GlyphUart,
+  i2c: GlyphI2c,
+  spi: GlyphSpi,
+  can: GlyphCan,
+  lin: GlyphLin,
+  "one-wire": GlyphOneWire,
+  rs485: GlyphRs485,
   perceptron: GlyphPerceptron,
   "neural-net": GlyphNeuralNet,
   attention: GlyphAttention,

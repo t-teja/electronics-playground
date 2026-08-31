@@ -27,6 +27,13 @@ import { Timer555Lab } from "@/labs/timer-555";
 import { TransformerLab } from "@/labs/transformer";
 import { TransistorLab } from "@/labs/transistor";
 import { UltrasonicLab } from "@/labs/ultrasonic";
+import { UartLab } from "@/labs/uart";
+import { I2cLab } from "@/labs/i2c";
+import { SpiLab } from "@/labs/spi";
+import { CanLab } from "@/labs/can";
+import { LinLab } from "@/labs/lin";
+import { OneWireLab } from "@/labs/one-wire";
+import { Rs485Lab } from "@/labs/rs485";
 import { PerceptronLab } from "@/labs/perceptron";
 import { NeuralNetLab } from "@/labs/neural-net";
 import { AttentionLab } from "@/labs/attention";
@@ -48,6 +55,13 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   "signal-generator": SignalGeneratorLab,
   adc: AdcLab,
   dac: DacLab,
+  uart: UartLab,
+  i2c: I2cLab,
+  spi: SpiLab,
+  can: CanLab,
+  lin: LinLab,
+  "one-wire": OneWireLab,
+  rs485: Rs485Lab,
   "dc-motor": DcMotorLab,
   relay: RelayLab,
   ldr: LdrLab,
