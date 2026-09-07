@@ -34,6 +34,7 @@ export function InductionMotorLab() {
   const samples = useRef<number[]>(Array(120).fill(0));
   const curve = useRef<number[]>([]);
   const ui = useRef(0);
+  const teRef = useRef(0);
   const params = useRef({ freq, vrms, poles, load });
   params.current = { freq, vrms, poles, load };
 
@@ -79,6 +80,7 @@ export function InductionMotorLab() {
             const slip = ws > 1e-6 ? (ws - s.w) / ws : 1;
             const vRatio = p.vrms / 230;
             const te = klossTorque(slip, vRatio);
+            teRef.current = te;
             s.w = clamp(s.w + ((te - p.load - B * s.w) / J) * h, 0, ws * 1.05);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.angle += s.w * h;
@@ -147,13 +149,23 @@ export function InductionMotorLab() {
               scope(ctx, 500, 40, 260, 120, curve.current, Ink.electron, "T-n curve");
               scope(ctx, 500, 190, 260, 100, samples.current, Ink.hole, "n(t)");
               label(ctx, `ns = 120 f / p = ${formatRpm(nsRpm)}`, 400, 360, { mono: true, size: 13, color: Ink.text });
-              label(ctx, `s = ${(slip * 100).toFixed(1)}% * T ${te.toFixed(2)} N*m`, 400, 382, { mono: true, size: 12, color: Ink.muted });
+              label(ctx, `s = ${(slip * 100).toFixed(1)}% * T ${teRef.current.toFixed(2)} N*m`, 400, 382, {
+                mono: true,
+                size: 12,
+                color: Ink.muted,
+              });
             });
 
             ui.current += h;
             if (ui.current > 0.08) {
               ui.current = 0;
-              setRead({ rpm: nRpm, slip, tau: te, ns: nsRpm });
+              const teShow = teRef.current;
+              setRead((prev) => ({
+                rpm: prev.rpm * 0.65 + nRpm * 0.35,
+                slip: prev.slip * 0.65 + slip * 0.35,
+                tau: prev.tau * 0.65 + teShow * 0.35,
+                ns: nsRpm,
+              }));
             }
           }}
         />
