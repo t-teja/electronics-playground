@@ -17,7 +17,7 @@ export function BldcLab() {
   const [vbus, setVbus] = useState(12);
   const [load, setLoad] = useState(0.05);
 
-  const sim = useRef({ w: 0, th: 0, i: [0, 0, 0] as number[] });
+  const sim = useRef({ w: 0, th: 0, iLine: 0 });
   const [read, setRead] = useState({ rpm: 0, tau: 0, sector: 0, iAbs: 0 });
   const samples = useRef<number[]>(Array(120).fill(0));
   const ui = useRef(0);
@@ -26,7 +26,7 @@ export function BldcLab() {
 
   const insight = useMemo(() => {
     const names = ["A+B-", "A+C-", "B+C-", "B+A-", "C+A-", "C+B-"];
-    return `Hall sector ${read.sector}: drive ${names[read.sector]}. Two of three phases carry current; trapezoidal back-EMF keeps torque nearly flat in the sector.`;
+    return `Hall sector ${read.sector}: drive ${names[read.sector]}. Two phases in series carry the line current; trapezoidal back-EMF keeps torque nearly flat in the sector.`;
   }, [read.sector]);
 
   return (
@@ -37,7 +37,7 @@ export function BldcLab() {
           <Meter label="Speed" value={formatRpm(read.rpm)} />
           <Meter label="Torque" value={`${read.tau.toFixed(3)} N*m`} />
           <Meter label="Sector" value={`${read.sector}`} />
-          <Meter label="|I|" value={formatAmp(read.iAbs)} />
+          <Meter label="I line" value={formatAmp(read.iAbs)} />
         </>
       }
       controls={
@@ -56,34 +56,41 @@ export function BldcLab() {
             const h = Math.min(0.02, Math.max(1e-4, dt));
             const sector = Math.floor((((s.th % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) / (Math.PI / 3)) % 6;
             const cmd = COMMUTATION[sector]!;
+            let hi = -1;
+            let lo = -1;
+            for (let k = 0; k < 3; k++) {
+              if (cmd[k] === 1) hi = k;
+              if (cmd[k] === -1) lo = k;
+            }
             const r = 1.2;
             const la = 0.002;
-            for (let k = 0; k < 3; k++) {
-              const bemf = KE * s.w * trapBemf(s.th, (k * 2 * Math.PI) / 3);
-              const v = cmd[k]! * p.duty * p.vbus - bemf;
-              s.i[k] = clamp(s.i[k]! + ((v - s.i[k]! * r) / la) * h, -20, 20);
-              if (!Number.isFinite(s.i[k]!)) s.i[k] = 0;
-              if (cmd[k] === 0) s.i[k] *= Math.exp(-h / 0.002);
+            const R_eq = 2 * r;
+            const L_eq = 2 * la;
+            const i = [0, 0, 0];
+            if (hi >= 0 && lo >= 0) {
+              const eHi = trapBemf(s.th, (hi * 2 * Math.PI) / 3);
+              const eLo = trapBemf(s.th, (lo * 2 * Math.PI) / 3);
+              const vLine = p.duty * p.vbus - KE * s.w * (eHi - eLo);
+              s.iLine += ((vLine - s.iLine * R_eq) / L_eq) * h;
+              s.iLine = clamp(s.iLine, -15, 15);
+              if (!Number.isFinite(s.iLine)) s.iLine = 0;
+              i[hi] = s.iLine;
+              i[lo] = -s.iLine;
+            } else {
+              s.iLine *= Math.exp(-h / 0.002);
             }
-            let floatIdx = -1;
-            let drivenSum = 0;
-            for (let k = 0; k < 3; k++) {
-              if (cmd[k] === 0) floatIdx = k;
-              else drivenSum += s.i[k]!;
-            }
-            if (floatIdx >= 0) s.i[floatIdx] = -drivenSum;
 
             const te =
               KT *
-              (s.i[0]! * trapBemf(s.th, 0) +
-                s.i[1]! * trapBemf(s.th, (2 * Math.PI) / 3) +
-                s.i[2]! * trapBemf(s.th, (4 * Math.PI) / 3));
+              (i[0]! * trapBemf(s.th, 0) +
+                i[1]! * trapBemf(s.th, (2 * Math.PI) / 3) +
+                i[2]! * trapBemf(s.th, (4 * Math.PI) / 3));
             const teSafe = Number.isFinite(te) ? te : 0;
             s.w = clamp(s.w + ((teSafe - p.load - B * s.w) / J) * h, 0, 800);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.th += s.w * h;
             const rpm = (s.w * 60) / (2 * Math.PI);
-            const iAbs = (Math.abs(s.i[0]!) + Math.abs(s.i[1]!) + Math.abs(s.i[2]!)) / 2;
+            const iAbs = Math.abs(s.iLine);
             samples.current.push(clamp(s.w / 400, 0, 1));
             if (samples.current.length > 160) samples.current.shift();
 
