@@ -22,7 +22,9 @@ import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const J = 0.00035;
 const B = 0.00008;
-const KT = 0.22;
+const KT_START = 0.22;
+const KT_RUN = 0.035;
+const POLES = 4;
 const SWITCH_RPM = 900;
 
 export function SplitPhaseMotorLab() {
@@ -45,10 +47,10 @@ export function SplitPhaseMotorLab() {
 
   const insight = useMemo(() => {
     if (read.rpm < 80 && read.aux) {
-      return `Starting. Capacitance shifts the aux current by about ${read.phase.toFixed(0)} deg. Torque follows Im Ia sin(phi).`;
+      return `Starting. Capacitance shifts the aux current by about ${read.phase.toFixed(0)} deg. Starting torque follows Im Ia sin(phi).`;
     }
     if (!read.aux) {
-      return `Run. Centrifugal switch opened the aux above ${SWITCH_RPM} rpm. The main winding alone keeps the rotor turning against the load.`;
+      return `Run. Centrifugal switch opened the aux above ${SWITCH_RPM} rpm. The main winding alone makes run torque against the load.`;
     }
     return `Both windings still in circuit. Phase shift phi ~= ${read.phase.toFixed(0)} deg feeds starting torque while speed climbs.`;
   }, [read]);
@@ -89,16 +91,21 @@ export function SplitPhaseMotorLab() {
             const phase = Math.atan2(xc, ra);
             const imPk = vp / rm;
             const iaPk = vp / Math.hypot(ra, xc);
+            const nsRpm = (120 * p.freq) / POLES;
+            const ws = (nsRpm * 2 * Math.PI) / 60;
             const rpm = (s.w * 60) / (2 * Math.PI);
             const auxOn = p.forceAux || rpm < SWITCH_RPM;
             const im = imPk * Math.sin(wElec * s.t);
             const ia = auxOn ? iaPk * Math.sin(wElec * s.t + phase) : 0;
-            const te = KT * (imPk * (auxOn ? iaPk : 0) * Math.sin(phase)) * (0.35 + 0.65 * Math.min(1, rpm / SWITCH_RPM));
-            const tau = clamp(te - p.load - B * s.w, -2, 2);
-            s.w = clamp(s.w + (tau / J) * h, 0, 250);
+            const teStart = KT_START * imPk * iaPk * Math.sin(phase);
+            const teRun = KT_RUN * imPk * Math.max(0, 1 - s.w / Math.max(1e-6, ws));
+            const te = auxOn ? teStart + teRun : teRun;
+            const teSafe = Number.isFinite(te) ? te : 0;
+            const tau = clamp(teSafe - p.load - B * s.w, -2, 2);
+            s.w = clamp(s.w + (tau / J) * h, 0, ws * 1.05);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.angle += s.w * h;
-            samples.current.push(clamp(s.w / 180, 0, 1));
+            samples.current.push(clamp(s.w / Math.max(1, ws), 0, 1));
             if (samples.current.length > 160) samples.current.shift();
 
             clearSim(ctx, size.w, size.h);
@@ -115,7 +122,7 @@ export function SplitPhaseMotorLab() {
               ctx.moveTo(300, 248);
               ctx.lineTo(300, 272);
               ctx.stroke();
-              label(ctx, "Crun", 295, 236, { size: 10 });
+              label(ctx, "Cs", 295, 236, { size: 10 });
               toggleSwitch(ctx, 330, 260, auxOn);
               dcMotor(ctx, 560, 200, s.angle, Math.min(1, s.w / 120));
               wire(ctx, [{ x: ac.top.x, y: ac.top.y }, { x: ac.top.x, y: 140 }, { x: 180, y: 140 }]);
@@ -135,13 +142,17 @@ export function SplitPhaseMotorLab() {
               flow.current.step(h);
               flow.current.draw(ctx);
               scope(ctx, 540, 28, 220, 90, samples.current, Ink.electron, "w(t)");
-              label(ctx, "tau ~ Im Ia sin(phi)  *  centrifugal switch", 400, 380, { mono: true, size: 13, color: Ink.text });
+              label(ctx, auxOn ? "start: Im Ia sin(phi)  *  Cs + switch" : "run: main winding torque", 400, 380, {
+                mono: true,
+                size: 13,
+                color: Ink.text,
+              });
             });
 
             ui.current += h;
             if (ui.current > 0.08) {
               ui.current = 0;
-              setRead({ rpm, tau: te, im: Math.abs(im), ia: Math.abs(ia), phase: (phase * 180) / Math.PI, aux: auxOn });
+              setRead({ rpm, tau: teSafe, im: Math.abs(im), ia: Math.abs(ia), phase: (phase * 180) / Math.PI, aux: auxOn });
             }
           }}
         />
