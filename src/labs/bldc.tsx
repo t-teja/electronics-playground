@@ -65,12 +65,21 @@ export function BldcLab() {
               if (!Number.isFinite(s.i[k]!)) s.i[k] = 0;
               if (cmd[k] === 0) s.i[k] *= Math.exp(-h / 0.002);
             }
+            let floatIdx = -1;
+            let drivenSum = 0;
+            for (let k = 0; k < 3; k++) {
+              if (cmd[k] === 0) floatIdx = k;
+              else drivenSum += s.i[k]!;
+            }
+            if (floatIdx >= 0) s.i[floatIdx] = -drivenSum;
+
             const te =
               KT *
               (s.i[0]! * trapBemf(s.th, 0) +
                 s.i[1]! * trapBemf(s.th, (2 * Math.PI) / 3) +
                 s.i[2]! * trapBemf(s.th, (4 * Math.PI) / 3));
-            s.w = clamp(s.w + ((te - p.load - B * s.w) / J) * h, 0, 800);
+            const teSafe = Number.isFinite(te) ? te : 0;
+            s.w = clamp(s.w + ((teSafe - p.load - B * s.w) / J) * h, 0, 800);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.th += s.w * h;
             const rpm = (s.w * 60) / (2 * Math.PI);
@@ -146,7 +155,7 @@ export function BldcLab() {
             ui.current += h;
             if (ui.current > 0.08) {
               ui.current = 0;
-              setRead({ rpm, tau: te, sector, iAbs });
+              setRead({ rpm, tau: teSafe, sector, iAbs });
             }
           }}
         />
