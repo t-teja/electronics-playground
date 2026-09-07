@@ -18,22 +18,21 @@ export function PmsmLab() {
   useEffect(() => mark(lab.slug), [lab.slug, mark]);
 
   const [iq, setIq] = useState(4);
-  const [wRef, setWRef] = useState(1500);
   const [load, setLoad] = useState(0.4);
 
-  const sim = useRef({ w: 0, th: 0, field: 0 });
+  const sim = useRef({ w: 0, th: 0 });
   const [read, setRead] = useState({ rpm: 0, te: 0, we: 0, locked: false });
   const samples = useRef<number[]>(Array(120).fill(0));
   const ui = useRef(0);
-  const params = useRef({ iq, wRef, load });
-  params.current = { iq, wRef, load };
+  const params = useRef({ iq, load });
+  params.current = { iq, load };
 
   const insight = useMemo(() => {
     if (!read.locked) {
-      return `Field spinning up. With Id = 0, Te = (3/2) p lambda_m Iq. The PM rotor accelerates until it locks to the stator field.`;
+      return `Id = 0 FOC. Te = (3/2) p lambda_m Iq. Raise Iq above the load so the rotor accelerates. Speed comes from torque balance, not a forced omega.`;
     }
-    return `Synced. Electrical speed we = p wm. Torque ${read.te.toFixed(2)} N*m from Iq = ${iq.toFixed(1)} A holds the ${load.toFixed(2)} N*m load.`;
-  }, [read, iq, load]);
+    return `Synced FOC frame. Te ${read.te.toFixed(2)} N*m from Iq = ${iq.toFixed(1)} A. we = p wm. Steady speed where Te balances load plus damping.`;
+  }, [read, iq]);
 
   return (
     <LabShell
@@ -59,15 +58,6 @@ export function PmsmLab() {
             hint="Id kept at 0."
           />
           <LinearControl
-            label="Speed ref"
-            value={wRef}
-            display={formatRpm(wRef)}
-            min={200}
-            max={4000}
-            step={50}
-            onChange={setWRef}
-          />
-          <LinearControl
             label="Load torque"
             value={load}
             display={`${load.toFixed(2)} N*m`}
@@ -86,19 +76,16 @@ export function PmsmLab() {
             const s = sim.current;
             const h = Math.min(0.02, Math.max(1e-4, dt));
             const te = 1.5 * POLE_PAIRS * LAMBDA * p.iq;
-            const wRefRad = (p.wRef * 2 * Math.PI) / 60;
-            const pull = 0.35 * Math.sin(s.field - POLE_PAIRS * s.th);
-            const tau = clamp(te * (0.7 + 0.3 * Math.cos(pull)) - p.load - B * s.w + pull, -8, 8);
-            s.w = clamp(s.w + (tau / J) * h, 0, wRefRad * 1.2);
+            const teSafe = Number.isFinite(te) ? te : 0;
+            const tau = teSafe - p.load - B * s.w;
+            s.w = clamp(s.w + (tau / J) * h, 0, 800);
             if (!Number.isFinite(s.w)) s.w = 0;
-            const err = wRefRad - s.w;
-            s.w = clamp(s.w + clamp(err * 2.5 * h, -40 * h, 40 * h), 0, wRefRad * 1.15);
             s.th += s.w * h;
-            s.field += POLE_PAIRS * wRefRad * h;
+            const field = POLE_PAIRS * s.th;
             const rpm = (s.w * 60) / (2 * Math.PI);
             const we = POLE_PAIRS * s.w;
-            const locked = Math.abs(s.w - wRefRad) < wRefRad * 0.08 && p.iq > 0.2;
-            samples.current.push(clamp(s.w / Math.max(1, wRefRad), 0, 1));
+            const locked = p.iq > 0.2 && Math.abs(teSafe - p.load - B * s.w) < 0.15;
+            samples.current.push(clamp(s.w / 400, 0, 1));
             if (samples.current.length > 160) samples.current.shift();
 
             clearSim(ctx, size.w, size.h);
@@ -112,7 +99,7 @@ export function PmsmLab() {
               ctx.arc(cx, cy, 80, 0, Math.PI * 2);
               ctx.stroke();
               for (let k = 0; k < 3; k++) {
-                const a = s.field + (k * 2 * Math.PI) / 3;
+                const a = field + (k * 2 * Math.PI) / 3;
                 ctx.strokeStyle = k === 0 ? "#5eead4" : Ink.copper;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
@@ -142,13 +129,13 @@ export function PmsmLab() {
               ctx.restore();
               label(ctx, "stator field", cx, cy - 100, { size: 11, color: Ink.electron });
               label(ctx, "PM rotor", cx, cy + 100, { size: 11 });
-              label(ctx, locked ? "LOCKED" : "pull-in", cx + 160, cy - 40, {
+              label(ctx, locked ? "LOCKED" : "accel", cx + 160, cy - 40, {
                 size: 13,
                 color: locked ? "#5eead4" : Ink.muted,
               });
 
               scope(ctx, 500, 60, 250, 120, samples.current, Ink.electron, "wm(t)");
-              label(ctx, `Te = (3/2) p lambda_m Iq = ${te.toFixed(2)} N*m`, 400, 360, {
+              label(ctx, `Te = (3/2) p lambda_m Iq = ${teSafe.toFixed(2)} N*m`, 400, 360, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
@@ -159,7 +146,7 @@ export function PmsmLab() {
             ui.current += h;
             if (ui.current > 0.08) {
               ui.current = 0;
-              setRead({ rpm, te, we, locked });
+              setRead({ rpm, te: teSafe, we, locked });
             }
           }}
         />
