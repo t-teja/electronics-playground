@@ -14,8 +14,8 @@ export const MOTOR_LABS: LabMeta[] = [
     summary:
       "A main winding plus an auxiliary winding with a start capacitor. The phase shift makes starting torque. A centrifugal switch drops the aux once the rotor is up.",
     principle:
-      "Two stator currents displaced in phase produce a rotating field component. Starting torque grows with Im Ia sin(phi). Above a speed threshold the switch opens the aux and the main winding alone makes run torque.",
-    formula: "tau ~ Im Ia sin(phi)",
+      "Two stator currents displaced in phase produce a rotating field component. Starting torque grows with Im Ia sin(phi) and fades with slip. Run torque follows slip and is zero at sync.",
+    formula: "tau ~ Im Ia sin(phi) * slip",
     uses: [
       "Household fans and blowers",
       "Washers and small compressors",
@@ -48,10 +48,10 @@ export const MOTOR_LABS: LabMeta[] = [
     category: "electromechanical",
     tagline: "Permanent magnets locked to the field",
     summary:
-      "A sinusoidal stator field and a magnetized rotor. With Id = 0, torque is set by Iq. Electrical speed tracks mechanical speed through the pole pairs.",
+      "A sinusoidal stator field and a magnetized rotor. With Id = 0, torque is set by Iq until bus voltage and back-EMF limit Vq. Electrical speed tracks mechanical speed through the pole pairs.",
     principle:
-      "Te = (3/2) p lambda_m Iq. Electrical speed we = p wm. Speed comes from torque balance J w' = Te - Tl - B w. The FOC frame stays synced to the rotor.",
-    formula: "Te = (3/2) p lambda_m Iq",
+      "Te = (3/2) p lambda_m Iq. Vq = R Iq + we lambda_m with we = p wm. When Vq hits Vbus/sqrt(3), I_eff drops. Speed comes from torque balance under that limit.",
+    formula: "Vq = R Iq + we lambda_m",
     uses: [
       "Servo axes and robot joints",
       "EV traction and e-bikes",
@@ -66,9 +66,9 @@ export const MOTOR_LABS: LabMeta[] = [
     category: "electromechanical",
     tagline: "Six-step commutation from hall sensors",
     summary:
-      "Three phases, trapezoidal back-EMF, and hall sensors. Each 60 deg sector energizes two windings. Torque comes from the driven currents.",
+      "Three phases, trapezoidal back-EMF, and hall sensors. Each 60 deg sector energizes two windings in series. Line current and torque come from that path.",
     principle:
-      "Hall state 0..5 picks which two of three phases are on. Trapezoidal back-EMF flats align with the six-step sectors so startup torque is nonzero.",
+      "Hall state 0..5 picks which two of three phases are on. The two ON phases share one line current. Trapezoidal back-EMF flats align with the six-step sectors so startup torque is nonzero.",
     formula: "sector = floor(theta / 60 deg)",
     uses: [
       "Drone motors and RC props",
