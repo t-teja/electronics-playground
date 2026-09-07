@@ -47,10 +47,10 @@ export function SplitPhaseMotorLab() {
 
   const insight = useMemo(() => {
     if (read.rpm < 80 && read.aux) {
-      return `Starting. Capacitance shifts the aux current by about ${read.phase.toFixed(0)} deg. Starting torque follows Im Ia sin(phi).`;
+      return `Starting. Capacitance shifts the aux current by about ${read.phase.toFixed(0)} deg. Starting torque follows Im Ia sin(phi) and fades with slip.`;
     }
     if (!read.aux) {
-      return `Run. Centrifugal switch opened the aux above ${SWITCH_RPM} rpm. The main winding alone makes run torque against the load.`;
+      return `Run. Centrifugal switch opened the aux above ${SWITCH_RPM} rpm. Main-winding torque follows slip and goes to zero at sync.`;
     }
     return `Both windings still in circuit. Phase shift phi ~= ${read.phase.toFixed(0)} deg feeds starting torque while speed climbs.`;
   }, [read]);
@@ -95,17 +95,18 @@ export function SplitPhaseMotorLab() {
             const ws = (nsRpm * 2 * Math.PI) / 60;
             const rpm = (s.w * 60) / (2 * Math.PI);
             const auxOn = p.forceAux || rpm < SWITCH_RPM;
+            const slip = (ws - s.w) / Math.max(1e-6, ws);
             const im = imPk * Math.sin(wElec * s.t);
             const ia = auxOn ? iaPk * Math.sin(wElec * s.t + phase) : 0;
-            const teStart = KT_START * imPk * iaPk * Math.sin(phase);
-            const teRun = KT_RUN * imPk * Math.max(0, 1 - s.w / Math.max(1e-6, ws));
+            const teStart = KT_START * imPk * iaPk * Math.sin(phase) * Math.max(0, slip);
+            const teRun = KT_RUN * imPk * slip;
             const te = auxOn ? teStart + teRun : teRun;
             const teSafe = Number.isFinite(te) ? te : 0;
             const tau = clamp(teSafe - p.load - B * s.w, -2, 2);
-            s.w = clamp(s.w + (tau / J) * h, 0, ws * 1.05);
+            s.w = clamp(s.w + (tau / J) * h, 0, ws * 1.15);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.angle += s.w * h;
-            samples.current.push(clamp(s.w / Math.max(1, ws), 0, 1));
+            samples.current.push(clamp(s.w / Math.max(1, ws), 0, 1.15));
             if (samples.current.length > 160) samples.current.shift();
 
             clearSim(ctx, size.w, size.h);
@@ -142,7 +143,7 @@ export function SplitPhaseMotorLab() {
               flow.current.step(h);
               flow.current.draw(ctx);
               scope(ctx, 540, 28, 220, 90, samples.current, Ink.electron, "w(t)");
-              label(ctx, auxOn ? "start: Im Ia sin(phi)  *  Cs + switch" : "run: main winding torque", 400, 380, {
+              label(ctx, auxOn ? "start: Im Ia sin(phi) * slip  *  Cs + switch" : "run: te ~ slip (zero at sync)", 400, 380, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
