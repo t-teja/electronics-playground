@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check } from "lucide-react";
 import { useEffect } from "react";
 import { AppHeader } from "@/components/app-header";
-import { GLYPHS } from "@/components/glyphs";
+import { GLYPHS } from "@/components/glyph-registry";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, LABS, labsIn } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
@@ -28,7 +28,7 @@ function Home() {
             Watch charge move.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted md:text-lg">
-            {LABS.length} live benches, from resistor to attention. Real equations, drifting
+            {LABS.length} live benches, from resistor to motors and PID. Real equations, drifting
             electrons, fields you can feel. Drag a slider. The physics follows.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
