@@ -29,7 +29,12 @@ export const formatFarad = (c: number) => si(c, "F", 2);
 export const formatHenry = (l: number) => si(l, "H", 2);
 export const formatHz = (f: number) => si(f, "Hz", 2);
 export const formatSec = (t: number) => si(t, "s", 2);
-export const formatRpm = (n: number) => `${Math.round(Math.max(0, n))} rpm`;
+export const formatRpm = (n: number) => {
+  if (!Number.isFinite(n)) return "0 rpm";
+  const rounded = Math.round(n);
+  if (rounded === 0) return "0 rpm";
+  return `${rounded} rpm`;
+};
 
 export function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));

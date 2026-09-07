@@ -43,19 +43,22 @@ export function DcMotorLab() {
   const params = useRef({ vsrc, r, load });
   params.current = { vsrc, r, load };
 
-  const stallI = vsrc / r;
-  const noLoadW = vsrc / KE;
+  const stallI = Math.abs(vsrc) / r;
+  const noLoadW = Math.abs(vsrc) / KE;
 
   const insight = useMemo(() => {
     const rpm = read.rpm;
-    if (rpm < 40) {
+    if (read.i < -0.05 && Math.abs(rpm) > 40) {
+      return `Regen. Back-EMF exceeds supply, so current reverses and electrical power goes negative. Rotation follows the sign of omega.`;
+    }
+    if (Math.abs(rpm) < 40) {
       return `Near stall. Back-EMF is almost gone, so the armature is roughly ${formatOhm(r)} plus ${formatHenry(LA)}. Current climbs toward ${formatAmp(stallI)}. Torque is high; speed is not.`;
     }
     if (load < 0.003) {
       return `Unloaded. Speed rises until Ke*w ~= V. Current only covers friction. ${formatRpm(rpm)}.`;
     }
     return `Loaded. Torque tau = Kt * I fights ${load.toFixed(3)} N*m. Speed settles where electrical input covers mechanical work plus I^2R.`;
-  }, [read.rpm, r, stallI, load]);
+  }, [read, r, stallI, load]);
 
   return (
     <LabShell
@@ -74,7 +77,7 @@ export function DcMotorLab() {
             label="Supply"
             value={vsrc}
             display={formatVolt(vsrc)}
-            min={1}
+            min={-18}
             max={18}
             step={0.1}
             onChange={setVsrc}
@@ -86,7 +89,7 @@ export function DcMotorLab() {
             min={1}
             max={40}
             onChange={setR}
-            hint="Stall current is V / R."
+            hint="Stall current is |V| / R."
           />
           <LinearControl
             label="Load torque"
@@ -117,16 +120,17 @@ export function DcMotorLab() {
             const bemf = KE * s.w;
             const vL = p.vsrc - bemf - s.i * p.r;
             const di = (vL / LA) * h;
-            s.i = clamp(s.i + di, -p.vsrc / Math.max(0.4, p.r), p.vsrc / Math.max(0.4, p.r));
+            const iLim = Math.abs(p.vsrc) / Math.max(0.4, p.r) + 2;
+            s.i = clamp(s.i + di, -iLim * 2, iLim * 2);
             if (!Number.isFinite(s.i)) s.i = 0;
-            const torque = KT * s.i - p.load - B * s.w;
-            s.w = Math.max(0, s.w + (torque / J) * h);
+            const torque = KT * s.i - p.load * Math.sign(s.w || p.vsrc || 1) - B * s.w;
+            s.w = clamp(s.w + (torque / J) * h, -800, 800);
             if (!Number.isFinite(s.w)) s.w = 0;
             s.angle += s.w * h;
             const rpm = (s.w * 60) / (2 * Math.PI);
             const tauM = KT * s.i;
-            const i01 = Math.abs(s.i) / Math.max(0.05, p.vsrc / p.r);
-            samples.current.push(clamp(s.w / Math.max(1, p.vsrc / KE), 0, 1));
+            const i01 = Math.min(1, Math.abs(s.i) / Math.max(0.05, Math.abs(p.vsrc) / p.r));
+            samples.current.push(clamp(0.5 + 0.5 * (s.w / Math.max(1, Math.abs(p.vsrc) / KE)), 0, 1));
             if (samples.current.length > 160) samples.current.shift();
 
             clearSim(ctx, size.w, size.h);
@@ -165,7 +169,9 @@ export function DcMotorLab() {
                 size: 12,
                 mono: true,
               });
-              label(ctx, s.w < 2 ? "stalled" : p.load > 0.02 ? "loaded" : "running", 560, y - 58, {
+              const stateLabel =
+                Math.abs(s.w) < 2 ? "stalled" : s.i < -0.05 ? "regen" : p.load > 0.02 ? "loaded" : "running";
+              label(ctx, stateLabel, 560, y - 58, {
                 size: 12,
                 color: Ink.electron,
               });
@@ -178,7 +184,7 @@ export function DcMotorLab() {
               flow.current.setPath(loop, false);
               flow.current.set(
                 Math.abs(s.i) > 0.02 ? Math.max(6, Math.min(36, Math.abs(s.i) * 8)) : 0,
-                -Math.min(220, 30 + Math.abs(s.i) * 40),
+                -Math.min(220, 30 + Math.abs(s.i) * 40) * Math.sign(s.i || 1),
               );
               flow.current.step(h);
               flow.current.draw(ctx);

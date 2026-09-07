@@ -6,7 +6,7 @@ export const BLDC_COMMUTATION: [number, number, number][] = [
   [1, -1, 0], [1, 0, -1], [0, 1, -1], [-1, 1, 0], [-1, 0, 1], [0, -1, 1],
 ];
 export function trapBemf(angle: number, phase: number) {
-  let a = ((angle - phase) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+  let a = ((angle - phase + Math.PI / 6) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
   const sector = a / (Math.PI / 3);
   if (sector < 1) return -1 + sector;
   if (sector < 3) return 1;
