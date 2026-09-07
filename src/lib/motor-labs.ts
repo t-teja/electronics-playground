@@ -6,16 +6,16 @@ export const ELECTROMECHANICAL_BLURB =
 export const MOTOR_LABS: LabMeta[] = [
   {
     slug: "split-phase-motor",
-    badge: "new",
+    badge: "updated",
     name: "Split-phase motor",
     symbol: "SP",
     category: "electromechanical",
     tagline: "Two windings, a phase shift, and a start switch",
     summary:
-      "A main winding plus an auxiliary winding with a run capacitor. The phase shift makes starting torque. A centrifugal switch drops the aux once the rotor is up.",
+      "A main winding plus an auxiliary winding with a start capacitor. The phase shift makes starting torque. A centrifugal switch drops the aux once the rotor is up.",
     principle:
-      "Two stator currents displaced in phase produce a rotating field component. Torque grows with Im Ia sin(\u03c6). Above a speed threshold the switch opens the aux circuit and the motor runs on the main winding alone.",
-    formula: "\u03c4 \u221d Im Ia sin(\u03c6)",
+      "Two stator currents displaced in phase produce a rotating field component. Starting torque grows with Im Ia sin(phi). Above a speed threshold the switch opens the aux and the main winding alone makes run torque.",
+    formula: "tau ~ Im Ia sin(phi)",
     uses: [
       "Household fans and blowers",
       "Washers and small compressors",
@@ -24,7 +24,7 @@ export const MOTOR_LABS: LabMeta[] = [
   },
   {
     slug: "induction-motor",
-    badge: "new",
+    badge: "updated",
     name: "Induction motor",
     symbol: "IM",
     category: "electromechanical",
@@ -32,7 +32,7 @@ export const MOTOR_LABS: LabMeta[] = [
     summary:
       "A three-phase stator builds a rotating field. The rotor never quite catches sync speed. That slip induces current, and current makes torque.",
     principle:
-      "Synchronous speed ns = 120 f / p. Slip s = (ns \u2212 n) / ns. Torque follows a Kloss-style curve with a breakdown peak near rated slip. Load sets the operating point on that curve.",
+      "Synchronous speed ns = 120 f / p. Slip s = (ns - n) / ns. Torque follows a Kloss-style curve with a breakdown peak near rated slip. Load sets the operating point on that curve.",
     formula: "ns = 120 f / p",
     uses: [
       "Pumps, conveyors, and machine tools",
@@ -42,16 +42,16 @@ export const MOTOR_LABS: LabMeta[] = [
   },
   {
     slug: "pmsm",
-    badge: "new",
+    badge: "updated",
     name: "PMSM",
     symbol: "PM",
     category: "electromechanical",
     tagline: "Permanent magnets locked to the field",
     summary:
-      "A sinusoidal stator field and a magnetized rotor. With Id = 0, torque is set by Iq. In sync, electrical and mechanical angles stay locked.",
+      "A sinusoidal stator field and a magnetized rotor. With Id = 0, torque is set by Iq. Electrical speed tracks mechanical speed through the pole pairs.",
     principle:
-      "Te = (3/2) p \u03bbm Iq. Electrical speed \u03c9e = p \u03c9m. The rotor tracks the rotating field; load angle grows with torque demand until pull-out.",
-    formula: "Te = (3/2) p \u03bbm Iq",
+      "Te = (3/2) p lambda_m Iq. Electrical speed we = p wm. Speed comes from torque balance J w' = Te - Tl - B w. The FOC frame stays synced to the rotor.",
+    formula: "Te = (3/2) p lambda_m Iq",
     uses: [
       "Servo axes and robot joints",
       "EV traction and e-bikes",
@@ -60,16 +60,16 @@ export const MOTOR_LABS: LabMeta[] = [
   },
   {
     slug: "bldc",
-    badge: "new",
+    badge: "updated",
     name: "BLDC",
     symbol: "BLDC",
     category: "electromechanical",
     tagline: "Six-step commutation from hall sensors",
     summary:
-      "Three phases, trapezoidal back-EMF, and hall sensors. Each 60\u00b0 sector energizes two windings. Torque comes from the driven currents.",
+      "Three phases, trapezoidal back-EMF, and hall sensors. Each 60 deg sector energizes two windings. Torque comes from the driven currents.",
     principle:
-      "Hall state 0..5 picks which two of three phases are on. Trapezoidal back-EMF and square-ish currents make nearly constant torque in each sector.",
-    formula: "sector = floor(\u03b8 / 60\u00b0)",
+      "Hall state 0..5 picks which two of three phases are on. Trapezoidal back-EMF flats align with the six-step sectors so startup torque is nonzero.",
+    formula: "sector = floor(theta / 60 deg)",
     uses: [
       "Drone motors and RC props",
       "PC fans and pumps",
@@ -86,8 +86,8 @@ export const MOTOR_LABS: LabMeta[] = [
     summary:
       "A DC motor, a pot on the shaft, and an internal PD loop. You set a target angle; error becomes drive until the shaft arrives.",
     principle:
-      "Feedback closes the loop: e = \u03b8ref \u2212 \u03b8. Drive u = Kp e + Kd \u0117 turns the motor. The pot reports position so the schematic matches the model.",
-    formula: "u = Kp e + Kd \u0117",
+      "Feedback closes the loop: e = theta_ref - theta. Drive u = Kp e + Kd e_dot turns the motor. The pot reports position so the schematic matches the model.",
+    formula: "u = Kp e + Kd e_dot",
     uses: [
       "RC hobby servos",
       "Camera gimbals and pan-tilt heads",
