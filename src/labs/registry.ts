@@ -37,6 +37,12 @@ import { Rs485Lab } from "@/labs/rs485";
 import { PerceptronLab } from "@/labs/perceptron";
 import { NeuralNetLab } from "@/labs/neural-net";
 import { AttentionLab } from "@/labs/attention";
+import { SplitPhaseMotorLab } from "@/labs/split-phase-motor";
+import { InductionMotorLab } from "@/labs/induction-motor";
+import { PmsmLab } from "@/labs/pmsm";
+import { BldcLab } from "@/labs/bldc";
+import { ServoLab } from "@/labs/servo";
+import { PidLab } from "@/labs/pid";
 
 export const LAB_COMPONENTS: Record<string, ComponentType> = {
   resistor: ResistorLab,
@@ -63,6 +69,12 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   "one-wire": OneWireLab,
   rs485: Rs485Lab,
   "dc-motor": DcMotorLab,
+  "split-phase-motor": SplitPhaseMotorLab,
+  "induction-motor": InductionMotorLab,
+  pmsm: PmsmLab,
+  bldc: BldcLab,
+  servo: ServoLab,
+  pid: PidLab,
   relay: RelayLab,
   ldr: LdrLab,
   ir: IrLab,
