@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Check, ChevronDown, Home } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppHeader } from "@/components/app-header";
-import { GLYPHS } from "@/components/glyphs";
+import { GLYPHS } from "@/components/glyph-registry";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CATEGORIES, labsIn, type Category, type LabMeta } from "@/lib/catalog";

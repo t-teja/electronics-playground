@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check } from "lucide-react";
 import { useEffect } from "react";
 import { AppHeader } from "@/components/app-header";
-import { GLYPHS } from "@/components/glyphs";
+import { GLYPHS } from "@/components/glyph-registry";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, LABS, labsIn } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
