@@ -39,6 +39,8 @@ if (!shell) {
   console.error("gh-pages-post: no index.html or _shell.html in", dest);
   process.exit(1);
 }
+// Always publish a root index so / is not 404 when the build only emitted _shell.html.
+copyFileSync(shell, join(dest, "index.html"));
 copyFileSync(shell, join(dest, "404.html"));
 
 const LAB_SLUGS = [
@@ -66,6 +68,12 @@ const LAB_SLUGS = [
   "one-wire",
   "rs485",
   "dc-motor",
+  "split-phase-motor",
+  "induction-motor",
+  "pmsm",
+  "bldc",
+  "servo",
+  "pid",
   "relay",
   "ldr",
   "ir",
@@ -89,5 +97,5 @@ for (const slug of LAB_SLUGS) {
 }
 
 console.log(
-  `gh-pages-post: ${src} \u2192 ${dest} (404.html + lab/*/index.html fallback + .nojekyll)`,
+  `gh-pages-post: ${src} → ${dest} (index.html + 404.html + lab/*/index.html fallback + .nojekyll)`,
 );
