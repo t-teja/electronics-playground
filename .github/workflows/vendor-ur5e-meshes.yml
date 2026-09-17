@@ -1,0 +1,71 @@
+name: Vendor UR5e visual meshes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "fix/v0.8.3-ur5e-visual-meshes"
+    paths:
+      - "scripts/vendor-ur5e-meshes.py"
+      - ".github/workflows/vendor-ur5e-meshes.yml"
+      - "public/robots/ur5e/ur5e.urdf"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vendor-ur5e-meshes
+  cancel-in-progress: true
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install mesh tools
+        run: pip install --upgrade pip trimesh pycollada numpy scipy fast_simplification
+
+      - name: Generate dense visual binary STLs
+        run: python scripts/vendor-ur5e-meshes.py --force
+
+      - name: Verify facet counts
+        run: |
+          python - <<'PY'
+          import struct, sys
+          from pathlib import Path
+          names = ["base","shoulder","upperarm","forearm","wrist1","wrist2","wrist3"]
+          ok = True
+          for n in names:
+            p = Path(f"public/robots/ur5e/meshes/{n}.stl")
+            d = p.read_bytes()
+            assert d[:5] != b"solid" or b"\x00" in d[:80], f"{n} should be binary STL"
+            faces = struct.unpack_from("<I", d, 80)[0]
+            print(f"{n}: {faces} facets, {len(d)} bytes")
+            if faces < 500 or len(d) < 20000:
+              if n == "wrist3" and faces >= 400:
+                pass
+              else:
+                print(f"FAIL {n}", file=sys.stderr)
+                ok = False
+          sys.exit(0 if ok else 1)
+          PY
+
+      - name: Commit and push meshes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/robots/ur5e/meshes/*.stl
+          if git diff --staged --quiet; then
+            echo "No mesh changes to commit"
+          else
+            git commit -m "vendor: dense UR5e visual binary STLs (BSD-3-Clause)"
+            git push
+          fi
