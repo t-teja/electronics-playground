@@ -1,6 +1,9 @@
-# EP-Arm local bridge
+# UR5e local bridge
 
 LAN bridge for the 6-DoF arm lab (WebSocket JSON + REST). No Foxglove required.
+
+Joint names: `shoulder_pan_joint`, `shoulder_lift_joint`, `elbow_joint`,
+`wrist_1_joint`, `wrist_2_joint`, `wrist_3_joint`.
 
 ## Run (Node)
 

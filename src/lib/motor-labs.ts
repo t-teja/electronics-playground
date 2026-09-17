@@ -118,9 +118,9 @@ export const MOTOR_LABS: LabMeta[] = [
     name: "6-DoF robot arm",
     symbol: "ARM",
     category: "electromechanical",
-    tagline: "URDF arm with orbit view and local bridge",
+    tagline: "UR5e URDF with realistic meshes and local bridge",
     summary:
-      "A UR5-class 6-DoF arm from a bundled MIT URDF. Orbit the view, solve IK, or drive joints from a local LAN bridge.",
+      "A UR5e-class 6-DoF arm with bundled BSD meshes. Orbit the view, solve IK, or drive joints from a local LAN bridge.",
     principle:
       "Forward kinematics maps joint angles to the tool pose. Inverse kinematics for a spherical wrist decouples position and orientation. Singularities appear when wrist axes align or the arm stretches to its reach limit.",
     formula: "T = A1 A2 A3 A4 A5 A6",

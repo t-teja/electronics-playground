@@ -101,8 +101,8 @@ const server = http.createServer(async (req, res) => {
       // Tip estimate: planar reach proxy for bridge smoke tests (lab does real FK)
       const q = (url.searchParams.get("q") || "0,0,0,0,0,0").split(",").map(Number);
       const a2 = 0.425,
-        a3 = 0.39225,
-        d1 = 0.089159;
+        a3 = 0.3922,
+        d1 = 0.1625;
       const q1 = q[0] || 0,
         q2 = q[1] || 0,
         q3 = q[2] || 0;

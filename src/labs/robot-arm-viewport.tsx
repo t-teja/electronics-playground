@@ -139,7 +139,7 @@ export function ArmViewport({
     };
 
     const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
-    const urdfUrl = `${base}robots/ep-arm-6/ep_arm_6.urdf`;
+    const urdfUrl = `${base}robots/ur5e/ur5e.urdf`;
 
     const loader = new URDFLoader();
     loader.load(
