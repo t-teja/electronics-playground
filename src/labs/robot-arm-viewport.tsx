@@ -9,8 +9,8 @@ import URDFLoader from "urdf-loader";
 
 /**
  * Fit OrbitControls to world AABB of `object`.
- * Robot root is already rotated ROS Z-up -> Three Y-up.
- * Call on URDF load, Fit view, and Reset -- never mid-orbit drag.
+ * Robot root is already rotated ROS Z-up to Three Y-up.
+ * Call on URDF load, Fit view, and Reset — never mid-orbit drag.
  */
 export function fitCameraToObject(
   camera: THREE.PerspectiveCamera,
@@ -144,6 +144,7 @@ export function ArmViewport({
       urdfUrl,
       (result) => {
         if (disposed) return;
+        setLoadError(null);
         robot = result as UrdfRobot;
         result.traverse((obj) => {
           const mesh = obj as THREE.Mesh;
@@ -166,8 +167,17 @@ export function ArmViewport({
         });
       },
       undefined,
-      () => {
-        if (!disposed) setLoadError("Could not load arm model.");
+      (err) => {
+        if (disposed) return;
+        const detail =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+              ? err
+              : err && typeof err === "object" && "message" in err
+                ? String((err as { message: unknown }).message)
+                : String(err ?? "unknown error");
+        setLoadError(`Could not load arm model: ${detail}`);
       },
     );
 
@@ -220,7 +230,7 @@ export function ArmViewport({
     <div className="relative h-full w-full">
       <div ref={mountRef} className="h-full w-full touch-none" />
       {loadError ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center text-xs text-amber-300/90">
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 px-2 text-center text-xs text-amber-300/90">
           {loadError}
         </div>
       ) : null}
