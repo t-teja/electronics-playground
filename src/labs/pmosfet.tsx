@@ -12,12 +12,12 @@ import {
   Ink,
   label,
   ledDome,
-  pMosfet,
   resistorBody,
   roundRect,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { pMosfet } from "@/lib/sim/draw-ext";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const VDD = 9;
