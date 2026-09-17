@@ -1,0 +1,13 @@
+{
+  "name": "ep-arm-bridge",
+  "private": true,
+  "version": "0.8.1",
+  "type": "module",
+  "description": "Local LAN bridge for Electronics Playground 6-DoF arm lab",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

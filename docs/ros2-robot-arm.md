@@ -1,23 +1,48 @@
-# Local ROS2 visualization for the 6-DoF arm
+# Local bridge for the 6-DoF arm
 
-The browser lab runs analytical FK/IK in Three.js. To mirror the same joint vector on a local ROS2 desktop:
+The browser lab loads a bundled MIT URDF (EP-Arm-6) and runs FK/IK in-page.
+To drive the same joints from your LAN, run the local bridge — no cloud viewer required.
 
-## Topics
-
-- `/joint_states` (`sensor_msgs/JointState`) — names `q1`..`q6`, positions in radians
-- `/tf` — publish `base_link` → `link1` … → `tool0` with `robot_state_publisher`, or a small Python broadcaster
-
-## Suggested loop
-
-1. Install ROS2 (Humble or Jazzy) and `ros-humble-joint-state-publisher-gui` (or Jazzy equivalents).
-2. Export the lab's joint vector `[q1..q6]` (radians) from the meters line, or stream it over rosbridge.
-3. Publish `JointState` at ~30 Hz. `robot_state_publisher` + a minimal URDF with the same link lengths (`d1=0.35`, `a2=0.55`, `a3=0.45`, `d6=0.12`) will produce TF.
-4. Open Foxglove Studio (or RViz) with a TF panel and a 3D view. Point Foxglove at `ws://localhost:9090` if you use `rosbridge_server`.
-
-## rosbridge sketch
+## Quick start
 
 ```bash
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+cd tools/arm-bridge
+npm install
+npm start
 ```
 
-Then publish joint states from any client that speaks the rosbridge JSON protocol. Keep the lab as the kinematics teacher; ROS2 is for visualization only.
+In the lab, set **Bridge URL** to `ws://localhost:9090` (or `ws://<your-lan-ip>:9090`), click **Connect**, and optionally enable **Follow remote**.
+
+Docker:
+
+```bash
+cd tools/arm-bridge
+docker compose up
+```
+
+## Protocol
+
+WebSocket JSON (same port as HTTP):
+
+| Message | Direction | Purpose |
+|--------|-----------|---------|
+| `joint_command` `{ positions: number[6] }` | controller → lab | Set joints (rad) when Follow remote is on |
+| `joint_states` `{ names, positions }` | lab ↔ peers | Current joint vector |
+
+REST:
+
+- `GET /health`
+- `GET /joints` / `POST /joints` `{ "positions": [q1..q6] }`
+- `GET /fk?q=...` (smoke-test tip estimate)
+- `POST /ik` `{ "x","y","z" }` (broadcasts a joint guess; lab does real IK)
+
+CORS is open so the GitHub Pages origin can call the bridge.
+
+## rosbridge (optional)
+
+If you already run ROS 2 + `rosbridge_websocket` on port 9090, point the lab at that URL instead.
+Topic names may differ; the Node bridge above is the supported path for this lab.
+
+## URDF
+
+Bundled at `public/robots/ep-arm-6/` (MIT). Lengths match `src/lib/robot-arm-ik.ts`.
