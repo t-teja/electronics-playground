@@ -5,6 +5,7 @@ import { LAB_BY_SLUG } from "@/lib/catalog";
 import { useProgress } from "@/lib/progress";
 import {
   ARM_LINKS,
+  JOINT_LABELS,
   JOINT_NAMES,
   clampJoint,
   deg,
@@ -22,8 +23,8 @@ export function RobotArm6dofLab() {
   const mark = useProgress((s) => s.mark);
   useEffect(() => mark(lab.slug), [lab.slug, mark]);
 
-  // Home pose: upright teaching stance (framed on load).
-  // Acceptance fail pose [180,25,-40,0,20,0] recovers via Fit view.
+  // Home pose: UR5e teaching stance (framed on load).
+  // Fail pose [180,25,-40,0,20,0] deg — Fit view reframes AABB.
   const [cartMode, setCartMode] = useState(false);
   const [q1, setQ1] = useState(0);
   const [q2, setQ2] = useState(-70);
@@ -145,9 +146,9 @@ export function RobotArm6dofLab() {
     }
     if (cartMode && !solved.ok) return solved.message;
     if (cartMode) {
-      return `Cartesian IK. Spherical-wrist seed, then a short polish so the tip matches the URDF. Tip at (${solved.tip.x.toFixed(2)}, ${solved.tip.y.toFixed(2)}, ${solved.tip.z.toFixed(2)}) m.`;
+      return `Cartesian IK. UR5e spherical-wrist seed, then a short polish so the tip matches the URDF. Tip at (${solved.tip.x.toFixed(2)}, ${solved.tip.y.toFixed(2)}, ${solved.tip.z.toFixed(2)}) m.`;
     }
-    return `Joint space. URDF EP-Arm-6 (a2=${ARM_LINKS.a2} m, a3=${ARM_LINKS.a3} m). Tip at (${solved.tip.x.toFixed(2)}, ${solved.tip.y.toFixed(2)}, ${solved.tip.z.toFixed(2)}) m.`;
+    return `Joint space. UR5e URDF meshes (a2=${ARM_LINKS.a2} m, a3=${ARM_LINKS.a3} m). Tip at (${solved.tip.x.toFixed(2)}, ${solved.tip.y.toFixed(2)}, ${solved.tip.z.toFixed(2)}) m.`;
   }, [solved, cartMode]);
 
   const connLabel =
@@ -184,12 +185,12 @@ export function RobotArm6dofLab() {
           />
           {!cartMode ? (
             <>
-              <LinearControl label="q1 base" value={q1} display={`${q1.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ1} />
-              <LinearControl label="q2 shoulder" value={q2} display={`${q2.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ2} />
-              <LinearControl label="q3 elbow" value={q3} display={`${q3.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ3} />
-              <LinearControl label="q4 wrist" value={q4} display={`${q4.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ4} />
-              <LinearControl label="q5 bend" value={q5} display={`${q5.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ5} />
-              <LinearControl label="q6 roll" value={q6} display={`${q6.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ6} />
+              <LinearControl label={JOINT_LABELS[0]} value={q1} display={`${q1.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ1} />
+              <LinearControl label={JOINT_LABELS[1]} value={q2} display={`${q2.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ2} />
+              <LinearControl label={JOINT_LABELS[2]} value={q3} display={`${q3.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ3} />
+              <LinearControl label={JOINT_LABELS[3]} value={q4} display={`${q4.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ4} />
+              <LinearControl label={JOINT_LABELS[4]} value={q5} display={`${q5.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ5} />
+              <LinearControl label={JOINT_LABELS[5]} value={q6} display={`${q6.toFixed(0)} deg`} min={-180} max={180} step={1} onChange={setQ6} />
             </>
           ) : (
             <>
