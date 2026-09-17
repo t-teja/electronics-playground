@@ -6,9 +6,10 @@ import { LAB_BY_SLUG } from "@/lib/catalog";
 import { clamp, formatAmp, formatHz, formatRpm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
+  acMotor,
   acSource,
+  capPlates,
   clearSim,
-  dcMotor,
   graphPaper,
   Ink,
   label,
@@ -47,7 +48,7 @@ export function SplitPhaseMotorLab() {
 
   const insight = useMemo(() => {
     if (read.rpm < 80 && read.aux) {
-      return `Starting. Capacitance shifts the aux current by about ${read.phase.toFixed(0)} deg. Starting torque follows Im Ia sin(phi) and fades with slip.`;
+      return `Starting. The start capacitor shifts the aux current by about ${read.phase.toFixed(0)} deg. Starting torque follows Im Ia sin(phi) and fades with slip.`;
     }
     if (!read.aux) {
       return `Run. Centrifugal switch opened the aux above ${SWITCH_RPM} rpm. Main-winding torque follows slip and goes to zero at sync.`;
@@ -115,27 +116,20 @@ export function SplitPhaseMotorLab() {
               const ac = acSource(ctx, 80, 200, 22);
               resistorBody(ctx, 180, 140, 70, rm, Math.min(1, Math.abs(im) / Math.max(0.1, imPk)));
               resistorBody(ctx, 180, 260, 70, ra, auxOn ? Math.min(1, Math.abs(ia) / Math.max(0.1, iaPk)) : 0);
-              ctx.strokeStyle = Ink.pin;
-              ctx.lineWidth = 2.2;
-              ctx.beginPath();
-              ctx.moveTo(290, 248);
-              ctx.lineTo(290, 272);
-              ctx.moveTo(300, 248);
-              ctx.lineTo(300, 272);
-              ctx.stroke();
-              label(ctx, "Cs", 295, 236, { size: 10 });
-              toggleSwitch(ctx, 330, 260, auxOn);
-              dcMotor(ctx, 560, 200, s.angle, Math.min(1, s.w / 120));
+              capPlates(ctx, 300, 260, auxOn ? 0.55 : 0.1);
+              label(ctx, "Cs", 300, 228, { size: 10 });
+              toggleSwitch(ctx, 360, 260, auxOn);
+              acMotor(ctx, 560, 200, s.angle, Math.min(1, s.w / 120));
               wire(ctx, [{ x: ac.top.x, y: ac.top.y }, { x: ac.top.x, y: 140 }, { x: 180, y: 140 }]);
               wire(ctx, [{ x: 260, y: 140 }, { x: 480, y: 140 }, { x: 480, y: 188 }, { x: 508, y: 188 }]);
               wire(ctx, [{ x: ac.top.x, y: ac.top.y }, { x: 140, y: ac.top.y }, { x: 140, y: 260 }, { x: 180, y: 260 }]);
-              wire(ctx, [{ x: 260, y: 260 }, { x: 285, y: 260 }]);
-              wire(ctx, [{ x: 305, y: 260 }, { x: 330, y: 260 }]);
-              wire(ctx, [{ x: 364, y: 260 }, { x: 480, y: 260 }, { x: 480, y: 212 }, { x: 508, y: 212 }]);
+              wire(ctx, [{ x: 260, y: 260 }, { x: 284, y: 260 }]);
+              wire(ctx, [{ x: 316, y: 260 }, { x: 360, y: 260 }]);
+              wire(ctx, [{ x: 394, y: 260 }, { x: 480, y: 260 }, { x: 480, y: 212 }, { x: 508, y: 212 }]);
               wire(ctx, [{ x: 508, y: 212 }, { x: 520, y: 300 }, { x: 80, y: 300 }, { x: ac.bot.x, y: ac.bot.y }]);
               label(ctx, "main", 215, 112, { size: 11 });
               label(ctx, "aux", 215, 288, { size: 11 });
-              label(ctx, auxOn ? "aux ON" : "aux OPEN", 360, 236, { size: 11, color: auxOn ? "#5eead4" : Ink.muted });
+              label(ctx, auxOn ? "aux ON" : "aux OPEN", 390, 236, { size: 11, color: auxOn ? "#5eead4" : Ink.muted });
               label(ctx, `phi ${((phase * 180) / Math.PI).toFixed(0)} deg * ${formatRpm(rpm)}`, 560, 278, { mono: true, size: 12 });
               const path: Pt[] = [{ x: ac.top.x, y: 140 }, { x: 260, y: 140 }, { x: 508, y: 188 }];
               flow.current.setPath(path, false);
