@@ -34,6 +34,9 @@
     <loc>https://t-teja.github.io/electronics-playground/lab/mosfet/</loc>
   </url>
   <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/pmosfet/</loc>
+  </url>
+  <url>
     <loc>https://t-teja.github.io/electronics-playground/lab/logic-gates/</loc>
   </url>
   <url>
@@ -89,6 +92,12 @@
   </url>
   <url>
     <loc>https://t-teja.github.io/electronics-playground/lab/servo/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/stepper/</loc>
+  </url>
+  <url>
+    <loc>https://t-teja.github.io/electronics-playground/lab/robot-arm-6dof/</loc>
   </url>
   <url>
     <loc>https://t-teja.github.io/electronics-playground/lab/pid/</loc>
