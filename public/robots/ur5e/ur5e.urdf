@@ -2,8 +2,8 @@
 <!--
   UR5e for Electronics Playground (browser).
   Joint origins: UniversalRobots/Universal_Robots_ROS2_Description default_kinematics.yaml
-  Mesh offsets: visual_parameters.yaml (official visual DAE -> binary STL)
-  License: BSD-3-Clause -- see LICENSE
+  Mesh offsets: visual_parameters.yaml (official visual DAE to binary STL)
+  License: BSD-3-Clause. See LICENSE.
 -->
 <robot name="ur5e">
   <material name="ur_grey"><color rgba="0.7 0.7 0.7 1"/></material>
