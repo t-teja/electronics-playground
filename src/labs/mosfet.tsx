@@ -55,40 +55,38 @@ export function MosfetLab() {
 
   return (
     <LabShell
-      title={lab.name}
-      tagline={lab.tagline}
-      category={lab.category}
+      lab={lab}
       meters={
         <>
           <Meter label="Vgs" value={formatVolt(vgs)} />
-          <Meter label="Id" value={formatAmp(id)} accent />
+          <Meter label="Id" value={formatAmp(id)} />
           <Meter label="Region" value={region} />
-          <Meter label="Rd" value={formatOhm(rd)} />
         </>
       }
       controls={
         <>
           <LinearControl
-            label="Gate-source voltage"
+            label="Gate voltage"
             value={vgs}
+            display={formatVolt(vgs)}
             min={0}
-            max={6}
+            max={8}
             step={0.05}
-            format={formatVolt}
             onChange={setVgs}
             hint={`Threshold Vth = ${formatVolt(VTH)}. The gate is a capacitor.`}
           />
           <LogControl
             label="Drain resistor"
             value={rd}
-            min={47}
+            display={formatOhm(rd)}
+            min={100}
             max={4700}
-            format={formatOhm}
             onChange={setRd}
+            hint="Sets how much current the switch can pass."
           />
         </>
       }
-      aside={
+      insight={
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
@@ -101,33 +99,32 @@ export function MosfetLab() {
       }
       canvas={
         <SimCanvas
-          onFrame={(ctx, size, dt) => {
+          onFrame={(ctx, size, _t, dt) => {
             const p = params.current;
             const on = p.region !== "cutoff";
+            const lit = p.id >= 0.001;
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
+              const bat = battery(ctx, 64, 90);
+              label(ctx, formatVolt(VDD), 64, 142, { mono: true, size: 12 });
+              resistorBody(ctx, 180, 54, 80, p.rd, Math.min(1, p.id * 8));
+              const led = ledDome(ctx, 340, 30, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               const mos = nMosfet(ctx, 520, 150, on);
-              const bat = battery(ctx, 60, 150);
-              resistorBody(ctx, 280, 80, 100, p.rd, Math.min(1, (p.id * p.id * p.rd) / 0.5));
-              ledDome(ctx, 420, 80, Math.min(1, p.id / 0.02));
 
               wire(ctx, [
                 bat.pos,
-                { x: bat.pos.x, y: 80 },
-                { x: 280, y: 80 },
+                { x: bat.pos.x, y: 54 },
+                { x: 180, y: 54 },
               ]);
               wire(ctx, [
-                { x: 390, y: 80 },
-                { x: 390, y: 80 },
+                { x: 270, y: 54 },
+                { x: led.anode.x, y: 54 },
+                led.anode,
               ]);
               wire(ctx, [
-                { x: 390, y: 80 },
-                { x: 420, y: 80 },
-              ]);
-              wire(ctx, [
-                { x: 460, y: 80 },
-                { x: 520, y: 80 },
+                led.cathode,
+                { x: led.cathode.x, y: mos.d.y },
                 mos.d,
               ]);
               wire(ctx, [
@@ -170,43 +167,47 @@ export function MosfetLab() {
                 ctx.fillRect(bodyX + 94, bodyY + 18, bodyW - 188, 14);
                 ctx.globalAlpha = 1;
               }
-              label(ctx, "p-body", bodyX + bodyW / 2, bodyY + bodyH + 16, {
-                size: 11,
-                color: Ink.muted,
-              });
+              ctx.fillStyle = Ink.package;
+              ctx.fillRect(bodyX + 110, bodyY - 10, bodyW - 220, 10);
+              ctx.strokeStyle = "rgba(128,128,128,0.25)";
+              ctx.strokeRect(bodyX, bodyY, bodyW, bodyH);
+              label(ctx, "S  n+", bodyX + 59, bodyY + bodyH + 14, { size: 11, color: Ink.electron });
+              label(ctx, "p body", bodyX + bodyW / 2, bodyY + bodyH + 14, { size: 11, color: Ink.hole });
+              label(ctx, "D  n+", bodyX + bodyW - 59, bodyY + bodyH + 14, { size: 11, color: Ink.electron });
               label(ctx, "gate", bodyX + bodyW / 2, bodyY - 22, { size: 11, color: Ink.text });
-              label(ctx, "S", bodyX + 59, bodyY + 12, { size: 11 });
-              label(ctx, "D", bodyX + bodyW - 59, bodyY + 12, { size: 11 });
+              label(ctx, on ? "inversion channel" : "no channel", bodyX + bodyW / 2, bodyY + 30, {
+                size: 11,
+                color: on ? Ink.electron : Ink.muted,
+              });
 
-              const loop: Pt[] = on
-                ? [
-                    bat.pos,
-                    { x: bat.pos.x, y: 80 },
-                    { x: 420, y: 80 },
-                    { x: 520, y: 80 },
-                    mos.d,
-                    mos.s,
-                    { x: mos.s.x, y: 250 },
-                    { x: bat.neg.x, y: 250 },
-                    bat.neg,
-                  ]
-                : [];
-              flow.current.setPath(loop, false);
-              flow.current.set(Math.min(1, p.id / 0.025), on ? 0.55 : 0);
+              const col: Pt[] = [
+                led.cathode,
+                { x: led.cathode.x, y: mos.d.y },
+                mos.d,
+                mos.s,
+                { x: mos.s.x, y: 250 },
+                { x: bat.neg.x, y: 250 },
+                bat.neg,
+              ];
+              flow.current.setPath(col, false);
+              flow.current.set(
+                p.id > 0.0004 ? Math.max(6, Math.min(36, p.id * 1200)) : 0,
+                -Math.min(240, 40 + p.id * 4000),
+              );
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(
-                ctx,
+              const overlay =
                 p.region === "cutoff"
-                  ? "cut-off \u2014 no channel"
+                  ? "Id = 0  (cutoff)"
                   : p.region === "ohmic"
-                    ? `ohmic \u00b7 Id \u2248 ${(p.id * 1000).toFixed(0)} mA`
-                    : `Id = k (Vgs - Vth)^2 = ${formatAmp(p.id)}`,
-                400,
-                390,
-                { size: 13, color: Ink.accent, align: "center" },
-              );
+                    ? `Id = (VDD - Vf) / Rd = ${formatAmp(p.id)}`
+                    : `Id = k (Vgs - Vth)^2 = ${formatAmp(p.id)}`;
+              label(ctx, overlay, 560, 392, {
+                mono: true,
+                size: 13,
+                color: Ink.text,
+              });
             });
           }}
         />
