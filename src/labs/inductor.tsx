@@ -57,9 +57,9 @@ export function InductorLab() {
     }
     const frac = read.i / Math.max(0.001, iinf);
     if (frac > 0.95) {
-      return `Steady state. dI/dt ≈ 0, so the inductor looks like a wire. The lamp (load) and ${formatOhm(r)} set the current: ${formatAmp(iinf)}. Energy stored is ½LI².`;
+      return `Steady state. dI/dt ~ 0, so the inductor looks like a wire. The load ${formatOhm(r)} sets the current: ${formatAmp(iinf)}. Energy stored is 0.5*L*I^2.`;
     }
-    return `Current is climbing toward ${formatAmp(iinf)} with time constant L/R = ${(tau * 1000).toFixed(0)} ms. The lamp is the load; the field you see is the inertia of that current.`;
+    return `Current is climbing toward ${formatAmp(iinf)} with time constant L/R = ${(tau * 1000).toFixed(0)} ms. The resistor is the load; the field you see is the inertia of that current.`;
   }, [closed, read.i, iinf, r, tau]);
 
   return (
@@ -106,7 +106,7 @@ export function InductorLab() {
             min={20}
             max={2000}
             onChange={setR}
-            hint="The lamp. Smaller load, more current, stronger field."
+            hint="Smaller load, more current, stronger field."
           />
         </>
       }
@@ -142,8 +142,9 @@ export function InductorLab() {
               battery(ctx, 56, y);
               toggleSwitch(ctx, 190, y, p.closed);
               const coil = inductorCoil(ctx, 268, y, 5, i01);
-              lamp(ctx, 520, y, i01);
-              resistorBody(ctx, 580, y, 70, p.r, Math.min(1, (s.i * s.i * p.r) / 0.4));
+              resistorBody(ctx, 520, y, 90, p.r, Math.min(1, (s.i * s.i * p.r) / 0.4));
+              // Brightness indicator for the load current (not a series element)
+              lamp(ctx, 700, y - 70, i01);
               wire(ctx, [
                 { x: 76, y },
                 { x: 190, y },
@@ -154,22 +155,18 @@ export function InductorLab() {
               ]);
               wire(ctx, [
                 { x: coil.end, y },
-                { x: 492, y },
+                { x: 520, y },
               ]);
               wire(ctx, [
-                { x: 548, y },
-                { x: 580, y },
-              ]);
-              wire(ctx, [
-                { x: 660, y },
+                { x: 620, y },
                 { x: 720, y },
                 { x: 720, y: 310 },
                 { x: 46, y: 310 },
                 { x: 46, y },
               ]);
-              label(ctx, "load", 520, y - 36, { size: 11 });
+              label(ctx, "R load", 565, y - 36, { size: 11 });
               if (!p.closed) {
-                label(ctx, "1 MΩ arc", 206, y + 36, { size: 10, mono: true, color: Ink.heat });
+                label(ctx, "1 MOhm arc", 206, y + 36, { size: 10, mono: true, color: Ink.heat });
               }
               label(ctx, formatHenry(p.l), coil.mid, y + 64, { mono: true, size: 12 });
               label(ctx, p.closed ? "building field" : "field collapsing", coil.mid, y - 58, { size: 12 });
@@ -190,7 +187,7 @@ export function InductorLab() {
               flow.current.draw(ctx);
 
               scope(ctx, 540, 36, 220, 90, samples.current, Ink.electron, "I(t)");
-              label(ctx, `V = L dI/dt   ·   ${formatVolt(vL)}`, 400, 380, {
+              label(ctx, `V = L dI/dt   *   ${formatVolt(vL)}`, 400, 380, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
