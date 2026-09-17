@@ -9,8 +9,8 @@ import URDFLoader from "urdf-loader";
 
 /**
  * Fit OrbitControls to world AABB of `object`.
- * Robot root is already rotated ROS Z-up → Three Y-up.
- * Call on URDF load, Fit view, and Reset — never mid-orbit drag.
+ * Robot root is already rotated ROS Z-up -> Three Y-up.
+ * Call on URDF load, Fit view, and Reset -- never mid-orbit drag.
  */
 export function fitCameraToObject(
   camera: THREE.PerspectiveCamera,
@@ -30,7 +30,6 @@ export function fitCameraToObject(
   const fitH = maxDim / (2 * Math.tan(fov / 2));
   const fitW = fitH / Math.max(aspect, 0.25);
   const dist = pad * Math.max(fitH, fitW);
-  // Isometric bias so yawed poses (acceptance: q1=180°) stay fully framed
   const dir = new THREE.Vector3(0.9, 0.55, 0.9).normalize();
   camera.position.copy(center).addScaledVector(dir, dist);
   camera.near = Math.max(0.01, dist / 120);
@@ -108,7 +107,6 @@ export function ArmViewport({
     const tgtMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.045), tgtMat);
     scene.add(tgtMesh);
 
-    // ROS Z-up → Three.js Y-up
     const robotRoot = new THREE.Group();
     robotRoot.rotation.x = -Math.PI / 2;
     scene.add(robotRoot);
@@ -153,11 +151,12 @@ export function ArmViewport({
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           for (const mat of mats) {
             const sm = mat as THREE.MeshStandardMaterial;
+            sm.side = THREE.DoubleSide;
             if ("metalness" in sm) {
               sm.metalness = 0.35;
               sm.roughness = 0.45;
-              sm.needsUpdate = true;
             }
+            sm.needsUpdate = true;
           }
         });
         robotRoot.add(result);
@@ -178,7 +177,6 @@ export function ArmViewport({
       camera.aspect = w / Math.max(h, 1);
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
-      // No auto-fit on resize — that fights OrbitControls. Use Fit view.
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -187,7 +185,6 @@ export function ArmViewport({
     const tick = () => {
       const { q: qq, target: tgt, singularity: sing, fitToken: ft } = live.current;
       applyJoints(qq);
-      // Lab/URDF Z-up → Three after robotRoot −90°X: (x, z, −y)
       tgtMesh.position.set(tgt.x, tgt.z, -tgt.y);
       tgtMat.color.set(sing ? 0xc0453c : 0x3b6ea8);
       if (ft !== lastFit) {
