@@ -30,12 +30,24 @@ export function PotentiometerLab() {
   const [k, setK] = useState(0.4);
   const [rload, setRload] = useState(4700);
 
-  const rlo = Math.max(1, rtot * k);
-  const rhi = Math.max(1, rtot * (1 - k));
-  const rpar = 1 / (1 / rlo + 1 / rload);
-  const vout = v * (rpar / (rhi + rpar));
   const VF = 1.8;
   const R_LED = 470;
+  const rlo = Math.max(1, rtot * k);
+  const rhi = Math.max(1, rtot * (1 - k));
+  // Schematic: LED + Rs in parallel with rload on the tap. Fold LED branch into the divider load.
+  // Iterate so nonlinear LED current loads the wiper consistently with Vout.
+  let vout = 0;
+  {
+    let vGuess = v * (rlo / (rhi + rlo));
+    for (let n = 0; n < 10; n++) {
+      const iLed = Math.max(0, (vGuess - VF) / R_LED);
+      const gLed = vGuess > 0.05 ? iLed / vGuess : 0;
+      const gBot = 1 / rlo + 1 / rload + gLed;
+      const rBot = 1 / gBot;
+      vGuess = v * (rBot / (rhi + rBot));
+    }
+    vout = vGuess;
+  }
   const iled = Math.max(0, (vout - VF) / R_LED);
 
   const flow = useRef(new ElectronFlow());
@@ -47,7 +59,7 @@ export function PotentiometerLab() {
     if (rload < rtot * 0.2) {
       return `The load (${formatOhm(rload)}) is small compared with the track. It pulls the wiper down. Vout is ${formatVolt(vout)}, not the unloaded ${formatVolt(v * k)}. Buffer it if you care about the ratio.`;
     }
-    return `Wiper at ${(k * 100).toFixed(0)}%. Unloaded, Vout would be ${formatVolt(v * k)}. With ${formatOhm(rload)} on the tap, Vout is ${formatVolt(vout)}. The LED brightness follows the tap, not the supply.`;
+    return `Wiper at ${(k * 100).toFixed(0)}%. Unloaded, Vout would be ${formatVolt(v * k)}. With ${formatOhm(rload)} || LED+Rs on the tap, Vout is ${formatVolt(vout)}. The LED brightness follows the tap, not the supply.`;
   }, [k, rload, rtot, v, vout]);
 
   return (
