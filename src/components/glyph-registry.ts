@@ -8,6 +8,7 @@ import {
   GlyphPid,
   GlyphStepper,
   GlyphRobotArm,
+  GlyphPmosfet,
 } from "@/components/motor-glyphs";
 
 export const GLYPHS = {
@@ -20,4 +21,5 @@ export const GLYPHS = {
   stepper: GlyphStepper,
   "robot-arm-6dof": GlyphRobotArm,
   pid: GlyphPid,
+  pmosfet: GlyphPmosfet,
 } as const;
