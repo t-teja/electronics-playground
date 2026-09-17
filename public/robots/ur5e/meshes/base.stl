@@ -1,0 +1,9 @@
+solid base
+  facet normal -2.3458e-06 -3.1565e-06 -1.0000e+00
+    outer loop
+      vertex -5.3699e-02 -5.3139e-02 -1.9566e-08
+      vertex 8.2881e-03 -7.5083e-02 -9.5709e-08
+      vertex -2.8879e-03 -7.5508e-02 -6.8151e-08
+    endloop
+  endfacet
+endsolid base
