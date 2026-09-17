@@ -160,11 +160,9 @@ export function StepperLab() {
                 while (s.acc >= 1) {
                   s.acc -= 1;
                   s.step += dir;
-                  const tableLen = p.mode === "full" ? 4 : 8;
-                  const microSteps = p.mode === "full" ? STEPS_REV / 4 : STEPS_REV / 8;
-                  // Advance mechanical angle by one table step
-                  s.angle += dir * ((2 * Math.PI) / (tableLen * (STEPS_REV / tableLen)));
-                  void microSteps;
+                  // full: 2π/STEPS_REV; half: 2π/(STEPS_REV*2)
+                  const microSteps = p.mode === "full" ? 1 : 2;
+                  s.angle += dir * ((2 * Math.PI) / (STEPS_REV * microSteps));
                 }
               }
             }

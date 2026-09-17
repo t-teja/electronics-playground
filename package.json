@@ -1,7 +1,7 @@
 {
   "name": "electronics-playground",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.8.1",
   "sideEffects": false,
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
     "tailwindcss": "^4.3.0",
     "three": "^0.170.0",
     "tw-animate-css": "^1.3.4",
+    "urdf-loader": "^0.12.3",
     "zustand": "^5.0.0"
   },
   "devDependencies": {

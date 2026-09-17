@@ -1,0 +1,12 @@
+services:
+  arm-bridge:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: sh -c "npm install && node server.mjs"
+    ports:
+      - "9090:9090"
+    environment:
+      - PORT=9090
+      - HOST=0.0.0.0

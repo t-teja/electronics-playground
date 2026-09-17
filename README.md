@@ -10,4 +10,4 @@ Resistor, capacitor, inductor, potentiometer, transformer, diode, LED, NPN trans
 
 ## Robot arm (ROS2)
 
-Local visualization notes for the 6-DoF arm: [docs/ros2-robot-arm.md](docs/ros2-robot-arm.md).
+Local LAN bridge for the 6-DoF arm: [docs/ros2-robot-arm.md](docs/ros2-robot-arm.md).

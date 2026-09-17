@@ -186,7 +186,7 @@ export function LabShell({
             </div>
 
             <div className="overflow-hidden rounded-2xl bg-sim shadow-[var(--shadow-border)]">
-              <div className="relative h-[280px] w-full sm:h-[340px] md:h-[420px]">{canvas}</div>
+              <div className="relative h-[360px] w-full sm:h-[440px] md:h-[520px]">{canvas}</div>
             </div>
 
             <div className="flex flex-wrap gap-2">{meters}</div>
