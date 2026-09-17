@@ -6,7 +6,6 @@ import { LAB_BY_SLUG } from "@/lib/catalog";
 import { clamp, formatAmp, formatHz, formatRpm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
-  acMotor,
   acSource,
   capPlates,
   clearSim,
@@ -17,8 +16,9 @@ import {
   scope,
   toggleSwitch,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { acMotor } from "@/lib/sim/draw-ext";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const J = 0.00035;
