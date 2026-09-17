@@ -3,6 +3,7 @@ import type { LabMeta } from "./catalog";
 export const CATALOG_CHUNK_A2: LabMeta[] = [
   {
     slug: "led",
+    badge: "updated",
     name: "LED",
     symbol: "LED",
     category: "semiconductor",
@@ -74,6 +75,25 @@ export const CATALOG_CHUNK_A2: LabMeta[] = [
       "H-bridge drivers for DC motors",
       "LED dimming and PWM loads",
       "Load switches and battery protection FETs",
+    ],
+  },
+  {
+    slug: "pmosfet",
+    badge: "new",
+    name: "P-MOSFET",
+    symbol: "M",
+    category: "semiconductor",
+    tagline: "High-side switch by gate voltage",
+    summary:
+      "A P-channel MOSFET. Pull the gate below the source and a channel opens from source to drain. The high-side twin of the N-MOSFET.",
+    principle:
+      "Vsg above threshold inverts an n-type body into a p-channel between source and drain. Id grows with (Vsg - |Vth|)^2 in saturation. Source sits at +VDD; the load hangs off the drain toward ground.",
+    formula: "Id = k * (Vsg - |Vth|)^2  (sat)",
+    uses: [
+      "High-side load switches",
+      "Battery reverse-protection FETs",
+      "Complementary half-bridges with N-MOS",
+      "Power-path and hot-swap controllers",
     ],
   },
   {

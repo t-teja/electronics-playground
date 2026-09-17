@@ -7,7 +7,6 @@ import { formatAmp, formatOhm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
   battery,
-  bjtSymbol,
   clearSim,
   graphPaper,
   Ink,
@@ -16,8 +15,9 @@ import {
   ledDome,
   resistorBody,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { bjtSymbol } from "@/lib/sim/draw-bjt";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const BETA = 100;
@@ -52,7 +52,7 @@ export function PnpLab() {
     if (region === "saturation") {
       return `Saturated. The collector cannot source more than ${formatAmp(icSat)} through ${formatOhm(rc)}. Extra base current is wasted. This is the ON high-side switch.`;
     }
-    return `Active region. ${formatAmp(ib)} leaving the base becomes ${formatAmp(ic)} at the collector. A gain of \u03b2 = ${BETA}. Holes stream from emitter to collector; the load hangs toward ground.`;
+    return `Active region. ${formatAmp(ib)} leaving the base becomes ${formatAmp(ic)} at the collector. A gain of beta = ${BETA}. Holes stream from emitter to collector; the load hangs toward ground.`;
   }, [region, ib, ic, icSat, rc]);
 
   return (
@@ -70,7 +70,7 @@ export function PnpLab() {
           <LinearControl
             label="Base current (out)"
             value={ibUa}
-            display={`${ibUa.toFixed(0)} \u00b5A`}
+            display={`${ibUa.toFixed(0)} uA`}
             min={0}
             max={120}
             step={1}
@@ -92,7 +92,7 @@ export function PnpLab() {
         <>
           <p>{insight}</p>
           <p className="font-mono text-xs text-subtle">
-            {"\u03b2 = "}{BETA}{" \u00b7 Ic sat = (Vcc - Vce_sat - Vf) / Rc = "}{formatAmp(icSat)}
+            {"beta = "}{BETA}{" * Ic sat = (Vcc - Vce_sat - Vf) / Rc = "}{formatAmp(icSat)}
           </p>
         </>
       }
@@ -109,20 +109,20 @@ export function PnpLab() {
               const bat = battery(ctx, 70, 150);
               label(ctx, formatVolt(VCC), 70, 206, { mono: true, size: 12 });
 
-              const q = bjtSymbol(ctx, 340, 168, "pnp");
+              const q = bjtSymbol(ctx, 340, 168, "pnp", { flipVertical: true });
               const led = ledDome(ctx, 560, 90, lit ? "#5eead4" : Ink.body, lit ? 1 : 0);
               resistorBody(ctx, 520, botY, 80, p.rc, Math.min(1, p.ic * 8));
 
               wire(ctx, [
                 q.e,
-                { x: 250, y: q.e.y },
-                { x: 250, y: topY },
+                { x: q.e.x, y: topY },
                 { x: bat.pos.x, y: topY },
                 bat.pos,
               ]);
               wire(ctx, [
                 q.c,
-                { x: led.anode.x, y: q.c.y },
+                { x: q.c.x, y: led.anode.y },
+                { x: led.anode.x, y: led.anode.y },
                 led.anode,
               ]);
               wire(ctx, [
@@ -140,9 +140,9 @@ export function PnpLab() {
               ctx.fillStyle = Ink.package;
               ctx.fillRect(160, q.b.y - 12, 80, 24);
               label(ctx, "Ib sink", 200, q.b.y, { size: 10, color: Ink.text });
-              label(ctx, `${p.ibUa.toFixed(0)} \u00b5A out`, 200, q.b.y + 24, { mono: true, size: 11 });
+              label(ctx, `${p.ibUa.toFixed(0)} uA out`, 200, q.b.y + 24, { mono: true, size: 11 });
 
-              junction(ctx, 250, topY);
+              junction(ctx, q.e.x, topY);
               junction(ctx, bat.pos.x, topY);
               junction(ctx, led.cathode.x, botY);
               junction(ctx, 200, botY);
@@ -150,8 +150,8 @@ export function PnpLab() {
 
               label(ctx, "PNP  (high-side)", 340, 222, { size: 11 });
               label(ctx, p.region, 340, 238, { size: 12, color: Ink.electron });
-              label(ctx, "E to +VCC", 250, topY - 16, { size: 10, color: Ink.text });
-              label(ctx, "C to load", q.c.x + 48, q.c.y - 14, { size: 10 });
+              label(ctx, "E to +VCC", q.e.x + 36, q.e.y - 14, { size: 10, color: Ink.text });
+              label(ctx, "C to load", q.c.x + 36, q.c.y + 14, { size: 10 });
 
               const dx = 80;
               const dy = 300;
@@ -179,11 +179,11 @@ export function PnpLab() {
                 { x: led.cathode.x, y: botY },
                 led.cathode,
                 led.anode,
-                { x: led.anode.x, y: q.c.y },
+                { x: led.anode.x, y: led.anode.y },
+                { x: q.c.x, y: led.anode.y },
                 q.c,
                 q.e,
-                { x: 250, y: q.e.y },
-                { x: 250, y: topY },
+                { x: q.e.x, y: topY },
                 { x: bat.pos.x, y: topY },
                 bat.pos,
               ];
@@ -218,7 +218,7 @@ export function PnpLab() {
                   ? `Ic = (Vcc - Vce_sat - Vf) / Rc = ${formatAmp(p.ic)}`
                   : p.region === "cutoff"
                     ? "Ic = 0  (cutoff)"
-                    : `Ic = \u03b2 Ib = ${formatAmp(p.ic)}`;
+                    : `Ic = beta Ib = ${formatAmp(p.ic)}`;
               label(ctx, overlay, 560, 392, {
                 mono: true,
                 size: 13,

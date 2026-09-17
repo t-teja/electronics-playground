@@ -14,6 +14,7 @@ import { LedLab } from "@/labs/led";
 import { LogicGatesLab } from "@/labs/logic-gates";
 import { MicrocontrollerLab } from "@/labs/microcontroller";
 import { MosfetLab } from "@/labs/mosfet";
+import { PmosfetLab } from "@/labs/pmosfet";
 import { PirLab } from "@/labs/pir";
 import { PnpLab } from "@/labs/pnp";
 import { PotentiometerLab } from "@/labs/potentiometer";
@@ -43,6 +44,8 @@ import { PmsmLab } from "@/labs/pmsm";
 import { BldcLab } from "@/labs/bldc";
 import { ServoLab } from "@/labs/servo";
 import { PidLab } from "@/labs/pid";
+import { StepperLab } from "@/labs/stepper";
+import { RobotArm6dofLab } from "@/labs/robot-arm-6dof";
 
 export const LAB_COMPONENTS: Record<string, ComponentType> = {
   resistor: ResistorLab,
@@ -55,6 +58,7 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   transistor: TransistorLab,
   pnp: PnpLab,
   mosfet: MosfetLab,
+  pmosfet: PmosfetLab,
   "logic-gates": LogicGatesLab,
   "timer-555": Timer555Lab,
   microcontroller: MicrocontrollerLab,
@@ -74,6 +78,8 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   pmsm: PmsmLab,
   bldc: BldcLab,
   servo: ServoLab,
+  stepper: StepperLab,
+  "robot-arm-6dof": RobotArm6dofLab,
   pid: PidLab,
   relay: RelayLab,
   ldr: LdrLab,

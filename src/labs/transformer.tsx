@@ -93,7 +93,7 @@ export function TransformerLab() {
           <LinearControl
             label="Load"
             value={rload}
-            display={`${rload.toFixed(0)} \u03a9`}
+            display={`${rload.toFixed(0)} Ohm`}
             min={40}
             max={800}
             step={10}
@@ -125,18 +125,16 @@ export function TransformerLab() {
               wire(ctx, [T.priTop, acSrc.top]);
               wire(ctx, [T.priBot, acSrc.bot]);
 
-              lamp(ctx, 680, 140, Math.min(1, (p.vs / 12) * flux));
-              resistorBody(ctx, 640, 220, 70, p.rload, Math.min(1, p.isec * 8));
-              wire(ctx, [T.secTop, { x: 652, y: 140 }]);
-              wire(ctx, [
-                { x: 708, y: 140 },
-                { x: 740, y: 140 },
-                { x: 740, y: 220 },
-                { x: 720, y: 220 },
-              ]);
-              wire(ctx, [T.secBot, { x: 640, y: 220 }]);
-              label(ctx, "load", 680, 100, { size: 11 });
-              label(ctx, formatVolt(p.vs * ac), 680, 268, { mono: true, size: 11 });
+              // Load is rload only (matches isec = vs/rload). Lamp is a brightness indicator across the same nodes.
+              resistorBody(ctx, 620, 180, 80, p.rload, Math.min(1, p.isec * 8));
+              lamp(ctx, 700, 100, Math.min(1, (p.vs / 12) * flux));
+              wire(ctx, [T.secTop, { x: 610, y: 180 }]);
+              wire(ctx, [{ x: 710, y: 180 }, { x: 740, y: 180 }, { x: 740, y: T.secBot.y }, T.secBot]);
+              // Lamp in parallel with rload (decorative indicator, not an extra series drop)
+              wire(ctx, [{ x: 640, y: 180 }, { x: 640, y: 100 }, { x: 672, y: 100 }]);
+              wire(ctx, [{ x: 728, y: 100 }, { x: 740, y: 100 }, { x: 740, y: 180 }]);
+              label(ctx, "Rload", 660, 152, { size: 11 });
+              label(ctx, formatVolt(p.vs * ac), 700, 248, { mono: true, size: 11 });
 
               const pri: Pt[] = [T.priTop, acSrc.top, acSrc.bot, T.priBot];
               flowP.current.setPath(pri, false);
@@ -144,7 +142,7 @@ export function TransformerLab() {
               flowP.current.step(dt);
               flowP.current.draw(ctx);
 
-              const sec: Pt[] = [T.secTop, { x: 680, y: 140 }, { x: 740, y: 140 }, { x: 740, y: 220 }];
+              const sec: Pt[] = [T.secTop, { x: 610, y: 180 }, { x: 710, y: 180 }, { x: 740, y: 180 }];
               flowS.current.setPath(sec, false);
               flowS.current.set(Math.max(4, Math.min(22, p.isec * 80)), ac >= 0 ? 90 : -90);
               flowS.current.step(dt);

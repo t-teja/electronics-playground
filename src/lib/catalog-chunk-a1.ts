@@ -1,8 +1,7 @@
 import type { LabMeta } from "./catalog";
 
 export const CATALOG_CHUNK_A1: LabMeta[] = [
-
-{
+  {
     slug: "resistor",
     name: "Resistor",
     symbol: "R",
@@ -30,8 +29,8 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
     summary:
       "Two plates that never touch. Charge piles up, an electric field grows, and current fades as the field fights back.",
     principle:
-      "Current can flow only while the plates are charging or discharging. Once the capacitor voltage equals the source, the field stops further charge. The time constant τ = RC sets how quickly that happens.",
-    formula: "I = C · dV/dt",
+      "Current can flow only while the plates are charging or discharging. Once the capacitor voltage equals the source, the field stops further charge. The time constant \u03c4 = RC sets how quickly that happens.",
+    formula: "I = C \u00b7 dV/dt",
     uses: [
       "Smoothing ripple on power-supply rails",
       "Decoupling ICs so they don't brown out on switching spikes",
@@ -41,6 +40,7 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
   },
   {
     slug: "inductor",
+    badge: "updated",
     name: "Inductor",
     symbol: "L",
     category: "passive",
@@ -48,8 +48,8 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
     summary:
       "A coil that hates change. Current builds a magnetic field; the field fights any attempt to alter that current.",
     principle:
-      "A changing current produces a changing flux, which induces a voltage opposing the change (Lenz's law). Energy lives in the magnetic field. The lamp is the load that current actually feeds. Open the switch and that energy has to go somewhere.",
-    formula: "V = L · dI/dt",
+      "A changing current produces a changing flux, which induces a voltage opposing the change (Lenz's law). Energy lives in the magnetic field until the current changes. Open the switch and that energy has to go somewhere.",
+    formula: "V = L \u00b7 dI/dt",
     uses: [
       "Energy storage in switch-mode power supplies (buck/boost)",
       "LC filters that keep noise off a power rail",
@@ -67,8 +67,8 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
     summary:
       "Three terminals: two ends of a track, and a wiper that slides between them. A voltage divider you can turn.",
     principle:
-      "The wiper splits the track into two resistances that always add to the total. Output is V · (R_lower / R_total). Current into a light load still follows Ohm, but the ratio is the story.",
-    formula: "Vout = V · k",
+      "The wiper splits the track into two resistances that always add to the total. Output is V \u00b7 (R_lower / R_total). Current into a light load still follows Ohm, but the ratio is the story.",
+    formula: "Vout = V \u00b7 k",
     uses: [
       "Volume and tone knobs on audio gear",
       "Lamp dimmers and analog set-points",
@@ -78,6 +78,7 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
   },
   {
     slug: "transformer",
+    badge: "updated",
     name: "Transformer",
     symbol: "T",
     category: "passive",
@@ -85,7 +86,7 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
     summary:
       "Two coils, one core. A changing current on the primary writes a flux; the secondary reads it as a voltage.",
     principle:
-      "Faraday's law: V = N · dφ/dt. Same flux through both windings means Vs / Vp = Ns / Np. Current transforms the other way so power is (almost) conserved.",
+      "Faraday's law: V = N \u00b7 d\u03c6/dt. Same flux through both windings means Vs / Vp = Ns / Np. Current transforms the other way so power is (almost) conserved.",
     formula: "Vs / Vp = Ns / Np",
     uses: [
       "Stepping mains down in phone chargers and laptop PSUs",
@@ -105,7 +106,7 @@ export const CATALOG_CHUNK_A1: LabMeta[] = [
       "A PN junction that conducts one way and blocks the other. Forward bias thins the barrier; reverse bias thickens it.",
     principle:
       "P-type silicon is rich in holes, N-type in electrons. At the junction they recombine and leave a depletion region, an insulating wall. Forward voltage lowers that wall past ~0.7 V; reverse voltage raises it.",
-    formula: "I = Iₛ (e^{V/nVₜ} − 1)",
+    formula: "I = I\u209b (e^{V/nV\u209c} \u2212 1)",
     uses: [
       "Bridge rectifiers that turn AC into DC",
       "Reverse-polarity protection on battery inputs",

@@ -11,7 +11,6 @@ import {
   dcMotor,
   graphPaper,
   Ink,
-  inductorCoil,
   label,
   resistorBody,
   scope,
@@ -138,34 +137,29 @@ export function DcMotorLab() {
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 180;
               battery(ctx, 60, y);
-              resistorBody(ctx, 160, y, 70, p.r, Math.min(1, (s.i * s.i * p.r) / 2));
-              inductorCoil(ctx, 280, y, 4, Math.min(1, Math.abs(s.i) / Math.max(0.1, stallI)));
-              dcMotor(ctx, 560, y, s.angle, i01);
+              resistorBody(ctx, 180, y, 80, p.r, Math.min(1, (s.i * s.i * p.r) / 2));
+              dcMotor(ctx, 480, y, s.angle, i01);
               wire(ctx, [
                 { x: 76, y },
-                { x: 160, y },
+                { x: 180, y },
               ]);
               wire(ctx, [
-                { x: 240, y },
-                { x: 280, y },
+                { x: 270, y },
+                { x: 400, y },
+                { x: 400, y: y - 12 },
+                { x: 428, y: y - 12 },
               ]);
               wire(ctx, [
-                { x: 360, y },
-                { x: 470, y },
-                { x: 470, y: y - 12 },
-                { x: 508, y: y - 12 },
-              ]);
-              wire(ctx, [
-                { x: 508, y: y + 12 },
-                { x: 470, y: y + 12 },
-                { x: 470, y: 300 },
+                { x: 428, y: y + 12 },
+                { x: 400, y: y + 12 },
+                { x: 400, y: 300 },
                 { x: 44, y: 300 },
                 { x: 44, y },
               ]);
               label(ctx, formatVolt(p.vsrc), 60, y + 52, { mono: true, size: 12 });
-              label(ctx, "R", 195, y - 32, { size: 11 });
-              label(ctx, "La", 320, y - 32, { size: 11 });
-              label(ctx, `${formatRpm(rpm)} * back-EMF ${formatVolt(bemf)}`, 560, y + 78, {
+              label(ctx, "Ra", 220, y - 32, { size: 11 });
+              label(ctx, "M (Ke w, La inside)", 480, y + 78, { size: 11, color: Ink.muted });
+              label(ctx, `${formatRpm(rpm)} * back-EMF ${formatVolt(bemf)}`, 480, y + 96, {
                 size: 12,
                 mono: true,
               });
@@ -178,8 +172,8 @@ export function DcMotorLab() {
 
               const loop: Pt[] = [
                 { x: 76, y },
-                { x: 360, y },
-                { x: 508, y: y - 12 },
+                { x: 270, y },
+                { x: 428, y: y - 12 },
               ];
               flow.current.setPath(loop, false);
               flow.current.set(

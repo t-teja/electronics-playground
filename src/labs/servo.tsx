@@ -11,6 +11,7 @@ import {
   dcMotor,
   graphPaper,
   Ink,
+  junction,
   label,
   potentiometer,
   scope,
@@ -25,6 +26,7 @@ const KE = 0.02;
 const R = 3.5;
 const KP = 4.5;
 const KD = 0.12;
+const VSUP = 12;
 
 export function ServoLab() {
   const lab = LAB_BY_SLUG["servo"]!;
@@ -45,12 +47,12 @@ export function ServoLab() {
   const insight = useMemo(() => {
     const e = Math.abs(read.err);
     if (e < 2) {
-      return `On target. Error is under 2 deg. The pot reports shaft angle and the PD loop holds drive near zero against the load.`;
+      return `On target. Error is under 2 deg. The shaft pot reports angle; the driver holds the armature near zero against the load.`;
     }
     if (Math.abs(read.drive) > 8) {
-      return `Large error. Drive saturates near the rail so the motor slews toward ${targetDeg.toFixed(0)} deg.`;
+      return `Large error. The driver saturates near the rail so the motor slews toward ${targetDeg.toFixed(0)} deg.`;
     }
-    return `Error ${read.err.toFixed(1)} deg. u = Kp e + Kd de/dt commands the armature. Feedback closes through the shaft pot.`;
+    return `Error ${read.err.toFixed(1)} deg. u = Kp e + Kd de/dt commands the driver. Feedback closes through the railed shaft pot.`;
   }, [read, targetDeg]);
 
   return (
@@ -97,7 +99,7 @@ export function ServoLab() {
             const e = thRef - s.th;
             const de = (e - s.ePrev) / h;
             s.ePrev = e;
-            const u = clamp(KP * e + KD * de, -12, 12);
+            const u = clamp(KP * e + KD * de, -VSUP, VSUP);
             const bemf = KE * s.w;
             s.i = clamp((u - bemf) / R, -4, 4);
             if (!Number.isFinite(s.i)) s.i = 0;
@@ -115,55 +117,87 @@ export function ServoLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
+              // PD block
               ctx.fillStyle = Ink.package;
               ctx.strokeStyle = Ink.pin;
               ctx.lineWidth = 1.6;
               ctx.beginPath();
-              ctx.rect(40, 80, 110, 70);
+              ctx.rect(40, 60, 100, 64);
               ctx.fill();
               ctx.stroke();
-              label(ctx, "PD", 95, 105, { size: 14, color: Ink.text });
-              label(ctx, `u ${u.toFixed(1)} V`, 95, 128, { mono: true, size: 11 });
+              label(ctx, "PD", 90, 84, { size: 14, color: Ink.text });
+              label(ctx, `u ${u.toFixed(1)} V`, 90, 106, { mono: true, size: 11 });
 
-              battery(ctx, 60, 220);
-              dcMotor(ctx, 320, 220, s.th, Math.min(1, Math.abs(s.i) / 2));
-              const pot = potentiometer(ctx, 480, 220, 120, potT, 5000);
+              // Driver / H-bridge between PD and motor
+              ctx.beginPath();
+              ctx.rect(180, 60, 110, 64);
+              ctx.fill();
+              ctx.stroke();
+              label(ctx, "driver", 235, 84, { size: 13, color: Ink.text });
+              label(ctx, "H-bridge", 235, 106, { size: 11, color: Ink.muted });
+
+              // Motor supply (separate from signal)
+              const bat = battery(ctx, 60, 220);
+              label(ctx, formatVolt(VSUP), 60, 272, { mono: true, size: 11 });
+              label(ctx, "Vm", 60, 188, { size: 10, color: Ink.muted });
+
+              // Supply to driver rails
+              wire(ctx, [bat.pos, { x: bat.pos.x, y: 40 }, { x: 235, y: 40 }, { x: 235, y: 60 }]);
+              wire(ctx, [bat.neg, { x: bat.neg.x, y: 300 }, { x: 235, y: 300 }, { x: 235, y: 124 }]);
+
+              // PD command into driver
+              wire(ctx, [{ x: 140, y: 92 }, { x: 180, y: 92 }], 2, "#5eead4");
+
+              dcMotor(ctx, 400, 220, s.th, Math.min(1, Math.abs(s.i) / 2));
+              // Driver outputs to motor
               wire(ctx, [
-                { x: 150, y: 115 },
-                { x: 200, y: 115 },
-                { x: 200, y: 208 },
-                { x: 268, y: 208 },
+                { x: 290, y: 80 },
+                { x: 340, y: 80 },
+                { x: 340, y: 208 },
+                { x: 348, y: 208 },
               ]);
               wire(ctx, [
-                { x: 76, y: 220 },
-                { x: 200, y: 220 },
-                { x: 268, y: 232 },
+                { x: 290, y: 104 },
+                { x: 320, y: 104 },
+                { x: 320, y: 232 },
+                { x: 348, y: 232 },
+              ]);
+
+              // Railed feedback pot: left=+V, right=GND, wiper -> PD
+              const pot = potentiometer(ctx, 520, 220, 140, potT, 5000);
+              wire(ctx, [
+                { x: bat.pos.x, y: 40 },
+                { x: pot.left.x, y: 40 },
+                pot.left,
               ]);
               wire(ctx, [
-                { x: 268, y: 232 },
-                { x: 200, y: 300 },
-                { x: 44, y: 300 },
-                { x: 44, y: 220 },
+                pot.right,
+                { x: pot.right.x, y: 300 },
+                { x: bat.neg.x, y: 300 },
               ]);
               wire(
                 ctx,
                 [
-                  { x: pot.wiper.x, y: pot.wiper.y },
-                  { x: pot.wiper.x, y: 60 },
-                  { x: 95, y: 60 },
-                  { x: 95, y: 80 },
+                  pot.wiper,
+                  { x: pot.wiper.x, y: 48 },
+                  { x: 90, y: 48 },
+                  { x: 90, y: 60 },
                 ],
                 2,
                 "#5eead4",
               );
-              label(ctx, "feedback", 200, 52, { size: 11, color: Ink.electron });
-              label(ctx, `theta ${deg.toFixed(1)} deg -> ${p.targetDeg.toFixed(0)} deg`, 320, 300, {
+              junction(ctx, bat.pos.x, 40);
+              junction(ctx, bat.neg.x, 300);
+              junction(ctx, pot.right.x, 300);
+              label(ctx, "feedback Vw", 300, 36, { size: 11, color: Ink.electron });
+              label(ctx, "shaft pot", 590, 268, { size: 11, color: Ink.muted });
+              label(ctx, `theta ${deg.toFixed(1)} deg -> ${p.targetDeg.toFixed(0)} deg`, 400, 300, {
                 mono: true,
                 size: 12,
               });
 
-              scope(ctx, 520, 40, 240, 90, samplesPos.current, Ink.electron, "theta");
-              scope(ctx, 520, 150, 240, 90, samplesU.current, Ink.hole, "u");
+              scope(ctx, 520, 40, 240, 70, samplesPos.current, Ink.electron, "theta");
+              scope(ctx, 520, 120, 240, 70, samplesU.current, Ink.hole, "u");
               label(ctx, "u = Kp e + Kd de/dt", 400, 380, { mono: true, size: 13, color: Ink.text });
             });
 

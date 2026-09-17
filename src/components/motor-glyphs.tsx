@@ -78,6 +78,31 @@ export function GlyphServo({ className }: { className?: string }) {
   );
 }
 
+export function GlyphStepper({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <circle cx="96" cy="36" r="16" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M96 22 L100 36 L92 36 Z" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1" />
+      <path d="M20 22 H70 M20 50 H70" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M48 22 V50" stroke="currentColor" strokeWidth="1.2" className="text-electron" />
+      <Electron d="M20 22 H70" dur="1.4s" />
+    </Frame>
+  );
+}
+
+export function GlyphRobotArm({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M28 56 L28 36 L60 28 L90 40 L118 24" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="28" cy="56" r="4" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="60" cy="28" r="3" stroke="currentColor" strokeWidth="1.2" className="text-electron" />
+      <circle cx="90" cy="40" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="118" cy="24" r="3" fill="currentColor" opacity="0.35" stroke="currentColor" strokeWidth="1" />
+      <Electron d="M28 36 L60 28 L90 40" dur="1.8s" />
+    </Frame>
+  );
+}
+
 export function GlyphPid({ className }: { className?: string }) {
   return (
     <Frame className={className}>
@@ -89,6 +114,29 @@ export function GlyphPid({ className }: { className?: string }) {
       <rect x="84" y="22" width="36" height="28" rx="4" stroke="currentColor" strokeWidth="1.4" />
       <path d="M120 36 H140 M140 36 V50 H40 V58 H20" stroke="currentColor" strokeWidth="1.3" className="text-electron" />
       <Electron d="M60 36 H84" dur="1.5s" />
+    </Frame>
+  );
+}
+
+export function GlyphPmosfet({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <circle cx="90" cy="36" r="20" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M12 36 H76" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M76 22 V50" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M82 16 V26 M82 30 V42 M82 46 V56" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M82 22 H108 V12 M82 50 H108 V60 M82 36 H108 L108 22" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M88 32 L100 36 L88 40 Z" fill="currentColor" stroke="currentColor" strokeWidth="0.6" />
+      <text x="64" y="24" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        G
+      </text>
+      <text x="118" y="14" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        S
+      </text>
+      <text x="118" y="64" fontSize="8" fill="currentColor" fontFamily="IBM Plex Sans, system-ui, sans-serif">
+        D
+      </text>
+      <Electron d="M12 36 H76" dur="1.8s" />
     </Frame>
   );
 }

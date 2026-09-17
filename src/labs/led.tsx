@@ -10,12 +10,13 @@ import {
   clearSim,
   graphPaper,
   Ink,
+  junction,
   label,
-  ledDome,
   resistorBody,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { ledSymbol } from "@/lib/sim/draw-ext";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const COLORS: { id: string; label: string; vf: number; hex: string }[] = [
@@ -47,7 +48,7 @@ export function LedLab() {
       return `${color.label} needs about ${formatVolt(color.vf)} of forward drop. The source is below that — no recombination, no light.`;
     }
     if (i > 0.025) {
-      return `${formatAmp(i)} is hard on a small LED. The resistor is supposed to set current: I = (V − Vf) / R. Raise R or drop the supply.`;
+      return `${formatAmp(i)} is hard on a small LED. The resistor is supposed to set current: I = (V - Vf) / R. Raise R or drop the supply.`;
     }
     return `Electrons drop across a ${color.vf.toFixed(1)} eV band-gap and leave as ${color.label.toLowerCase()} photons. Brightness tracks current (${formatAmp(i)}), not voltage.`;
   }, [color, vsrc, i]);
@@ -99,8 +100,8 @@ export function LedLab() {
             if (p.bright > 0.04 && Math.random() < p.bright * 0.6) {
               const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.1;
               photons.current.push({
-                x: 560,
-                y: 150,
+                x: 520,
+                y: 160,
                 vx: Math.cos(a) * (40 + Math.random() * 50),
                 vy: Math.sin(a) * (40 + Math.random() * 50),
                 life: 0.5 + Math.random() * 0.4,
@@ -117,25 +118,21 @@ export function LedLab() {
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const y = 200;
-              battery(ctx, 70, y);
+              const bat = battery(ctx, 70, y);
               resistorBody(ctx, 250, y, 90, p.r, Math.min(1, p.i * 20));
-              ledDome(ctx, 560, y - 24, p.hex, p.bright);
+              const led = ledSymbol(ctx, 520, y, p.hex, p.bright, 1.05);
+              wire(ctx, [bat.pos, { x: 250, y }]);
+              wire(ctx, [{ x: 350, y }, led.anode]);
               wire(ctx, [
-                { x: 88, y },
-                { x: 250, y },
+                led.cathode,
+                { x: 640, y },
+                { x: 640, y: 310 },
+                { x: bat.neg.x, y: 310 },
+                bat.neg,
               ]);
-              wire(ctx, [
-                { x: 350, y },
-                { x: 555, y },
-              ]);
-              wire(ctx, [
-                { x: 565, y: y + 8 },
-                { x: 565, y: 310 },
-                { x: 70, y: 310 },
-                { x: 70, y: y + 28 },
-              ]);
+              junction(ctx, bat.neg.x, 310);
               label(ctx, formatVolt(p.vsrc), 70, y + 52, { mono: true, size: 12 });
-              label(ctx, `${p.name}  Vf ${formatVolt(p.vf)}`, 560, y + 56, { size: 12 });
+              label(ctx, `${p.name}  Vf ${formatVolt(p.vf)}`, 520, y + 48, { size: 12 });
 
               for (const ph of photons.current) {
                 ctx.globalAlpha = Math.max(0, ph.life * 1.6);
@@ -147,9 +144,15 @@ export function LedLab() {
               }
 
               const loop: Pt[] = [
-                { x: 88, y },
+                bat.pos,
+                { x: 250, y },
                 { x: 350, y },
-                { x: 555, y },
+                led.anode,
+                led.cathode,
+                { x: 640, y },
+                { x: 640, y: 310 },
+                { x: bat.neg.x, y: 310 },
+                bat.neg,
               ];
               flow.current.setPath(loop, false);
               flow.current.set(
@@ -159,7 +162,7 @@ export function LedLab() {
               flow.current.step(dt);
               flow.current.draw(ctx);
 
-              label(ctx, `I = (V − Vf) / R = ${formatAmp(p.i)}`, 400, 380, {
+              label(ctx, `I = (V - Vf) / R = ${formatAmp(p.i)}`, 400, 380, {
                 mono: true,
                 size: 13,
                 color: Ink.text,
