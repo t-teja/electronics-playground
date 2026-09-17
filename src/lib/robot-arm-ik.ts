@@ -1,1 +1,1 @@
-@file:///tmp/mcp_push/ik_content.txt
+PLACEHOLDER_WILL_FAIL
