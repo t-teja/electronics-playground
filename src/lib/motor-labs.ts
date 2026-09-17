@@ -1,18 +1,18 @@
 import type { LabMeta } from "./catalog";
 
 export const ELECTROMECHANICAL_BLURB =
-  "Current becomes torque. From brushed DC to AC, PMSM, BLDC, and position servos.";
+  "Current becomes torque. From brushed DC to capacitor-start, steppers, PMSM, BLDC, servos, and a 6-DoF arm.";
 
 export const MOTOR_LABS: LabMeta[] = [
   {
     slug: "split-phase-motor",
     badge: "updated",
-    name: "Split-phase motor",
-    symbol: "SP",
+    name: "Capacitor-start motor",
+    symbol: "CS",
     category: "electromechanical",
-    tagline: "Two windings, a phase shift, and a start switch",
+    tagline: "Start capacitor, aux winding, centrifugal switch",
     summary:
-      "A main winding plus an auxiliary winding with a start capacitor. The phase shift makes starting torque. A centrifugal switch drops the aux once the rotor is up.",
+      "A main winding plus an auxiliary winding with a start capacitor. The capacitor shifts phase for starting torque. A centrifugal switch drops the aux once the rotor is up.",
     principle:
       "Two stator currents displaced in phase produce a rotating field component. Starting torque grows with Im Ia sin(phi) and fades with slip. Run torque follows slip and is zero at sync.",
     formula: "tau ~ Im Ia sin(phi) * slip",
@@ -78,20 +78,56 @@ export const MOTOR_LABS: LabMeta[] = [
   },
   {
     slug: "servo",
-    badge: "new",
+    badge: "updated",
     name: "Servo",
     symbol: "SRV",
     category: "electromechanical",
     tagline: "Angle in, shaft follows",
     summary:
-      "A DC motor, a pot on the shaft, and an internal PD loop. You set a target angle; error becomes drive until the shaft arrives.",
+      "A DC motor, a driver, a railed pot on the shaft, and an internal PD loop. You set a target angle; error becomes drive until the shaft arrives.",
     principle:
-      "Feedback closes the loop: e = theta_ref - theta. Drive u = Kp e + Kd e_dot turns the motor. The pot reports position so the schematic matches the model.",
+      "Feedback closes the loop: e = theta_ref - theta. Drive u = Kp e + Kd e_dot commands a driver that powers the armature. The shaft pot is railed to V+/GND; the wiper reports angle.",
     formula: "u = Kp e + Kd e_dot",
     uses: [
       "RC hobby servos",
       "Camera gimbals and pan-tilt heads",
       "Small robot joints",
+    ],
+  },
+  {
+    slug: "stepper",
+    badge: "new",
+    name: "Stepper motor",
+    symbol: "ST",
+    category: "electromechanical",
+    tagline: "Discrete steps from coil sequencing",
+    summary:
+      "Two coils, timed currents, and a toothed rotor. Full, half, and microstep modes trade torque and smoothness. Direction follows the phase sequence.",
+    principle:
+      "Energizing coils A and B in sequence locks the rotor to the next tooth. Step angle is 360 deg / (n_steps). Microstepping blends coil currents for finer motion; torque falls as speed rises.",
+    formula: "theta_step = 360 / n",
+    uses: [
+      "3D printers and CNC axes",
+      "Camera focus and iris drives",
+      "Precision dispensers and valves",
+    ],
+  },
+  {
+    slug: "robot-arm-6dof",
+    badge: "new",
+    name: "6-DoF robot arm",
+    symbol: "ARM",
+    category: "electromechanical",
+    tagline: "Serial arm with analytical IK",
+    summary:
+      "A six-joint serial manipulator with spherical wrist. Move joints or a Cartesian target; analytical inverse kinematics solves the pose when reachable.",
+    principle:
+      "Forward kinematics maps joint angles to the tool pose. Inverse kinematics for a spherical wrist decouples position and orientation. Singularities appear when wrist axes align or the arm stretches to its reach limit.",
+    formula: "T = A1 A2 A3 A4 A5 A6",
+    uses: [
+      "Pick-and-place cells",
+      "Welding and finishing arms",
+      "Research and teaching manipulators",
     ],
   },
 ];
