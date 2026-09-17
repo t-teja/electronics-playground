@@ -5,7 +5,7 @@ import { SimCanvas } from "@/components/sim-canvas";
 import { LAB_BY_SLUG } from "@/lib/catalog";
 import { clamp, formatAmp, formatRpm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
-import { battery, clearSim, graphPaper, Ink, label, scope, wire, withFrame } from "@/lib/sim/draw";
+import { battery, clearSim, graphPaper, Ink, junction, label, scope, wire, withFrame } from "@/lib/sim/draw";
 import { BLDC_B as B, BLDC_COMMUTATION as COMMUTATION, BLDC_J as J, BLDC_KE as KE, BLDC_KT as KT, trapBemf } from "@/lib/bldc-math";
 
 export function BldcLab() {
@@ -97,28 +97,55 @@ export function BldcLab() {
             clearSim(ctx, size.w, size.h);
             graphPaper(ctx, size.w, size.h);
             withFrame(ctx, size.w, size.h, 800, 420, () => {
-              battery(ctx, 60, 200);
+              const bat = battery(ctx, 56, 200);
+              label(ctx, formatVolt(p.vbus), 56, 252, { mono: true, size: 11 });
+
+              // DC rail: +Vbus top, GND bottom, closed to battery negative
+              const railX0 = 110;
+              const railX1 = 300;
+              const yTop = 70;
+              const yBot = 330;
+              wire(ctx, [bat.pos, { x: bat.pos.x, y: yTop }, { x: railX1, y: yTop }]);
+              wire(ctx, [bat.neg, { x: bat.neg.x, y: yBot }, { x: railX1, y: yBot }]);
+              label(ctx, "+Vbus", 180, yTop - 14, { size: 11, color: Ink.text });
+              label(ctx, "GND", 180, yBot + 16, { size: 11, color: Ink.muted });
+
               const phases = ["A", "B", "C"];
-              const ys = [120, 200, 280];
+              const xs = [150, 210, 270];
               for (let k = 0; k < 3; k++) {
-                const on = cmd[k]! !== 0;
-                const y = ys[k]!;
-                ctx.fillStyle = on ? "#5eead4" : Ink.body;
+                const x = xs[k]!;
+                const hiOn = cmd[k] === 1;
+                const loOn = cmd[k] === -1;
+                // High-side switch
+                ctx.fillStyle = hiOn ? "#5eead4" : Ink.body;
                 ctx.strokeStyle = Ink.pin;
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1.8;
                 ctx.beginPath();
-                ctx.rect(160, y - 14, 70, 28);
+                ctx.rect(x - 14, 100, 28, 36);
                 ctx.fill();
                 ctx.stroke();
-                label(ctx, phases[k]!, 195, y, { size: 12, color: on ? Ink.text : Ink.muted });
-                label(ctx, cmd[k]! > 0 ? "+" : cmd[k]! < 0 ? "-" : "off", 250, y, {
-                  size: 11,
-                  color: on ? "#5eead4" : Ink.muted,
-                  align: "left",
-                });
-                wire(ctx, [{ x: 76, y: 200 }, { x: 120, y: 200 }, { x: 120, y }, { x: 160, y }]);
-                wire(ctx, [{ x: 230, y }, { x: 320, y }]);
+                label(ctx, "H", x, 118, { size: 10, color: hiOn ? Ink.text : Ink.muted });
+                // Low-side switch
+                ctx.fillStyle = loOn ? "#5eead4" : Ink.body;
+                ctx.beginPath();
+                ctx.rect(x - 14, 264, 28, 36);
+                ctx.fill();
+                ctx.stroke();
+                label(ctx, "L", x, 282, { size: 10, color: loOn ? Ink.text : Ink.muted });
+                // Midpoint to motor
+                wire(ctx, [{ x, y: yTop }, { x, y: 100 }]);
+                wire(ctx, [{ x, y: 136 }, { x, y: 200 }]);
+                wire(ctx, [{ x, y: 200 }, { x, y: 264 }]);
+                wire(ctx, [{ x, y: 300 }, { x, y: yBot }]);
+                junction(ctx, x, 200);
+                label(ctx, phases[k]!, x, 214, { size: 12, color: cmd[k]! !== 0 ? "#5eead4" : Ink.muted });
+                wire(ctx, [{ x, y: 200 }, { x: 360, y: 200 - (1 - k) * 28 }]);
               }
+              junction(ctx, railX0, yTop);
+              junction(ctx, bat.pos.x, yTop);
+              junction(ctx, bat.neg.x, yBot);
+
+              // Motor
               const cx = 480;
               const cy = 200;
               ctx.strokeStyle = Ink.pin;
@@ -151,12 +178,12 @@ export function BldcLab() {
                 ctx.stroke();
                 label(ctx, `H${hI + 1}`, hx, hy + 18, { size: 10 });
               }
-              wire(ctx, [{ x: 320, y: 120 }, { x: 400, y: 120 }, { x: 430, y: 160 }]);
-              wire(ctx, [{ x: 320, y: 200 }, { x: 426, y: 200 }]);
-              wire(ctx, [{ x: 320, y: 280 }, { x: 400, y: 280 }, { x: 430, y: 240 }]);
+              wire(ctx, [{ x: 360, y: 172 }, { x: 430, y: 172 }, { x: 450, y: 180 }]);
+              wire(ctx, [{ x: 360, y: 200 }, { x: 426, y: 200 }]);
+              wire(ctx, [{ x: 360, y: 228 }, { x: 430, y: 228 }, { x: 450, y: 220 }]);
               label(ctx, `hall ${sector} * ${formatRpm(rpm)}`, cx, cy + 90, { mono: true, size: 12 });
               scope(ctx, 560, 40, 210, 100, samples.current, Ink.electron, "w(t)");
-              label(ctx, "6-step * two phases ON", 400, 380, { mono: true, size: 13, color: Ink.text });
+              label(ctx, "3-ph half-bridge * two phases ON", 400, 380, { mono: true, size: 13, color: Ink.text });
             });
 
             ui.current += h;
