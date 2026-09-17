@@ -7,7 +7,6 @@ import { formatAmp, formatOhm, formatVolt } from "@/lib/format";
 import { useProgress } from "@/lib/progress";
 import {
   battery,
-  bjtSymbol,
   clearSim,
   graphPaper,
   Ink,
@@ -16,8 +15,9 @@ import {
   ledDome,
   resistorBody,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { bjtSymbol } from "@/lib/sim/draw-bjt";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const BETA = 100;
