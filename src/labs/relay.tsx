@@ -40,10 +40,10 @@ export function RelayLab() {
 
   const insight = useMemo(() => {
     if (!armed) {
-      return `Coil open. The spring holds COM on NC. The load is dark. That click you don’t hear is the isolation — coil and lamp never share copper.`;
+      return `Coil open. The spring holds COM on NC. The load is dark. That click you don't hear is the isolation — coil and lamp never share copper.`;
     }
     if (!on) {
-      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn’t strong enough to beat the spring yet. Raise the coil supply.`;
+      return `Coil current is ${formatAmp(icoil)}, below pull-in (~${formatAmp(PULL)}). The field isn't strong enough to beat the spring yet. Raise the coil supply.`;
     }
     return `Pulled in. ${formatAmp(icoil)} in the coil slammed COM onto NO, and the lamp lights from its own supply. The diode across the coil is the flyback path for when you drop the field.`;
   }, [armed, on, icoil]);
@@ -89,17 +89,19 @@ export function RelayLab() {
             withFrame(ctx, size.w, size.h, 800, 420, () => {
               const coilBat = battery(ctx, 70, 150);
               label(ctx, formatVolt(p.vcoil), 70, 202, { mono: true, size: 12 });
-              const R = relayBody(ctx, 340, 168, p.on);
-              const fly = diodeSymbol(ctx, 200, 200, 0.85);
-              label(ctx, "flyback", 200, 236, { size: 10 });
+              const R = relayBody(ctx, 360, 168, p.on);
+              // Flyback diode shunts the coil terminals (cathode to coil+, anode to coil-).
+              const fly = diodeSymbol(ctx, 250, 150, 0.75);
+              label(ctx, "flyback", 250, 184, { size: 10 });
 
               wire(ctx, [coilBat.pos, { x: R.coilTop.x, y: coilBat.pos.y }, R.coilTop]);
               wire(ctx, [R.coilBot, { x: coilBat.neg.x, y: R.coilBot.y }, coilBat.neg]);
-              wire(ctx, [fly.cathode, { x: fly.cathode.x, y: coilBat.pos.y }]);
-              wire(ctx, [fly.anode, { x: fly.anode.x, y: R.coilBot.y }, R.coilBot]);
+              // Tight parallel across coil: K to coil top, A to coil bottom
+              wire(ctx, [fly.cathode, { x: fly.cathode.x, y: R.coilTop.y }, { x: R.coilTop.x, y: R.coilTop.y }]);
+              wire(ctx, [fly.anode, { x: fly.anode.x, y: R.coilBot.y }, { x: R.coilBot.x, y: R.coilBot.y }]);
               junction(ctx, R.coilTop.x, coilBat.pos.y);
-              junction(ctx, fly.cathode.x, coilBat.pos.y);
-              junction(ctx, fly.anode.x, R.coilBot.y);
+              junction(ctx, R.coilTop.x, R.coilTop.y);
+              junction(ctx, R.coilBot.x, R.coilBot.y);
               junction(ctx, coilBat.neg.x, R.coilBot.y);
 
               const loadBat = battery(ctx, 700, 340);
