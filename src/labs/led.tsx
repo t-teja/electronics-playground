@@ -12,11 +12,11 @@ import {
   Ink,
   junction,
   label,
-  ledSymbol,
   resistorBody,
   wire,
-  withFrame,
+  withFrame
 } from "@/lib/sim/draw";
+import { ledSymbol } from "@/lib/sim/draw-ext";
 import { ElectronFlow, type Pt } from "@/lib/sim/flow";
 
 const COLORS: { id: string; label: string; vf: number; hex: string }[] = [
