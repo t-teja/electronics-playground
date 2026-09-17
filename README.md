@@ -6,4 +6,8 @@ Live: [https://t-teja.github.io/electronics-playground/](https://t-teja.github.i
 
 ## Benches
 
-Resistor, capacitor, inductor, potentiometer, transformer, diode, LED, NPN transistor, PNP transistor, N-MOSFET, logic gates, 555 timer, microcontroller, signal generator, ADC, DAC, UART, I2C, SPI, CAN, LIN, 1-Wire, RS-485, DC motor, split-phase motor, induction motor, PMSM, BLDC, servo, PID control, relay, LDR, IR sensor, PIR, ultrasonic, RAM, ROM, EPROM, PSRAM, CPU, GPU, perceptron, neural net, attention.
+Resistor, capacitor, inductor, potentiometer, transformer, diode, LED, NPN transistor, PNP transistor, N-MOSFET, P-MOSFET, logic gates, 555 timer, microcontroller, signal generator, ADC, DAC, UART, I2C, SPI, CAN, LIN, 1-Wire, RS-485, DC motor, capacitor-start motor, induction motor, PMSM, BLDC, servo, stepper, 6-DoF robot arm, PID control, relay, LDR, IR sensor, PIR, ultrasonic, RAM, ROM, EPROM, PSRAM, CPU, GPU, perceptron, neural net, attention.
+
+## Robot arm (ROS2)
+
+Local visualization notes for the 6-DoF arm: [docs/ros2-robot-arm.md](docs/ros2-robot-arm.md).

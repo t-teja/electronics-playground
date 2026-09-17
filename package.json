@@ -1,6 +1,7 @@
 {
   "name": "electronics-playground",
   "private": true,
+  "version": "0.8.0",
   "sideEffects": false,
   "type": "module",
   "scripts": {
@@ -25,6 +26,7 @@
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.3.0",
+    "three": "^0.170.0",
     "tw-animate-css": "^1.3.4",
     "zustand": "^5.0.0"
   },
@@ -32,6 +34,7 @@
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "@types/three": "^0.170.0",
     "@vitejs/plugin-react": "^5.2.0",
     "lightningcss": "^1.28.0",
     "lru-cache": "^11.5.2",
