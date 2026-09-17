@@ -78,6 +78,31 @@ export function GlyphServo({ className }: { className?: string }) {
   );
 }
 
+export function GlyphStepper({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <circle cx="96" cy="36" r="16" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M96 22 L100 36 L92 36 Z" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1" />
+      <path d="M20 22 H70 M20 50 H70" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M48 22 V50" stroke="currentColor" strokeWidth="1.2" className="text-electron" />
+      <Electron d="M20 22 H70" dur="1.4s" />
+    </Frame>
+  );
+}
+
+export function GlyphRobotArm({ className }: { className?: string }) {
+  return (
+    <Frame className={className}>
+      <path d="M28 56 L28 36 L60 28 L90 40 L118 24" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="28" cy="56" r="4" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="60" cy="28" r="3" stroke="currentColor" strokeWidth="1.2" className="text-electron" />
+      <circle cx="90" cy="40" r="3" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="118" cy="24" r="3" fill="currentColor" opacity="0.35" stroke="currentColor" strokeWidth="1" />
+      <Electron d="M28 36 L60 28 L90 40" dur="1.8s" />
+    </Frame>
+  );
+}
+
 export function GlyphPid({ className }: { className?: string }) {
   return (
     <Frame className={className}>
