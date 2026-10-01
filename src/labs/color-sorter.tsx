@@ -64,7 +64,7 @@ export function ColorSorterLab() {
   const onFit = useCallback(() => setFitToken((n) => n + 1), []);
   const onReset = useCallback(() => {
     sim.reset();
-    setSnap(empty());
+    setSnap(sim.step(0));
     setRunning(false);
     setEStop(false);
     setFitToken((n) => n + 1);

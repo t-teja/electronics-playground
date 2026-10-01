@@ -4,6 +4,7 @@ export type PartSize = "small" | "large";
 export type SortPart = {
   id: number;
   x: number;
+  /** Lateral travel into side chute (+Z), null while on main belt. */
   lane: 0 | 1 | 2 | null;
   laneY: number;
   color: PartColor;
@@ -22,9 +23,15 @@ export type SorterSnapshot = {
 
 const COLORS: PartColor[] = ["red", "blue", "amber"];
 const LANE_FOR: Record<PartColor, 0 | 1 | 2> = { red: 0, blue: 1, amber: 2 };
-const GATE_X = 3.2;
-const END_X = 5.5;
-const LANE_LEN = 1.6;
+
+/** Vision gate on main belt (world X). */
+const GATE_X = 2.15;
+/** Divert mouths staggered along belt — paddles kick into bins BESIDE (+Z). */
+const DIVERT_XS = [2.45, 2.95, 3.45] as const;
+/** Lateral chute length into side bin (world +Z). */
+const LANE_LEN = 0.85;
+/** End of main belt (reject / overrun). */
+const END_X = 4.0;
 
 let nextId = 1;
 
@@ -36,18 +43,18 @@ export function createSorterSim() {
   let classified = 0;
 
   const seedDemo = () => {
-    // Idle Fit: only under hopper / early infeed (x << GATE). Never mid-belt or lanes.
-    const demo: Array<{ x: number; color: PartColor; size: PartSize; lane: 0 | 1 | 2 | null; laneY: number }> = [
-      { x: 0.35, color: "red", size: "large", lane: null, laneY: 0 },
-      { x: 0.55, color: "blue", size: "small", lane: null, laneY: 0 },
-      { x: 0.75, color: "amber", size: "large", lane: null, laneY: 0 },
-      { x: 0.95, color: "red", size: "small", lane: null, laneY: 0 },
+    // Idle Fit: only under hopper / early infeed. Never mid-belt or side chutes.
+    const demo: Array<{ x: number; color: PartColor; size: PartSize }> = [
+      { x: 0.3, color: "red", size: "large" },
+      { x: 0.5, color: "blue", size: "small" },
+      { x: 0.7, color: "amber", size: "large" },
+      { x: 0.9, color: "red", size: "small" },
     ];
     parts = demo.map((d) => ({
       id: nextId++,
       x: d.x,
-      lane: d.lane,
-      laneY: d.laneY,
+      lane: null,
+      laneY: 0,
       color: d.color,
       size: d.size,
       done: false,
@@ -66,7 +73,7 @@ export function createSorterSim() {
     const size: PartSize = Math.random() > 0.45 ? "large" : "small";
     parts.push({
       id: nextId++,
-      x: 0,
+      x: 0.05,
       lane: null,
       laneY: 0,
       color,
@@ -100,9 +107,11 @@ export function createSorterSim() {
         continue;
       }
       p.x += v * dt;
-      if (p.x >= GATE_X && p.lane == null) {
-        // Large amber goes to lane 2 still; size only affects mesh scale.
+      const divertX = DIVERT_XS[LANE_FOR[p.color]]!;
+      if (p.x >= divertX) {
+        p.x = divertX;
         p.lane = LANE_FOR[p.color];
+        p.laneY = 0;
       }
       if (p.x >= END_X && p.lane == null) {
         p.done = true;
@@ -121,8 +130,11 @@ export function createSorterSim() {
     step,
     snap: snap(),
     setControls: (p: Partial<SorterControls>) => {
+      const wasRunning = controls.running && !controls.eStop;
       Object.assign(controls, p);
       if (controls.eStop) controls.running = false;
+      const nowRunning = controls.running && !controls.eStop;
+      if (nowRunning && !wasRunning) spawnAcc = 999;
     },
     reset: () => {
       spawnAcc = 0;
@@ -134,4 +146,4 @@ export function createSorterSim() {
   };
 }
 
-export const SORTER_LANES = { GATE_X, END_X, LANE_LEN, LANE_FOR };
+export const SORTER_LANES = { GATE_X, END_X, LANE_LEN, LANE_FOR, DIVERT_XS };

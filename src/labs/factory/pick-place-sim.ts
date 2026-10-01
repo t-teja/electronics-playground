@@ -1,4 +1,4 @@
-import { deg, fk, ik, rad, type Vec3 } from "@/lib/robot-arm-ik";
+import { clampJoint, deg, fk, ik, rad, type Vec3 } from "@/lib/robot-arm-ik";
 
 export type PpPhase = "idle" | "approach" | "grip" | "lift" | "carry" | "place" | "retract";
 
@@ -26,54 +26,138 @@ export const PP_PLACE = { x: -0.4, y: 0.54, z: -0.2 };
 
 /** Robot root: position (0, 0.47, 0), rotation.x = -pi/2 */
 const ROOT_Y = 0.47;
+/** Keep every FK joint above table top (~0.47). */
+const TABLE_CLEAR_Y = 0.5;
 
-/** Aim tool0 slightly above part so jaws (~0.10 m along tool) meet the cube. */
+/** Aim tool0 slightly above part so jaws (~0.10 m along tool +Z) meet the cube. */
 const GRIP_OFFSET = 0.1;
 /** Approach / lift clearance above the grasp tip (world Y). */
-const APPROACH_CLEAR = 0.14;
+const APPROACH_CLEAR = 0.28;
 
 const worldToRobot = (w: Vec3): Vec3 => ({ x: w.x, y: -w.z, z: w.y - ROOT_Y });
 const robotToWorld = (r: Vec3): Vec3 => ({ x: r.x, y: r.z + ROOT_Y, z: -r.y });
 
-/**
- * Prefer a 2π-equivalent joint vector near `prefer`, but only keep it when FK
- * tip error stays within 2 cm of the robot-frame target.
- */
-function nearestGood(q: number[], prefer: number[], targetR: Vec3): number[] {
-  const candidates: number[][] = [q];
-  // Try shifting each joint by +/- 2π independently (small set)
-  for (let i = 0; i < 6; i++) {
-    for (const k of [-1, 1]) {
-      const c = q.slice();
-      c[i] = q[i]! + k * 2 * Math.PI;
-      candidates.push(c);
-    }
-  }
-  let best = q;
-  let bestScore = Infinity;
-  for (const c of candidates) {
-    const tip = fk(c).tip;
-    const err = Math.hypot(tip.x - targetR.x, tip.y - targetR.y, tip.z - targetR.z);
-    if (err > 0.02) continue;
-    const jump = c.reduce((s, v, i) => s + Math.abs(v - (prefer[i] ?? 0)), 0);
-    if (jump < bestScore) {
-      bestScore = jump;
-      best = c;
-    }
-  }
-  return best;
+/** Tool +Z in robot frame that maps to world −Y after root Rx(−π/2). */
+const TOOL_DOWN_R: Vec3 = { x: 0, y: 0, z: -1 };
+
+function toolZRobot(q: number[]): Vec3 {
+  const f = fk(q);
+  const a = f.joints[4]!;
+  const b = f.tip;
+  const d = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z };
+  const L = Math.hypot(d.x, d.y, d.z) || 1;
+  return { x: d.x / L, y: d.y / L, z: d.z / L };
 }
 
-function solveWorld(targetW: Vec3, preferRad: number[]): number[] {
+function minJointWorldY(q: number[]): number {
+  let m = Infinity;
+  for (const j of fk(q).joints) {
+    const y = robotToWorld(j).y;
+    if (y < m) m = y;
+  }
+  return m;
+}
+
+/**
+ * Position IK + tool-down orientation (+ table clearance). Prefer seed near
+ * `preferRad` so consecutive waypoints stay continuous in joint space.
+ */
+function solveWorldToolDown(targetW: Vec3, preferRad: number[]): number[] {
   const targetR = worldToRobot(targetW);
-  const res = ik(targetR, preferRad);
-  const q = nearestGood(res.q, preferRad, targetR);
-  return q.map(deg);
+  const seeds: number[][] = [
+    preferRad.slice(),
+    ik(targetR, preferRad).q,
+    [0, -Math.PI / 2, Math.PI / 2, -Math.PI / 2, Math.PI / 2, 0],
+  ];
+
+  let bestQ = preferRad.slice();
+  let bestScore = Infinity;
+
+  for (const seed of seeds) {
+    let q = seed.map((v, i) => clampJoint(i, v));
+    const eps = 1e-4;
+    for (let iter = 0; iter < 100; iter++) {
+      const tip = fk(q).tip;
+      const tz = toolZRobot(q);
+      const below = Math.max(0, TABLE_CLEAR_Y - minJointWorldY(q));
+      const e = [
+        targetR.x - tip.x,
+        targetR.y - tip.y,
+        targetR.z - tip.z,
+        0.4 * (TOOL_DOWN_R.x - tz.x),
+        0.4 * (TOOL_DOWN_R.y - tz.y),
+        0.4 * (TOOL_DOWN_R.z - tz.z),
+      ];
+      if (Math.hypot(e[0]!, e[1]!, e[2]!, e[3]!, e[4]!, e[5]!) < 1e-3 && below < 1e-3) {
+        break;
+      }
+      const J: number[][] = Array.from({ length: 6 }, () => Array(6).fill(0));
+      for (let j = 0; j < 6; j++) {
+        const qp = q.slice();
+        qp[j] = clampJoint(j, qp[j]! + eps);
+        const tp = fk(qp).tip;
+        const tzp = toolZRobot(qp);
+        J[0]![j] = (tp.x - tip.x) / eps;
+        J[1]![j] = (tp.y - tip.y) / eps;
+        J[2]![j] = (tp.z - tip.z) / eps;
+        J[3]![j] = (0.4 * (tzp.x - tz.x)) / eps;
+        J[4]![j] = (0.4 * (tzp.y - tz.y)) / eps;
+        J[5]![j] = (0.4 * (tzp.z - tz.z)) / eps;
+      }
+      const lambda = 8e-3;
+      const A: number[][] = Array.from({ length: 6 }, () => Array(6).fill(0));
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
+          let s = r === c ? lambda : 0;
+          for (let k = 0; k < 6; k++) s += J[r]![k]! * J[c]![k]!;
+          A[r]![c] = s;
+        }
+      }
+      const M = A.map((row, i) => [...row, e[i]!]);
+      for (let i = 0; i < 6; i++) {
+        let piv = i;
+        for (let r = i + 1; r < 6; r++) {
+          if (Math.abs(M[r]![i]!) > Math.abs(M[piv]![i]!)) piv = r;
+        }
+        [M[i], M[piv]] = [M[piv]!, M[i]!];
+        const div = M[i]![i]! || 1e-12;
+        for (let c = i; c < 7; c++) M[i]![c] = M[i]![c]! / div;
+        for (let r = 0; r < 6; r++) {
+          if (r === i) continue;
+          const f = M[r]![i]!;
+          for (let c = i; c < 7; c++) M[r]![c] = M[r]![c]! - f * M[i]![c]!;
+        }
+      }
+      const u = M.map((row) => row[6]!);
+      for (let j = 0; j < 6; j++) {
+        let dq = 0;
+        for (let r = 0; r < 6; r++) dq += J[r]![j]! * u[r]!;
+        if (below > 0 && j === 1) dq -= 0.15 * below;
+        q[j] = clampJoint(j, q[j]! + dq);
+      }
+    }
+
+    const tip = fk(q).tip;
+    const tz = toolZRobot(q);
+    const tipErr = Math.hypot(tip.x - targetR.x, tip.y - targetR.y, tip.z - targetR.z);
+    const oriErr = Math.hypot(
+      tz.x - TOOL_DOWN_R.x,
+      tz.y - TOOL_DOWN_R.y,
+      tz.z - TOOL_DOWN_R.z,
+    );
+    const below = Math.max(0, TABLE_CLEAR_Y - minJointWorldY(q));
+    const jump = q.reduce((s, v, i) => s + Math.abs(v - (preferRad[i] ?? 0)), 0);
+    const score = tipErr * 12 + oriErr * 3 + below * 25 + jump * 0.02;
+    if (score < bestScore) {
+      bestScore = score;
+      bestQ = q;
+    }
+  }
+  return bestQ.map(deg);
 }
 
 function tipWorldFromQDeg(qDeg: number[]): { x: number; y: number; z: number } {
-  const tip = fk(qDeg.map(rad)).tip;
-  return robotToWorld(tip);
+  return robotToWorld(fk(qDeg.map(rad)).tip);
 }
 
 function buildTargets() {
@@ -90,14 +174,15 @@ function buildTargets() {
     y: PP_PLACE.y + GRIP_OFFSET + APPROACH_CLEAR,
     z: PP_PLACE.z,
   };
-  const homeW = { x: 0.3, y: 0.85, z: 0.0 };
+  const homeW = { x: 0.3, y: 0.95, z: 0.1 };
 
-  const HOME = solveWorld(homeW, preferDown);
-  const APPROACH_PICK = solveWorld(approachPickW, HOME.map(rad));
-  const PICK = solveWorld(pickTipW, APPROACH_PICK.map(rad));
-  const LIFT = solveWorld(approachPickW, PICK.map(rad));
-  const APPROACH_PLACE = solveWorld(approachPlaceW, LIFT.map(rad));
-  const PLACE = solveWorld(placeTipW, APPROACH_PLACE.map(rad));
+  const HOME = solveWorldToolDown(homeW, preferDown);
+  const APPROACH_PICK = solveWorldToolDown(approachPickW, HOME.map(rad));
+  const PICK = solveWorldToolDown(pickTipW, APPROACH_PICK.map(rad));
+  // Same Cartesian as approach — reuse joints so lift is a pure retract
+  const LIFT = [...APPROACH_PICK];
+  const APPROACH_PLACE = solveWorldToolDown(approachPlaceW, LIFT.map(rad));
+  const PLACE = solveWorldToolDown(placeTipW, APPROACH_PLACE.map(rad));
 
   return { HOME, APPROACH_PICK, PICK, LIFT, APPROACH_PLACE, PLACE };
 }
