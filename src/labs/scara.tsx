@@ -13,6 +13,8 @@ const empty = (): ScaraSnapshot => ({
   wrist: 0,
   phase: "idle",
   gripped: false,
+  partVisible: true,
+  partAtPlace: false,
   cycles: 0,
   tip: { x: 0.4, y: 0.2 },
 });

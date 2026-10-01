@@ -378,6 +378,25 @@ export function AgvViewport({
     );
     world.add(pathLine);
 
+    // Path rectangle spans z in [0, 1.8] and x in [-2.5, 2.5].
+    // Keep pads/rings on waypoints; offset poles OUTSIDE the loop so AGV clears them.
+    const pathZMin = Math.min(...waypoints.map((p) => p.z));
+    const pathZMax = Math.max(...waypoints.map((p) => p.z));
+    const pathXMin = Math.min(...waypoints.map((p) => p.x));
+    const pathXMax = Math.max(...waypoints.map((p) => p.x));
+    const poleOffset = 0.85;
+    const stationPoleXZ = (w: { x: number; z: number }) => {
+      const midZ = (pathZMin + pathZMax) / 2;
+      const midX = (pathXMin + pathXMax) / 2;
+      const onBottom = Math.abs(w.z - pathZMin) < 0.05;
+      const onTop = Math.abs(w.z - pathZMax) < 0.05;
+      if (onBottom) return { x: w.x, z: w.z - poleOffset };
+      if (onTop) return { x: w.x, z: w.z + poleOffset };
+      // Vertical-edge only: push away from interior in +/- x
+      const xDir = w.x >= midX ? 1 : -1;
+      return { x: w.x + xDir * poleOffset, z: w.z };
+    };
+
     let stationIdx = 0;
     for (const w of waypoints) {
       if (!w.station) continue;
@@ -403,12 +422,14 @@ export function AgvViewport({
       mark.rotation.x = Math.PI;
       mark.position.set(w.x, 0.06, w.z);
       world.add(mark);
-      world.add(buildStationPost(w.x, w.z + 0.85, `ST-${stationIdx}`));
+      const poleAt = stationPoleXZ(w);
+      world.add(buildStationPost(poleAt.x, poleAt.z, `ST-${stationIdx}`));
     }
 
-    // Charging dock at first station
+    // Charging dock beside first station, outside the path (not on the travel strip)
     const first = waypoints.find((w) => w.station) ?? waypoints[0]!;
-    world.add(buildChargingDock(first.x, first.z - 0.15));
+    const dockPole = stationPoleXZ(first);
+    world.add(buildChargingDock(dockPole.x, dockPole.z));
 
     const agv = buildAgvBody();
     world.add(agv.root);

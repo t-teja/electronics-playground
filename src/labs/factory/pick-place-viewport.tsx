@@ -495,10 +495,29 @@ export function PickPlaceViewport({
 
       if (s.gripped) {
         part.visible = true;
-        part.position.set(s.tip.x, Math.max(0.52, s.tip.z), -s.tip.y);
+        // Prefer live tool0 world pose; snap.tip is already world XYZ from FK.
+        let wx = s.tip.x;
+        let wy = s.tip.y;
+        let wz = s.tip.z;
+        if (robot) {
+          const tool =
+            robot.getObjectByName("tool0") ||
+            robot.getObjectByName("wrist_3_link") ||
+            robot.getObjectByName("flange");
+          if (tool) {
+            const wp = new THREE.Vector3();
+            tool.getWorldPosition(wp);
+            // Jaws sit ~0.10 m along tool +Z; after root Rx(-pi/2) that is -world Y.
+            wx = wp.x;
+            wy = wp.y - 0.1;
+            wz = wp.z;
+          }
+        }
+        part.position.set(wx, wy, wz);
       } else if (s.partAtPlace) {
         part.visible = false;
         placed.visible = true;
+        placed.position.set(-0.4, 0.54, -0.2);
       } else {
         part.visible = s.partVisible;
         part.position.set(0.45, 0.54, 0.25);

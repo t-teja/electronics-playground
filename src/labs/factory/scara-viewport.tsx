@@ -207,32 +207,33 @@ export function ScaraViewport({
     baseStripe.position.y = 0.38;
     world.add(baseStripe);
 
-    // Z column / ball-screw with bellows
+    // Z column / ball-screw with bellows (shoulder low enough for jaws to meet parts)
+    const J1_Y = 0.57;
     const column = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.055, 0.055, 0.58, 20),
+      new THREE.CylinderGeometry(0.055, 0.055, 0.36, 20),
       steel(0x94a3b8, 0.85, 0.28),
     );
-    column.position.y = 0.62;
+    column.position.y = 0.42;
     world.add(column);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 5; i++) {
       const bellow = new THREE.Mesh(
         new THREE.TorusGeometry(0.062, 0.008, 8, 20),
         rubber(0x44403c),
       );
       bellow.rotation.x = Math.PI / 2;
-      bellow.position.y = 0.42 + i * 0.05;
+      bellow.position.y = 0.3 + i * 0.045;
       world.add(bellow);
     }
     // Ball-screw visible rod
     const screw = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.012, 0.012, 0.5, 10),
+      new THREE.CylinderGeometry(0.012, 0.012, 0.32, 10),
       brushedAluminum(0xd0d8e0),
     );
-    screw.position.set(0.08, 0.62, 0);
+    screw.position.set(0.08, 0.42, 0);
     world.add(screw);
 
     const j1 = new THREE.Group();
-    j1.position.y = 0.92;
+    j1.position.y = J1_Y;
     world.add(j1);
     j1.add(buildMotorHousing(0.06));
     const motorCap1 = new THREE.Mesh(
@@ -418,22 +419,22 @@ export function ScaraViewport({
       jawL.position.x = -open;
       jawR.position.x = open;
 
+      // Jaw world Y: J1_Y + (z - 0.20) - 0.08 = J1_Y + z - 0.28 (~0.31 at pick-down)
       if (s.gripped) {
         part.visible = true;
-        part.position.set(s.tip.x, 0.2 + s.z, s.tip.y);
-        placed.visible = false;
-      } else if (s.phase === "idle" || s.phase === "toPick" || s.phase === "home") {
-        part.visible = true;
-        part.position.set(0.45, 0.31, 0.25);
-        placed.visible = s.cycles > 0;
-      } else if (s.phase === "upPlace") {
+        const wp = new THREE.Vector3();
+        jawL.getWorldPosition(wp);
+        part.position.set(s.tip.x, wp.y, s.tip.y);
+      } else if (s.partAtPlace) {
         part.visible = false;
-        placed.visible = true;
+        part.position.set(-0.25, 0.29, -0.2);
       } else {
-        part.visible = true;
+        part.visible = s.partVisible;
         part.position.set(0.45, 0.31, 0.25);
-        placed.visible = s.cycles > 0;
       }
+      // Deposited part stays on the tray (no teleport); visible after first place
+      placed.visible = s.partAtPlace || s.cycles > 0;
+      placed.position.set(-0.25, 0.29, -0.2);
 
       (amb.material as THREE.Material).dispose();
       amb.material = warnAmber(!es && s.phase !== "idle");

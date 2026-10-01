@@ -6,12 +6,15 @@ import {
   ACCENT,
   addFactoryLights,
   alarmRed,
+  applyFactoryEnvMap,
   brushedAluminum,
   emissiveAccent,
   machineBlue,
   makeFactoryFloor,
   matteBlack,
   paintedSteel,
+  physicalPaint,
+  physicalSteel,
   plastic,
   rubber,
   safetyYellow,
@@ -19,9 +22,16 @@ import {
   steel,
   warnAmber,
 } from "./materials";
+import {
+  boltCircle,
+  motorHousing,
+  pneumaticCylinder,
+  sheetBin,
+} from "./industrial-kit";
 import { SORTER_LANES, type SorterSnapshot } from "./sorter-sim";
 
 const COLOR_MAP = { red: 0xef4444, blue: 0x3b82f6, amber: 0xf59e0b };
+const LANE_ZS = [-0.95, 0, 0.95] as const;
 
 function belt(len: number, width = 0.4): THREE.Group {
   const g = new THREE.Group();
@@ -56,6 +66,16 @@ function belt(len: number, width = 0.4): THREE.Group {
       g.add(leg);
     }
   }
+  // Drive motor at outfeed
+  const drive = new THREE.Mesh(
+    new THREE.BoxGeometry(0.16, 0.14, 0.2),
+    paintedSteel(0x334155),
+  );
+  drive.position.set(len - 0.08, 0.28, width / 2 + 0.14);
+  g.add(drive);
+  const mot = motorHousing(0.12, 0.04, "x");
+  mot.position.set(len - 0.2, 0.28, width / 2 + 0.14);
+  g.add(mot);
   return g;
 }
 
@@ -63,78 +83,76 @@ function buildVisionGate(x: number): { root: THREE.Group; eye: THREE.Mesh; ring:
   const root = new THREE.Group();
   root.position.set(x, 0, 0);
 
-  const gantry = new THREE.Mesh(
-    new THREE.BoxGeometry(0.18, 0.12, 0.95),
-    machineBlue(0x1e40af),
+  // Tunnel hood / vision enclosure
+  const hood = new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.45, 0.85),
+    physicalPaint(0x1e40af, 0.4, 0.35),
   );
-  gantry.position.y = 1.15;
-  gantry.castShadow = true;
-  root.add(gantry);
-  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.98), safetyYellow());
-  bar.position.y = 1.28;
+  hood.position.set(0, 0.95, 0);
+  hood.castShadow = true;
+  root.add(hood);
+  // Inner tunnel void (dark)
+  const voidBox = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.32, 0.5),
+    matteBlack(0x0f172a),
+  );
+  voidBox.position.set(0, 0.72, 0);
+  root.add(voidBox);
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.06, 0.9), safetyYellow());
+  bar.position.y = 1.2;
   root.add(bar);
 
-  // Side posts
-  for (const z of [-0.42, 0.42]) {
+  // Side posts with cross-brace
+  for (const z of [-0.4, 0.4]) {
     const post = new THREE.Mesh(
-      new THREE.BoxGeometry(0.08, 1.15, 0.08),
+      new THREE.BoxGeometry(0.09, 1.2, 0.09),
       paintedSteel(0x475569),
     );
-    post.position.set(0, 0.57, z);
+    post.position.set(0, 0.6, z);
     post.castShadow = true;
     root.add(post);
   }
+  const brace = new THREE.Mesh(
+    new THREE.BoxGeometry(0.04, 0.04, 0.78),
+    brushedAluminum(),
+  );
+  brace.position.set(-0.2, 0.9, 0);
+  root.add(brace);
 
-  // Camera housing
+  // Camera + LED ring under hood
   const camBody = new THREE.Mesh(
     new THREE.BoxGeometry(0.1, 0.08, 0.12),
     matteBlack(0x1a1a1a),
   );
-  camBody.position.set(-0.12, 1.05, 0);
+  camBody.position.set(0, 1.05, 0);
   root.add(camBody);
   const lens = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.03, 0.035, 0.04, 16),
-    steel(0xcbd5e1, 0.7, 0.25),
+    new THREE.CylinderGeometry(0.032, 0.038, 0.045, 18),
+    physicalSteel(0xcbd5e1, 0.75, 0.22),
   );
-  lens.rotation.z = Math.PI / 2;
-  lens.position.set(-0.16, 1.05, 0);
+  lens.position.set(0, 0.98, 0);
   root.add(lens);
-  const glass = new THREE.Mesh(
-    new THREE.CircleGeometry(0.022, 16),
-    new THREE.MeshStandardMaterial({
-      color: 0x0ea5e9,
-      emissive: 0x0284c7,
-      emissiveIntensity: 0.4,
-      metalness: 0.2,
-      roughness: 0.2,
-    }),
-  );
-  glass.rotation.y = Math.PI / 2;
-  glass.position.set(-0.182, 1.05, 0);
-  root.add(glass);
-
-  // LED ring around camera view
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.09, 0.012, 10, 28),
-    emissiveAccent(0.4),
+    new THREE.TorusGeometry(0.1, 0.014, 10, 28),
+    emissiveAccent(0.55),
   );
-  ring.rotation.y = Math.PI / 2;
-  ring.position.set(-0.08, 0.85, 0);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.set(0, 0.92, 0);
   root.add(ring);
 
-  // Photoeye posts across belt
+  // Photoeye beam across belt
   for (const z of [-0.28, 0.28]) {
     const pePost = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.012, 0.015, 0.35, 10),
+      new THREE.CylinderGeometry(0.012, 0.015, 0.28, 10),
       brushedAluminum(),
     );
-    pePost.position.set(0.05, 0.65, z);
+    pePost.position.set(0.22, 0.62, z);
     root.add(pePost);
     const peHead = new THREE.Mesh(
       new THREE.BoxGeometry(0.04, 0.03, 0.035),
       paintedSteel(0x292524),
     );
-    peHead.position.set(0.05, 0.82, z);
+    peHead.position.set(0.22, 0.76, z);
     root.add(peHead);
   }
   const eye = new THREE.Mesh(
@@ -145,132 +163,205 @@ function buildVisionGate(x: number): { root: THREE.Group; eye: THREE.Mesh; ring:
       opacity: 0.2,
     }),
   );
-  eye.position.set(0.05, 0.82, 0);
+  eye.position.set(0.22, 0.76, 0);
   root.add(eye);
 
   return { root, eye, ring };
 }
 
-function buildDivertGate(laneZ: number, color: number): THREE.Group {
+/** Highly visible divert paddle + pneumatic actuator at each lane. */
+function buildDivertGate(
+  laneIndex: number,
+  color: number,
+): { root: THREE.Group; hinge: THREE.Group; restAngle: number; activeAngle: number } {
+  const laneZ = LANE_ZS[laneIndex]!;
   const g = new THREE.Group();
-  g.position.set(SORTER_LANES.GATE_X + 0.15, 0.52, laneZ * 0.35);
+  // Full lane Z - paddles sit at the spur entrance, not clustered at center
+  g.position.set(SORTER_LANES.GATE_X + 0.12, 0.52, laneZ);
 
-  // Hinged paddle
   const hinge = new THREE.Group();
-  hinge.position.set(0, 0, 0);
   g.add(hinge);
+
+  // Tall visible paddle blade
   const paddle = new THREE.Mesh(
-    new THREE.BoxGeometry(0.28, 0.08, 0.04),
-    paintedSteel(0xf1f5f9, 0.45, 0.35),
+    new THREE.BoxGeometry(0.38, 0.14, 0.045),
+    paintedSteel(0xf8fafc, 0.5, 0.32),
   );
-  paddle.position.x = 0.14;
+  paddle.position.x = 0.19;
   paddle.castShadow = true;
   hinge.add(paddle);
-  const tip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.09, 0.05), plastic(color, 0.45));
-  tip.position.x = 0.28;
-  hinge.add(tip);
+  const edge = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.16, 0.055),
+    plastic(color, 0.4),
+  );
+  edge.position.x = 0.38;
+  hinge.add(edge);
+  // Stripe so paddle reads even from Fit view
+  const stripe = new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.03, 0.05),
+    new THREE.MeshStandardMaterial({ color, metalness: 0.2, roughness: 0.4 }),
+  );
+  stripe.position.set(0.18, 0.05, 0);
+  hinge.add(stripe);
 
-  // Pneumatic cylinder actuator
-  const cyl = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.025, 0.18, 14),
+  // Pivot block
+  const pivot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.03, 0.03, 0.08, 14),
     brushedAluminum(),
   );
-  cyl.rotation.z = Math.PI / 2;
-  cyl.position.set(0.05, 0.08, 0.08);
-  g.add(cyl);
-  const rod = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.008, 0.008, 0.12, 8),
-    steel(0xe2e8f0),
-  );
-  rod.rotation.z = Math.PI / 2;
-  rod.position.set(0.16, 0.08, 0.08);
-  g.add(rod);
-  const mount = new THREE.Mesh(
-    new THREE.BoxGeometry(0.06, 0.05, 0.06),
-    paintedSteel(0x52525b),
-  );
-  mount.position.set(-0.02, 0.05, 0.08);
-  g.add(mount);
+  pivot.position.set(0, 0, 0);
+  g.add(pivot);
 
-  // Slight default divert angle toward lane
-  hinge.rotation.y = laneZ * 0.35;
-  return g;
+  // Pneumatic cylinder (visible)
+  const cyl = pneumaticCylinder(0.22, 0.028, "z");
+  cyl.position.set(0.05, 0.1, laneIndex === 1 ? 0.12 : Math.sign(laneZ || 1) * 0.14);
+  g.add(cyl);
+
+  // Airline tubing
+  const tube = new THREE.Mesh(
+    new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0.05, 0.14, 0.1),
+        new THREE.Vector3(-0.1, 0.2, 0.15),
+        new THREE.Vector3(-0.25, 0.15, 0.2),
+      ]),
+      12,
+      0.008,
+      6,
+      false,
+    ),
+    plastic(0x0ea5e9, 0.45),
+  );
+  g.add(tube);
+
+  // Rest: slightly open to main belt; active: swung to push into spur (-Z)
+  const restAngle = laneIndex === 1 ? 0.15 : Math.sign(laneZ || 1) * 0.35;
+  const activeAngle = laneIndex === 1 ? -0.85 : Math.sign(laneZ || 1) * -0.95;
+  hinge.rotation.y = restAngle;
+  return { root: g, hinge, restAngle, activeAngle };
 }
 
-function buildLaneChute(z: number, colorHex: number): THREE.Group {
+function buildLaneChute(laneIndex: number, colorHex: number): THREE.Group {
+  const z = LANE_ZS[laneIndex]!;
   const g = new THREE.Group();
   g.position.set(SORTER_LANES.GATE_X, 0, z);
-  const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(0.36, 0.025, SORTER_LANES.LANE_LEN),
-    paintedSteel(0x57534e),
-  );
-  floor.position.set(0.18, 0.44, -SORTER_LANES.LANE_LEN / 2);
-  floor.rotation.y = 0;
-  // Spur already has belt; add side walls on spur direction (-Z from gate when rotated)
-  // Walls along spur (local after parent places spur)
+
+  // Sheet-metal side walls along spur (-Z)
   for (const side of [-1, 1]) {
     const wall = new THREE.Mesh(
-      new THREE.BoxGeometry(0.02, 0.14, SORTER_LANES.LANE_LEN * 0.9),
-      paintedSteel(0x64748b),
+      new THREE.BoxGeometry(0.025, 0.16, SORTER_LANES.LANE_LEN * 0.95),
+      paintedSteel(0x64748b, 0.45, 0.4),
     );
-    wall.position.set(side * 0.18, 0.55, -SORTER_LANES.LANE_LEN / 2);
+    wall.position.set(side * 0.17, 0.56, -SORTER_LANES.LANE_LEN / 2);
+    wall.castShadow = true;
     g.add(wall);
+    // Thickness lip
+    const lip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.012, 0.03, SORTER_LANES.LANE_LEN * 0.95),
+      brushedAluminum(),
+    );
+    lip.position.set(side * 0.185, 0.65, -SORTER_LANES.LANE_LEN / 2);
+    g.add(lip);
   }
-  // Bin mouth at end of spur
-  const bin = new THREE.Mesh(
-    new THREE.BoxGeometry(0.42, 0.35, 0.4),
-    paintedSteel(0x334155),
+
+  // Floor pan
+  const floor = new THREE.Mesh(
+    new THREE.BoxGeometry(0.34, 0.02, SORTER_LANES.LANE_LEN),
+    paintedSteel(0x57534e),
   );
-  bin.position.set(0, 0.25, -SORTER_LANES.LANE_LEN - 0.15);
-  bin.castShadow = true;
+  floor.position.set(0, 0.45, -SORTER_LANES.LANE_LEN / 2);
+  g.add(floor);
+
+  // Large colored bin at spur end — must be obvious in Fit view
+  const bin = sheetBin(0.5, 0.42, 0.48, 0x1e293b, colorHex);
+  bin.position.set(0, 0.28, -SORTER_LANES.LANE_LEN - 0.28);
   g.add(bin);
-  const mouth = new THREE.Mesh(
-    new THREE.BoxGeometry(0.36, 0.08, 0.36),
-    matteBlack(0x0f172a),
-  );
-  mouth.position.set(0, 0.44, -SORTER_LANES.LANE_LEN - 0.15);
-  g.add(mouth);
-  const lip = new THREE.Mesh(
-    new THREE.BoxGeometry(0.4, 0.03, 0.4),
-    new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.25, roughness: 0.45 }),
-  );
-  lip.position.set(0, 0.48, -SORTER_LANES.LANE_LEN - 0.15);
-  g.add(lip);
+  // Bin legs
+  for (const [bx, bz] of [
+    [-0.18, -0.15],
+    [0.18, -0.15],
+    [-0.18, 0.15],
+    [0.18, 0.15],
+  ] as const) {
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.12, 0.04),
+      paintedSteel(0x475569),
+    );
+    leg.position.set(bx, 0.06, -SORTER_LANES.LANE_LEN - 0.28 + bz);
+    g.add(leg);
+  }
+  boltCircle(bin, 0.22, 0.18, 4, 0.007);
+
   return g;
 }
 
 function buildInfeedHopper(): THREE.Group {
   const g = new THREE.Group();
-  g.position.set(0.15, 0, 0);
-  const hopper = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.12, 0.35, 6),
-    paintedSteel(0x475569),
+  g.position.set(0.2, 0, 0);
+  // Frame uprights + cross-brace
+  for (const z of [-0.22, 0.22]) {
+    const upright = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 1.05, 0.06),
+      paintedSteel(0x475569),
+    );
+    upright.position.set(-0.05, 0.52, z);
+    upright.castShadow = true;
+    g.add(upright);
+  }
+  const cross = new THREE.Mesh(
+    new THREE.BoxGeometry(0.05, 0.05, 0.44),
+    brushedAluminum(),
   );
-  hopper.position.set(0, 0.85, 0);
+  cross.position.set(-0.05, 0.85, 0);
+  g.add(cross);
+
+  const hopper = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.26, 0.12, 0.4, 8),
+    paintedSteel(0x475569, 0.45, 0.42),
+  );
+  hopper.position.set(0, 0.9, 0);
   hopper.castShadow = true;
   g.add(hopper);
-  const chute = new THREE.Mesh(
-    new THREE.BoxGeometry(0.2, 0.08, 0.35),
-    steel(0x94a3b8),
-  );
-  chute.position.set(0.15, 0.62, 0);
-  chute.rotation.z = -0.35;
-  g.add(chute);
-  // Rail guides onto belt
-  for (const z of [-0.12, 0.12]) {
-    const guide = new THREE.Mesh(
-      new THREE.BoxGeometry(0.55, 0.04, 0.02),
-      brushedAluminum(),
-    );
-    guide.position.set(0.45, 0.55, z);
-    g.add(guide);
-  }
   const funnelLip = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.24, 0.24, 0.03, 6),
+    new THREE.CylinderGeometry(0.28, 0.28, 0.035, 8),
     safetyYellow(),
   );
-  funnelLip.position.set(0, 1.02, 0);
+  funnelLip.position.set(0, 1.1, 0);
   g.add(funnelLip);
+  const chute = new THREE.Mesh(
+    new THREE.BoxGeometry(0.22, 0.06, 0.38),
+    physicalSteel(0x94a3b8, 0.7, 0.3),
+  );
+  chute.position.set(0.18, 0.62, 0);
+  chute.rotation.z = -0.4;
+  g.add(chute);
+  for (const z of [-0.13, 0.13]) {
+    const guide = new THREE.Mesh(
+      new THREE.BoxGeometry(0.6, 0.04, 0.02),
+      brushedAluminum(),
+    );
+    guide.position.set(0.5, 0.55, z);
+    g.add(guide);
+  }
+  return g;
+}
+
+function makePartMesh(color: number, large: boolean): THREE.Group {
+  const g = new THREE.Group();
+  const s = large ? 0.11 : 0.075;
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(s, s * 0.65, s),
+    plastic(color, 0.4),
+  );
+  body.castShadow = true;
+  g.add(body);
+  // Bevel lip so parts read as molded plastics
+  const lip = new THREE.Mesh(
+    new THREE.BoxGeometry(s * 1.05, s * 0.08, s * 1.05),
+    plastic(color, 0.35),
+  );
+  lip.position.y = s * 0.3;
+  g.add(lip);
   return g;
 }
 
@@ -302,7 +393,7 @@ export function SorterViewport({
     scene.background = new THREE.Color(0x1a2332);
     scene.fog = new THREE.Fog(0x1a2332, 16, 36);
     const camera = new THREE.PerspectiveCamera(52, 1, 0.05, 60);
-    camera.position.set(3.2, 2.6, 3.8);
+    camera.position.set(3.6, 2.8, 4.2);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
@@ -315,76 +406,88 @@ export function SorterViewport({
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     el.appendChild(renderer.domElement);
     addFactoryLights(scene);
+    applyFactoryEnvMap(renderer, scene);
     scene.add(makeFactoryFloor(18));
 
     const world = new THREE.Group();
     scene.add(world);
-    world.add(belt(SORTER_LANES.GATE_X + 0.6));
+    world.add(belt(SORTER_LANES.GATE_X + 0.7));
     world.add(buildInfeedHopper());
 
-    const laneZs = [-0.85, 0, 0.85];
     const laneLabels = ["RED", "BLUE", "AMBER"];
     const laneColors = [0xef4444, 0x3b82f6, 0xf59e0b];
+    const divertGates: {
+      root: THREE.Group;
+      hinge: THREE.Group;
+      restAngle: number;
+      activeAngle: number;
+    }[] = [];
     for (let i = 0; i < 3; i++) {
       const spur = belt(SORTER_LANES.LANE_LEN, 0.32);
       spur.rotation.y = -Math.PI / 2;
-      spur.position.set(SORTER_LANES.GATE_X, 0, laneZs[i]);
+      spur.position.set(SORTER_LANES.GATE_X, 0, LANE_ZS[i]);
       world.add(spur);
-      const chute = buildLaneChute(laneZs[i]!, laneColors[i]!);
-      // Align chute walls with spur: spur goes in -local Z after rotation
-      // buildLaneChute places walls in -Z; position at lane
-      world.add(chute);
-      const sign = stationSign(laneLabels[i]!, 0.5);
-      sign.position.set(SORTER_LANES.GATE_X + 0.55, 1.15, laneZs[i]!);
+      world.add(buildLaneChute(i, laneColors[i]!));
+      const sign = stationSign(laneLabels[i]!, 0.55);
+      sign.position.set(SORTER_LANES.GATE_X + 0.15, 1.25, LANE_ZS[i]! - SORTER_LANES.LANE_LEN - 0.15);
       world.add(sign);
-      world.add(buildDivertGate(laneZs[i]! / 0.85, laneColors[i]!));
+      const gate = buildDivertGate(i, laneColors[i]!);
+      world.add(gate.root);
+      divertGates.push(gate);
     }
 
     const gate = buildVisionGate(SORTER_LANES.GATE_X);
     world.add(gate.root);
 
     const inSign = stationSign("INFEED", 0.6);
-    inSign.position.set(0.55, 1.15, -0.55);
+    inSign.position.set(0.55, 1.2, -0.6);
     world.add(inSign);
 
     const redL = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 14), alarmRed(false));
-    redL.position.set(-0.3, 1.35, 0.75);
+    redL.position.set(-0.3, 1.35, 0.85);
     world.add(redL);
     const ambL = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 14), warnAmber(false));
-    ambL.position.set(-0.3, 1.24, 0.75);
+    ambL.position.set(-0.3, 1.24, 0.85);
     world.add(ambL);
     const pole = new THREE.Mesh(
       new THREE.CylinderGeometry(0.02, 0.025, 1.25, 10),
       paintedSteel(0x27272a),
     );
-    pole.position.set(-0.3, 0.7, 0.75);
+    pole.position.set(-0.3, 0.7, 0.85);
     world.add(pole);
     for (const y of [1.35, 1.24]) {
       const shade = new THREE.Mesh(
         new THREE.CylinderGeometry(0.065, 0.055, 0.02, 14),
         matteBlack(),
       );
-      shade.position.set(-0.3, y + 0.05, 0.75);
+      shade.position.set(-0.3, y + 0.05, 0.85);
       world.add(shade);
     }
 
-    // Control cabinet
     const cab = new THREE.Mesh(
-      new THREE.BoxGeometry(0.35, 0.7, 0.25),
+      new THREE.BoxGeometry(0.38, 0.75, 0.28),
       paintedSteel(0x1e293b),
     );
-    cab.position.set(-0.5, 0.35, 0.75);
+    cab.position.set(-0.55, 0.38, 0.85);
     cab.castShadow = true;
     world.add(cab);
+    // Cabinet vents
+    for (let i = 0; i < 5; i++) {
+      const vent = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28, 0.012, 0.01),
+        matteBlack(),
+      );
+      vent.position.set(-0.55, 0.55 + i * 0.04, 0.995);
+      world.add(vent);
+    }
 
-    type PMesh = { root: THREE.Mesh };
+    type PMesh = { root: THREE.Group; color: number; large: boolean };
     const pool: PMesh[] = [];
     for (let i = 0; i < 20; i++) {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), plastic(0xcccccc));
-      m.castShadow = true;
-      m.visible = false;
-      world.add(m);
-      pool.push({ root: m });
+      const root = makePartMesh(0xcccccc, true);
+      root.visible = false;
+      world.add(root);
+      pool.push({ root, color: 0xcccccc, large: true });
     }
 
     let disposed = false;
@@ -395,7 +498,8 @@ export function SorterViewport({
       const w = el.clientWidth || 640;
       const h = el.clientHeight || 400;
       camera.aspect = w / Math.max(h, 1);
-      fitCameraToObject(camera, controls, world, camera.aspect, 0.92);
+      // Slightly looser Fit so bins + paddles + idle parts stay in frame
+      fitCameraToObject(camera, controls, world, camera.aspect, 1.05);
     };
     const resize = () => {
       const w = el.clientWidth || 640;
@@ -425,21 +529,45 @@ export function SorterViewport({
       (ambL.material as THREE.Material).dispose();
       ambL.material = warnAmber(!es && s.photoeye);
 
+      // Swing divert paddle when a part is actively entering that lane
+      for (let li = 0; li < divertGates.length; li++) {
+        const dg = divertGates[li]!;
+        const active = s.parts.some(
+          (p) => p.lane === li && !p.done && p.laneY < 0.55,
+        );
+        const target = active ? dg.activeAngle : dg.restAngle;
+        dg.hinge.rotation.y += (target - dg.hinge.rotation.y) * 0.18;
+      }
+
       for (let i = 0; i < pool.length; i++) {
-        const mesh = pool[i]!.root;
+        const slot = pool[i]!;
         const p = s.parts[i];
         if (!p) {
-          mesh.visible = false;
+          slot.root.visible = false;
           continue;
         }
-        mesh.visible = true;
-        const scale = p.size === "large" ? 0.12 : 0.08;
-        mesh.scale.set(scale, scale * 0.7, scale);
-        (mesh.material as THREE.MeshStandardMaterial).color.set(COLOR_MAP[p.color]);
+        const color = COLOR_MAP[p.color];
+        const large = p.size === "large";
+        if (slot.color !== color || slot.large !== large) {
+          // Rebuild part mesh materials/scale via children
+          const body = slot.root.children[0] as THREE.Mesh;
+          const lip = slot.root.children[1] as THREE.Mesh;
+          const s0 = large ? 0.11 : 0.075;
+          body.geometry.dispose();
+          body.geometry = new THREE.BoxGeometry(s0, s0 * 0.65, s0);
+          (body.material as THREE.MeshStandardMaterial).color.set(color);
+          lip.geometry.dispose();
+          lip.geometry = new THREE.BoxGeometry(s0 * 1.05, s0 * 0.08, s0 * 1.05);
+          lip.position.y = s0 * 0.3;
+          (lip.material as THREE.MeshStandardMaterial).color.set(color);
+          slot.color = color;
+          slot.large = large;
+        }
+        slot.root.visible = true;
         if (p.lane != null) {
-          mesh.position.set(SORTER_LANES.GATE_X, 0.52, laneZs[p.lane]! - p.laneY);
+          slot.root.position.set(SORTER_LANES.GATE_X, 0.52, LANE_ZS[p.lane]! - p.laneY);
         } else {
-          mesh.position.set(p.x, 0.52, 0);
+          slot.root.position.set(p.x, 0.52, 0);
         }
       }
 

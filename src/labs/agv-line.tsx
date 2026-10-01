@@ -54,7 +54,11 @@ export function AgvLineLab() {
     return () => cancelAnimationFrame(raf);
   }, [sim]);
 
-  const onStart = useCallback(() => setRunning(true), []);
+  const onStart = useCallback(() => {
+    if (eStop) return;
+    setRunning(true);
+    sim.setControls({ running: true, eStop: false, speed });
+  }, [eStop, sim, speed]);
   const onStop = useCallback(() => setRunning(false), []);
   const onEStop = useCallback(() => {
     setEStop(true);

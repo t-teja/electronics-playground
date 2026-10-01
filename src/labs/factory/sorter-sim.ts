@@ -35,6 +35,25 @@ export function createSorterSim() {
   const counts: Record<PartColor, number> = { red: 0, blue: 0, amber: 0 };
   let classified = 0;
 
+  const seedDemo = () => {
+    // Idle Fit: only under hopper / early infeed (x << GATE). Never mid-belt or lanes.
+    const demo: Array<{ x: number; color: PartColor; size: PartSize; lane: 0 | 1 | 2 | null; laneY: number }> = [
+      { x: 0.35, color: "red", size: "large", lane: null, laneY: 0 },
+      { x: 0.55, color: "blue", size: "small", lane: null, laneY: 0 },
+      { x: 0.75, color: "amber", size: "large", lane: null, laneY: 0 },
+      { x: 0.95, color: "red", size: "small", lane: null, laneY: 0 },
+    ];
+    parts = demo.map((d) => ({
+      id: nextId++,
+      x: d.x,
+      lane: d.lane,
+      laneY: d.laneY,
+      color: d.color,
+      size: d.size,
+      done: false,
+    }));
+  };
+
   const snap = (): SorterSnapshot => ({
     parts: parts.map((p) => ({ ...p })),
     counts: { ...counts },
@@ -95,6 +114,8 @@ export function createSorterSim() {
     return snap();
   };
 
+  seedDemo();
+
   return {
     controls,
     step,
@@ -104,11 +125,11 @@ export function createSorterSim() {
       if (controls.eStop) controls.running = false;
     },
     reset: () => {
-      parts = [];
       spawnAcc = 0;
       counts.red = counts.blue = counts.amber = 0;
       classified = 0;
       nextId = 1;
+      seedDemo();
     },
   };
 }

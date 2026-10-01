@@ -7,6 +7,7 @@ import {
   addCoolingFins,
   addFactoryLights,
   alarmRed,
+  applyFactoryEnvMap,
   brushedAluminum,
   emissiveAccent,
   glassBottle,
@@ -15,6 +16,8 @@ import {
   makeFactoryFloor,
   matteBlack,
   paintedSteel,
+  physicalPaint,
+  physicalSteel,
   plastic,
   rubber,
   safetyYellow,
@@ -22,6 +25,14 @@ import {
   steel,
   warnAmber,
 } from "./materials";
+import {
+  boltCircle,
+  machineFoot,
+  motorHousing,
+  pipeRun,
+  pressureGauge,
+  yellowHazardBand,
+} from "./industrial-kit";
 import {
   LINE_END,
   REJECT_LEN,
@@ -100,22 +111,25 @@ function buildConveyor(length: number, z = 0): THREE.Group {
     g.add(roller);
   }
 
-  // Motor drive box with cooling fins at outfeed end
+  // Motor + gearbox drive end
   const drive = new THREE.Mesh(
-    new THREE.BoxGeometry(0.22, 0.18, 0.28),
+    new THREE.BoxGeometry(0.24, 0.2, 0.3),
     paintedSteel(0x334155, 0.45, 0.42),
   );
-  drive.position.set(length - 0.05, 0.35, 0.38);
+  drive.position.set(length - 0.05, 0.35, 0.4);
   drive.castShadow = true;
   g.add(drive);
-  addCoolingFins(g, length - 0.05 + 0.115, 0.35, 0.38, 7);
-  const motor = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.055, 0.055, 0.14, 16),
-    brushedAluminum(0xb8c0c8),
-  );
-  motor.rotation.z = Math.PI / 2;
-  motor.position.set(length - 0.18, 0.35, 0.38);
+  addCoolingFins(g, length - 0.05 + 0.125, 0.35, 0.4, 8);
+  const motor = motorHousing(0.16, 0.055, "x");
+  motor.position.set(length - 0.22, 0.35, 0.4);
   g.add(motor);
+  const coupling = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.035, 0.035, 0.04, 16),
+    physicalSteel(0x94a3b8, 0.85, 0.25),
+  );
+  coupling.rotation.z = Math.PI / 2;
+  coupling.position.set(length - 0.12, 0.35, 0.4);
+  g.add(coupling);
 
   return g;
 }
@@ -180,116 +194,334 @@ function buildStarwheel(segments = 12): THREE.Group {
 
 function buildFillHead(): THREE.Group {
   const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.55), paintedSteel(0x52525b, 0.4, 0.4));
-  base.position.y = 0.58;
-  base.castShadow = true;
-  g.add(base);
-  const column = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.15, 0.38), machineBlue(0x1e40af));
-  column.position.y = 1.2;
+
+  // Skid base plate with legs
+  const skid = new THREE.Mesh(
+    new THREE.BoxGeometry(0.72, 0.06, 0.72),
+    paintedSteel(0x3f3f46, 0.5, 0.42),
+  );
+  skid.position.y = 0.48;
+  skid.castShadow = true;
+  g.add(skid);
+  for (const [x, z] of [
+    [-0.28, -0.28],
+    [0.28, -0.28],
+    [-0.28, 0.28],
+    [0.28, 0.28],
+  ] as const) {
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 0.46, 0.055),
+      paintedSteel(0x52525b, 0.55, 0.4),
+    );
+    leg.position.set(x, 0.23, z);
+    leg.castShadow = true;
+    g.add(leg);
+    g.add(machineFoot(x, z));
+  }
+  boltCircle(g, 0.515, 0.3, 8, 0.008);
+
+  // Column / valve cabinet
+  const column = new THREE.Mesh(
+    new THREE.BoxGeometry(0.42, 1.05, 0.42),
+    physicalPaint(0x1e40af, 0.42, 0.32),
+  );
+  column.position.y = 1.05;
   column.castShadow = true;
   g.add(column);
-  const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 0.4), safetyYellow());
-  stripe.position.y = 0.78;
+  const stripe = yellowHazardBand(0.44, 0.07, 0.44);
+  stripe.position.y = 0.72;
   g.add(stripe);
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.55), steel(0xcbd5e1, 0.85, 0.22));
-  arm.position.set(0, 1.55, 0.12);
-  g.add(arm);
-
-  // Nozzle tube + bellows rings + drip pan
-  const nozzleTube = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.018, 0.016, 0.32, 16),
-    steel(0xe2e8f0, 0.92, 0.16),
+  // Side access door seam + handle
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(0.02, 0.55, 0.28),
+    paintedSteel(0x1e3a8a, 0.4, 0.4),
   );
-  nozzleTube.position.set(0, 1.28, 0);
-  g.add(nozzleTube);
-  for (let i = 0; i < 5; i++) {
-    const bellow = new THREE.Mesh(
-      new THREE.TorusGeometry(0.028, 0.006, 8, 16),
-      rubber(0x44403c),
-    );
-    bellow.rotation.x = Math.PI / 2;
-    bellow.position.set(0, 1.42 - i * 0.028, 0);
-    g.add(bellow);
-  }
-  const tip = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.012, 0.008, 0.04, 12),
+  door.position.set(0.22, 1.05, 0);
+  g.add(door);
+  const handle = new THREE.Mesh(
+    new THREE.BoxGeometry(0.02, 0.08, 0.02),
     brushedAluminum(),
   );
-  tip.position.set(0, 1.1, 0);
-  g.add(tip);
-  const dripPan = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.08, 0.02, 20),
-    paintedSteel(0x57534e, 0.4, 0.5),
-  );
-  dripPan.position.set(0, 1.05, 0);
-  g.add(dripPan);
+  handle.position.set(0.24, 1.05, 0.08);
+  g.add(handle);
 
+  // Product tank (glass cylinder) with manhole, legs residual, level sight
   const tank = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.22, 0.5, 28),
+    new THREE.CylinderGeometry(0.24, 0.24, 0.55, 40),
     new THREE.MeshPhysicalMaterial({
       color: 0x7dd3fc,
       metalness: 0.05,
-      roughness: 0.12,
-      transmission: 0.35,
+      roughness: 0.08,
+      transmission: 0.4,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.72,
+      clearcoat: 0.5,
+      clearcoatRoughness: 0.1,
+      envMapIntensity: 1.2,
+      side: THREE.DoubleSide,
     }),
   );
   tank.position.set(0, 1.85, 0);
   tank.castShadow = true;
   g.add(tank);
   const product = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.19, 0.19, 0.32, 24),
+    new THREE.CylinderGeometry(0.21, 0.21, 0.36, 32),
     liquid(0x0369a1),
   );
   product.position.set(0, 1.72, 0);
   g.add(product);
-  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.05, 24), steel(0x94a3b8));
-  lid.position.set(0, 2.12, 0);
+  // Manhole cover on tank top
+  const manhole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 0.035, 24),
+    physicalSteel(0x94a3b8, 0.88, 0.2),
+  );
+  manhole.position.set(0.08, 2.15, 0);
+  g.add(manhole);
+  boltCircle(g, 2.17, 0.085, 6, 0.006);
+  const lid = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.255, 0.255, 0.04, 32),
+    physicalSteel(0x94a3b8, 0.85, 0.22),
+  );
+  lid.position.set(0, 2.14, 0);
   g.add(lid);
+  // Sight glass strip
+  const sight = new THREE.Mesh(
+    new THREE.BoxGeometry(0.04, 0.32, 0.02),
+    new THREE.MeshPhysicalMaterial({
+      color: 0xe0f2fe,
+      metalness: 0,
+      roughness: 0.05,
+      transmission: 0.7,
+      transparent: true,
+      opacity: 0.55,
+    }),
+  );
+  sight.position.set(0.22, 1.85, 0.12);
+  g.add(sight);
 
+  // Pipework from tank to nozzle arm
+  const drop = pipeRun(0.42, 0.03, physicalSteel(0xcbd5e1, 0.9, 0.18));
+  drop.position.set(0.18, 1.55, 0.18);
+  g.add(drop);
+  const elbow = new THREE.Mesh(
+    new THREE.TorusGeometry(0.06, 0.028, 12, 16, Math.PI / 2),
+    physicalSteel(0xcbd5e1, 0.9, 0.18),
+  );
+  elbow.position.set(0.18, 1.34, 0.12);
+  elbow.rotation.y = Math.PI / 2;
+  g.add(elbow);
+  const horiz = pipeRun(0.28, 0.028, physicalSteel(0xcbd5e1, 0.9, 0.18));
+  horiz.rotation.z = Math.PI / 2;
+  horiz.position.set(0.05, 1.34, 0.12);
+  g.add(horiz);
+  // Valve body
+  const valve = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.08, 0.08),
+    paintedSteel(0x334155),
+  );
+  valve.position.set(0, 1.34, 0.05);
+  g.add(valve);
+  const handwheel = new THREE.Mesh(
+    new THREE.TorusGeometry(0.04, 0.008, 8, 16),
+    brushedAluminum(),
+  );
+  handwheel.position.set(0.08, 1.4, 0.05);
+  handwheel.rotation.z = Math.PI / 2;
+  g.add(handwheel);
+
+  // Gauges on column
+  const g1 = pressureGauge(0.04);
+  g1.position.set(0.22, 1.25, 0.1);
+  g1.rotation.y = -0.4;
+  g.add(g1);
+  const g2 = pressureGauge(0.035);
+  g2.position.set(0.22, 1.05, -0.08);
+  g2.rotation.y = -0.6;
+  g.add(g2);
+
+  // Fill arm + nozzle with bellows + drip pan
+  const arm = new THREE.Mesh(
+    new THREE.BoxGeometry(0.14, 0.1, 0.5),
+    physicalSteel(0xcbd5e1, 0.88, 0.2),
+  );
+  arm.position.set(0, 1.55, 0.08);
+  arm.castShadow = true;
+  g.add(arm);
+  const nozzleTube = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.02, 0.017, 0.36, 20),
+    physicalSteel(0xe2e8f0, 0.92, 0.14),
+  );
+  nozzleTube.position.set(0, 1.28, 0);
+  g.add(nozzleTube);
+  for (let i = 0; i < 6; i++) {
+    const bellow = new THREE.Mesh(
+      new THREE.TorusGeometry(0.03, 0.007, 8, 20),
+      rubber(0x44403c),
+    );
+    bellow.rotation.x = Math.PI / 2;
+    bellow.position.set(0, 1.44 - i * 0.026, 0);
+    g.add(bellow);
+  }
+  const tip = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.014, 0.009, 0.045, 14),
+    brushedAluminum(),
+  );
+  tip.position.set(0, 1.08, 0);
+  g.add(tip);
+  const dripPan = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.085, 0.025, 24),
+    paintedSteel(0x57534e, 0.4, 0.5),
+  );
+  dripPan.position.set(0, 1.02, 0);
+  g.add(dripPan);
+
+  // Starwheel guide
   const guide = buildStarwheel(10);
-  guide.position.set(0, 0, 0.28);
+  guide.position.set(0, 0, 0.3);
   g.add(guide);
+
+  // Side cable tray stub
+  for (let i = 0; i < 5; i++) {
+    const link = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.03, 0.05),
+      paintedSteel(0x57534e),
+    );
+    link.position.set(-0.28, 0.85 + i * 0.08, 0.28);
+    g.add(link);
+  }
 
   return g;
 }
 
 function buildCapper(): THREE.Group {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.95, 0.48), machineBlue(0x1e3a8a));
+
+  // Base skid + legs
+  const skid = new THREE.Mesh(
+    new THREE.BoxGeometry(0.65, 0.055, 0.58),
+    paintedSteel(0x3f3f46, 0.5, 0.42),
+  );
+  skid.position.y = 0.5;
+  skid.castShadow = true;
+  g.add(skid);
+  for (const [x, z] of [
+    [-0.25, -0.22],
+    [0.25, -0.22],
+    [-0.25, 0.22],
+    [0.25, 0.22],
+  ] as const) {
+    const leg = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.48, 0.05),
+      paintedSteel(0x52525b),
+    );
+    leg.position.set(x, 0.24, z);
+    g.add(leg);
+    g.add(machineFoot(x, z));
+  }
+
+  // Main body casting
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.52, 0.95, 0.5),
+    physicalPaint(0x1e3a8a, 0.4, 0.32),
+  );
   body.position.y = 1.05;
   body.castShadow = true;
   g.add(body);
-  const hood = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.12, 0.52), paintedSteel(0x334155));
+  const hood = new THREE.Mesh(
+    new THREE.BoxGeometry(0.56, 0.1, 0.54),
+    paintedSteel(0x334155, 0.5, 0.4),
+  );
   hood.position.y = 1.58;
   g.add(hood);
-  const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.45, 16), steel(0xd4d4d8));
+  const banner = yellowHazardBand(0.54, 0.07, 0.02);
+  banner.position.set(0, 1.35, 0.26);
+  g.add(banner);
+
+  // Drive gearbox on side
+  const gearbox = new THREE.Mesh(
+    new THREE.BoxGeometry(0.2, 0.22, 0.18),
+    paintedSteel(0x334155, 0.55, 0.38),
+  );
+  gearbox.position.set(0.32, 1.2, 0);
+  gearbox.castShadow = true;
+  g.add(gearbox);
+  const motor = motorHousing(0.16, 0.05, "x");
+  motor.position.set(0.48, 1.2, 0);
+  g.add(motor);
+  addCoolingFins(g, 0.32 + 0.1, 1.2, 0, 5);
+
+  // Spindle column
+  const spindle = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.055, 0.055, 0.5, 24),
+    physicalSteel(0xd4d4d8, 0.88, 0.2),
+  );
   spindle.position.y = 0.95;
   g.add(spindle);
-  // Chuck with jaw segments
+  // Rotary chuck with jaw detail
   const chuck = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.085, 0.065, 0.1, 20),
-    steel(0xf1f5f9, 0.85, 0.2),
+    new THREE.CylinderGeometry(0.095, 0.07, 0.12, 28),
+    physicalSteel(0xf1f5f9, 0.9, 0.16),
   );
-  chuck.position.y = 0.74;
+  chuck.position.y = 0.72;
+  chuck.castShadow = true;
   g.add(chuck);
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2;
     const jaw = new THREE.Mesh(
-      new THREE.BoxGeometry(0.02, 0.06, 0.025),
+      new THREE.BoxGeometry(0.022, 0.07, 0.03),
       brushedAluminum(),
     );
-    jaw.position.set(Math.cos(a) * 0.055, 0.7, Math.sin(a) * 0.055);
+    jaw.position.set(Math.cos(a) * 0.06, 0.68, Math.sin(a) * 0.06);
     jaw.rotation.y = -a;
     g.add(jaw);
+    const tip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.012, 0.04, 0.018),
+      matteBlack(),
+    );
+    tip.position.set(Math.cos(a) * 0.038, 0.66, Math.sin(a) * 0.038);
+    tip.rotation.y = -a;
+    g.add(tip);
   }
-  const hopper = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.28, 16), plastic(0xfafafa, 0.4));
-  hopper.position.set(0.22, 1.55, 0);
+  // Chuck collar ring
+  const collar = new THREE.Mesh(
+    new THREE.TorusGeometry(0.08, 0.012, 10, 24),
+    paintedSteel(0x475569),
+  );
+  collar.rotation.x = Math.PI / 2;
+  collar.position.y = 0.8;
+  g.add(collar);
+
+  // Cap hopper + feed chute
+  const hopper = new THREE.Mesh(
+    new THREE.ConeGeometry(0.17, 0.3, 20),
+    plastic(0xfafafa, 0.4),
+  );
+  hopper.position.set(0.24, 1.58, 0.05);
+  hopper.castShadow = true;
   g.add(hopper);
-  const banner = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.08, 0.02), safetyYellow());
-  banner.position.set(0, 1.35, 0.25);
-  g.add(banner);
+  const hopperRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.17, 0.012, 8, 20),
+    safetyYellow(),
+  );
+  hopperRim.rotation.x = Math.PI / 2;
+  hopperRim.position.set(0.24, 1.72, 0.05);
+  g.add(hopperRim);
+  const feed = new THREE.Mesh(
+    new THREE.BoxGeometry(0.08, 0.06, 0.22),
+    steel(0x94a3b8),
+  );
+  feed.position.set(0.1, 1.42, 0.05);
+  feed.rotation.z = 0.35;
+  g.add(feed);
+
+  // Cap bowl vibratory base
+  const bowl = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.14, 0.08, 24),
+    brushedAluminum(0xb0b8c0),
+  );
+  bowl.position.set(0.24, 1.38, 0.05);
+  g.add(bowl);
+
   return g;
 }
 
@@ -568,6 +800,7 @@ export function BottlingViewport({
     el.appendChild(renderer.domElement);
 
     addFactoryLights(scene);
+    applyFactoryEnvMap(renderer, scene);
     scene.add(makeFactoryFloor(22));
 
     const world = new THREE.Group();
