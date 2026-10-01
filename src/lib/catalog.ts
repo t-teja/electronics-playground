@@ -4,6 +4,7 @@ import { CONTROL_LABS } from "./control-labs";
 import { CATALOG_CHUNK_A } from "./catalog-chunk-a";
 import { CATALOG_CHUNK_B } from "./catalog-chunk-b";
 import { CATALOG_AFTER_MOTORS } from "./catalog-after-motors";
+import { FACTORY_CATEGORY, FACTORY_LABS } from "./factory-labs";
 
 export type Category =
   | "passive"
@@ -13,7 +14,8 @@ export type Category =
   | "electromechanical"
   | "sensor"
   | "computer"
-  | "neural";
+  | "neural"
+  | "factory";
 
 export type LabBadge = "new" | "updated";
 
@@ -67,6 +69,7 @@ export const CATEGORIES: { id: Category; label: string; blurb: string }[] = [
     blurb: "Memory that keeps bits, and processors that walk through them.",
   },
   NEURAL_CATEGORY,
+  FACTORY_CATEGORY,
 ];
 
 export const LABS: LabMeta[] = [
@@ -76,6 +79,7 @@ export const LABS: LabMeta[] = [
   ...CATALOG_AFTER_MOTORS,
   ...CONTROL_LABS,
   ...NEURAL_LABS,
+  ...FACTORY_LABS,
 ];
 
 export const LAB_BY_SLUG = Object.fromEntries(LABS.map((l) => [l.slug, l])) as Record<

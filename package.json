@@ -1,7 +1,7 @@
 {
   "name": "electronics-playground",
   "private": true,
-  "version": "0.8.4",
+  "version": "0.9.0",
   "sideEffects": false,
   "type": "module",
   "scripts": {
