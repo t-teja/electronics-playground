@@ -31,3 +31,8 @@ scripts/*
 !scripts/gh-pages-post.mjs
 !scripts/with-app-env.mjs
 eslint.config.mjs
+
+# Local packaging / release notes (do not push)
+PUSH_NOTES.md
+READY
+READY-*

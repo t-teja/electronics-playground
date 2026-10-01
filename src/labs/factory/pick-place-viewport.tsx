@@ -495,9 +495,9 @@ export function PickPlaceViewport({
 
       if (s.gripped) {
         part.visible = true;
-        // Prefer live tool0 world pose; snap.tip is already world XYZ from FK.
+        // Prefer live tool0: jaws sit ~0.10 m along tool +Z (tool-down → nest/fixture).
         let wx = s.tip.x;
-        let wy = s.tip.y;
+        let wy = s.tip.y - 0.1;
         let wz = s.tip.z;
         if (robot) {
           const tool =
@@ -505,12 +505,11 @@ export function PickPlaceViewport({
             robot.getObjectByName("wrist_3_link") ||
             robot.getObjectByName("flange");
           if (tool) {
-            const wp = new THREE.Vector3();
-            tool.getWorldPosition(wp);
-            // Jaws sit ~0.10 m along tool +Z; after root Rx(-pi/2) that is -world Y.
-            wx = wp.x;
-            wy = wp.y - 0.1;
-            wz = wp.z;
+            const jaw = new THREE.Vector3(0, 0, 0.1);
+            tool.localToWorld(jaw);
+            wx = jaw.x;
+            wy = jaw.y;
+            wz = jaw.z;
           }
         }
         part.position.set(wx, wy, wz);
