@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 /** Lit industrial accent (teal). */
 export const ACCENT = 0x5eead4;
@@ -229,4 +230,47 @@ export function addCoolingFins(parent: THREE.Object3D, x: number, y: number, z: 
     fin.position.set(x, y, z + (i - (count - 1) / 2) * 0.022);
     parent.add(fin);
   }
+}
+
+let sharedEnvMap: THREE.Texture | null = null;
+
+/**
+ * Shared PMREM RoomEnvironment for industrial metal reflections.
+ * Call once per viewport after creating the renderer; assigns scene.environment.
+ */
+export function applyFactoryEnvMap(
+  renderer: THREE.WebGLRenderer,
+  scene: THREE.Scene,
+): THREE.Texture {
+  if (!sharedEnvMap) {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem.compileEquirectangularShader();
+    sharedEnvMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+  }
+  scene.environment = sharedEnvMap;
+  scene.environmentIntensity = 0.85;
+  return sharedEnvMap;
+}
+
+export function physicalSteel(color = 0x9ca3af, metalness = 0.82, roughness = 0.22) {
+  return new THREE.MeshPhysicalMaterial({
+    color,
+    metalness,
+    roughness,
+    clearcoat: 0.25,
+    clearcoatRoughness: 0.35,
+    envMapIntensity: 1.1,
+  });
+}
+
+export function physicalPaint(color = 0x1e40af, metalness = 0.4, roughness = 0.35) {
+  return new THREE.MeshPhysicalMaterial({
+    color,
+    metalness,
+    roughness,
+    clearcoat: 0.45,
+    clearcoatRoughness: 0.28,
+    envMapIntensity: 0.95,
+  });
 }

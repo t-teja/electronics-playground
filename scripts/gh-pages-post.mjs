@@ -91,6 +91,11 @@ const LAB_SLUGS = [
   "perceptron",
   "neural-net",
   "attention",
+  "bottling-line",
+  "pick-and-place",
+  "agv-line",
+  "color-sorter",
+  "scara-cell",
 ];
 for (const slug of LAB_SLUGS) {
   const dir = join(dest, "lab", slug);

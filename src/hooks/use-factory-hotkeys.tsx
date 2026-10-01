@@ -57,6 +57,13 @@ export function useFactoryHotkeys({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (isTypingTarget(e.target)) return;
+      // Don't steal Space/keys from focused buttons (Space on E-stop was causing Start→ESTOP)
+      if (e.target instanceof HTMLElement) {
+        const interactive = e.target.closest(
+          'button, a, input, textarea, select, [role="button"], [role="slider"], [contenteditable="true"]',
+        );
+        if (interactive) return;
+      }
 
       const key = e.key;
       const lower = key.length === 1 ? key.toLowerCase() : key;

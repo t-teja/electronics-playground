@@ -1,0 +1,10 @@
+READY-motion-sorter: v0.9.1 color-sorter idle seed (follow-up to READY-motion)
+
+PnP / AGV / SCARA already PASS on READY-motion.
+
+color-sorter idle FAIL fix:
+- seedDemo parts clustered under hopper / early infeed only: x in {0.35, 0.55, 0.75, 0.95}
+- All lane: null (never mid-lane / gate-adjacent)
+- Mid-belt seeds (x>~1.0 toward GATE_X=3.2) removed — those read as "right-side from thin air" at Fit
+
+Retest: Fit idle before Start — cubes only near hopper on left infeed, empty mid-belt and divert zone.

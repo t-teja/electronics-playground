@@ -18,6 +18,8 @@ const empty = (): ScaraSnapshot => ({
   wrist: 0,
   phase: "idle",
   gripped: false,
+  partVisible: true,
+  partAtPlace: false,
   cycles: 0,
   tip: { x: 0.4, y: 0.2 },
 });
@@ -54,7 +56,11 @@ export function ScaraCellLab() {
     return () => cancelAnimationFrame(raf);
   }, [sim]);
 
-  const onStart = useCallback(() => setRunning(true), []);
+  const onStart = useCallback(() => {
+    if (eStop) return;
+    setRunning(true);
+    sim.setControls({ running: true, eStop: false, speed });
+  }, [eStop, sim, speed]);
   const onStop = useCallback(() => setRunning(false), []);
   const onEStop = useCallback(() => {
     setEStop(true);
