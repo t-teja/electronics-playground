@@ -46,6 +46,11 @@ import { ServoLab } from "@/labs/servo";
 import { PidLab } from "@/labs/pid";
 import { StepperLab } from "@/labs/stepper";
 import { RobotArm6dofLab } from "@/labs/robot-arm-6dof";
+import { BottlingLineLab } from "@/labs/bottling-line";
+import { ScaraCellLab } from "@/labs/scara-cell";
+import { ColorSorterLab } from "@/labs/color-sorter";
+import { AgvLineLab } from "@/labs/agv-line";
+import { PickAndPlaceLab } from "@/labs/pick-and-place";
 
 export const LAB_COMPONENTS: Record<string, ComponentType> = {
   resistor: ResistorLab,
@@ -95,4 +100,9 @@ export const LAB_COMPONENTS: Record<string, ComponentType> = {
   perceptron: PerceptronLab,
   "neural-net": NeuralNetLab,
   attention: AttentionLab,
+  "bottling-line": BottlingLineLab,
+  "scara-cell": ScaraCellLab,
+  "color-sorter": ColorSorterLab,
+  "agv-line": AgvLineLab,
+  "pick-and-place": PickAndPlaceLab,
 };

@@ -141,9 +141,11 @@ export function ToggleControl({
 
 export function Meter({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1 rounded-xl bg-sim px-3 py-2.5">
-      <span className="text-[10px] font-medium tracking-[0.14em] text-subtle uppercase">{label}</span>
-      <span className="min-w-0 truncate font-mono text-lg leading-none font-medium tabular-nums text-fg">
+    <div className="flex min-w-0 flex-1 flex-col gap-0.5 rounded-xl bg-sim px-2 py-1.5 sm:px-3 sm:py-2.5">
+      <span className="text-[9px] font-medium tracking-[0.12em] text-subtle uppercase sm:text-[10px] sm:tracking-[0.14em]">
+        {label}
+      </span>
+      <span className="min-w-0 font-mono text-sm leading-tight font-medium break-words tabular-nums text-fg sm:text-lg sm:leading-none">
         {value}
       </span>
     </div>
